@@ -7,8 +7,15 @@ class GroqScreener:
     """Handle resume screening via Groq API"""
     
     def __init__(self):
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
+        self._client = None
         self.model = "llama-3.3-70b-versatile"  # Fast, free Groq model
+        
+    @property
+    def client(self) -> Groq:
+        """Lazy initialize the Groq client on demand to avoid import-time side-effects"""
+        if self._client is None:
+            self._client = Groq(api_key=settings.GROQ_API_KEY)
+        return self._client
     
     def screen_resume(self, resume_text: str, job_description: str) -> dict:
         """
