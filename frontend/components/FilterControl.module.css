@@ -1,13 +1,13 @@
 .container {
     background: #ffffff;
-    padding: 24px;
-    border-radius: 8px;
+    padding: 20px 24px;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     margin: 0 0 16px 0;
     color: #0f172a;
@@ -21,7 +21,7 @@
 }
 
 .label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: #475569;
 }
@@ -49,7 +49,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #0f172a; /* Muted slate Ashby knob */
+    background: #0f172a;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     border: 1px solid #0f172a;
@@ -100,7 +100,7 @@
     border: 1px solid #cbd5e1;
     background: #ffffff;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: #334155;
     cursor: pointer;
@@ -113,7 +113,7 @@
 }
 
 .presetBtn.active {
-    background: #0f172a; /* Muted Slate Active Ashby state */
+    background: #0f172a;
     color: #ffffff;
     border-color: #0f172a;
 }
