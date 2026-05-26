@@ -52,3 +52,27 @@ export async function getResults(screeningId, minScore = 0) {
         throw error;
     }
 }
+
+/**
+ * Generate tailored interview questions for a screened candidate
+ */
+export async function generateInterviewQuestions(resultId) {
+    try {
+        const response = await fetch(`${API_URL}/api/results/${resultId}/questions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to generate interview questions");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Generate interview questions error:", error);
+        throw error;
+    }
+}

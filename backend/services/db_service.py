@@ -134,6 +134,13 @@ class DatabaseService:
         db.commit()
         return result
 
+    @staticmethod
+    def get_resume_result(db: Session, result_id: UUID) -> ResumeResult:
+        """Fetch a single resume result by ID"""
+        return db.query(ResumeResult).filter(
+            ResumeResult.id == result_id
+        ).first()
+
 
 # Create global instance
 db_service = DatabaseService()

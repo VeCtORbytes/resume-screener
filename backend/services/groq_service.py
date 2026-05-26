@@ -211,6 +211,108 @@ Respond ONLY with the requested JSON object."""
         result["filename"] = filename
         return result
 
+    def generate_interview_questions(self, resume_text: str, job_description: str, screening_context: str) -> dict:
+        """
+        Generate tailored technical, project deep-dive, behavioral, and risk-probing questions on-demand.
+        
+        Returns: {"technical": [...], "project_deep_dive": [...], "behavioral": [...], "risk_probing": [...]}
+        """
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """You are an elite, highly experienced technical recruiter and interviewing coordinator.
+Your objective is to generate tailored, highly specific, and diagnostic interview questions for a candidate based on:
+1. The candidate's extracted RESUME text.
+2. The target JOB DESCRIPTION requirements.
+3. The AI SCREENING EVALUATION context (which details strengths, score, and gaps).
+
+You must generate exactly 5 deep, highly relevant questions for each of the following four categories:
+1. "technical": Questions probing their listed technologies, frameworks, and architectural choices.
+2. "project_deep_dive": Specific questions digging into their named portfolio projects, responsibilities, or company impact achievements listed on their resume.
+3. "behavioral": Questions testing soft skills, culture fit, leadership, teamwork, or conflict resolution tailored to their career stage.
+4. "risk_probing": Questions specifically targeting gaps, missing skills, technology switches, short tenures, or areas where they might lack experience relative to the job requirements.
+
+You MUST return your response as a valid, single JSON object with no markdown fences, no conversational filler, and no notes. Use the following exact JSON schema:
+{
+  "technical": ["question 1", "question 2", "question 3", "question 4", "question 5"],
+  "project_deep_dive": ["question 1", "question 2", "question 3", "question 4", "question 5"],
+  "behavioral": ["question 1", "question 2", "question 3", "question 4", "question 5"],
+  "risk_probing": ["question 1", "question 2", "question 3", "question 4", "question 5"]
+}"""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""JOB DESCRIPTION:
+{job_description}
+
+CANDIDATE EVALUATION CONTEXT:
+{screening_context}
+
+CANDIDATE RESUME TEXT:
+{resume_text}
+
+Respond ONLY with the requested JSON object containing tailored questions."""
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=1000,
+                response_format={"type": "json_object"},
+                timeout=30.0
+            )
+            
+            response_text = response.choices[0].message.content.strip()
+            
+            # Clean markdown JSON block wrappers if present
+            cleaned_text = response_text
+            if "```" in cleaned_text:
+                if "```json" in cleaned_text:
+                    start_idx = cleaned_text.find("```json") + 7
+                else:
+                    start_idx = cleaned_text.find("```") + 3
+                end_idx = cleaned_text.find("```", start_idx)
+                if end_idx != -1:
+                    cleaned_text = cleaned_text[start_idx:end_idx].strip()
+                else:
+                    cleaned_text = cleaned_text[start_idx:].strip()
+                    
+            return json.loads(cleaned_text)
+            
+        except Exception as e:
+            logger.exception("Error during interview question generation")
+            return {
+                "technical": [
+                    "Can you explain the architecture of a recent key system you designed using Python/SQL?",
+                    "How do you approach database schema migrations and concurrency challenges in technical stacks?",
+                    "How do you handle connection pooling, query optimization, and memory limits in backend frameworks?",
+                    "Can you detail your experience deploying containerized REST APIs in modern cloud environments?",
+                    "What strategies do you adopt for handling complex asynchronous workloads or thread pools in production?"
+                ],
+                "project_deep_dive": [
+                    "Could you walk us through the most technically challenging project listed on your resume?",
+                    "What were the core scale or latency challenges you hit in that specific project, and how did you resolve them?",
+                    "How did you validate the business impact or performance metrics of your completed system?",
+                    "What architectural trade-offs did you make during the design phase of your portfolio projects?",
+                    "If you had to rebuild your primary work system from scratch today, what would you design differently?"
+                ],
+                "behavioral": [
+                    "Tell us about a technical disagreement with a colleague. How was it resolved?",
+                    "How do you prioritize codebase quality over strict shipping speed constraints under pressure?",
+                    "Describe a situation where a production system broke. What actions did you take, and what were the key learnings?",
+                    "How do you mentor junior developers or communicate technical tradeoffs to non-technical stakeholders?",
+                    "What practices do you follow to stay updated with modern architectural patterns and design standards?"
+                ],
+                "risk_probing": [
+                    "How do you plan to quickly gain production-level fluency with advanced LLM integration paradigms?",
+                    "Are there specific stack items in our description that you haven't operated extensively in production settings?",
+                    "We noticed certain technology changes in your career history. What motivated those switches?",
+                    "How do you ensure rapid onboarding when joining a team with a highly complex codebase?",
+                    "What strategies do you use to overcome gaps in understanding legacy components or undocumented systems?"
+                ]
+            }
+
 
 # Create global instance
 groq_screener = GroqScreener()

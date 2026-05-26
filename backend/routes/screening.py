@@ -164,3 +164,44 @@ def get_results(
         screening_id=screening_uuid,
         results=result_responses
     )
+
+
+@router.post("/results/{result_id}/questions")
+def generate_candidate_questions(
+    result_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate tailored interview questions for a candidate result on-demand.
+    """
+    try:
+        from uuid import UUID
+        result_uuid = UUID(result_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid result_id format")
+
+    result = db_service.get_resume_result(db=db, result_id=result_uuid)
+    if not result:
+        raise HTTPException(status_code=404, detail="Candidate result not found")
+
+    # Access the related job description
+    screening_session = result.screening
+    if not screening_session:
+        raise HTTPException(status_code=404, detail="Associated screening session not found")
+
+    job_description = screening_session.job_description
+    resume_text = result.resume_text
+    screening_context = f"Score: {result.score}. Reasoning: {result.reasoning}"
+
+    try:
+        questions = groq_screener.generate_interview_questions(
+            resume_text=resume_text,
+            job_description=job_description,
+            screening_context=screening_context
+        )
+        return questions
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate interview questions: {str(e)}"
+        )
