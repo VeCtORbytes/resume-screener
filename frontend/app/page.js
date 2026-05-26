@@ -69,9 +69,8 @@ export default function Home() {
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
 
-      // Reset form
+      // Reset form (preserves selected files unless manually removed)
       setJobDescription("");
-      setResumeFiles([]);
     } catch (err) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {
@@ -93,7 +92,11 @@ export default function Home() {
       <main className={styles.main}>
         {/* Input Section */}
         <section className={styles.inputSection}>
-          <FileUpload onFilesSelect={handleFilesSelect} isLoading={loading} />
+          <FileUpload
+            files={resumeFiles}
+            onFilesSelect={handleFilesSelect}
+            isLoading={loading}
+          />
           <JobDescInput
             value={jobDescription}
             onChange={handleJobDescChange}
