@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, CheckConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import uuid
 
 Base = declarative_base()
@@ -13,7 +13,7 @@ class ScreeningSession(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     job_description = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(datetime.timezone.utc) + timedelta(days=30), nullable=False)
+    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=30), nullable=False)
     result_count = Column(Integer, default=0)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
@@ -35,7 +35,7 @@ class ResumeResult(Base):
     score = Column(Integer, nullable=False)
     reasoning = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(datetime.timezone.utc) + timedelta(days=30), nullable=False)
+    expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=30), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationship to screening_sessions
