@@ -71,12 +71,17 @@ async def screen_resumes(
             job_description=job_description
         )
         
-        # Step 4: Store results in database
+        # Step 4: Store results in database (map by filename to prevent score-to-resume index mismatch)
         results_to_save = []
-        for i, result in enumerate(screening_results):
+        for result in screening_results:
+            filename = result["filename"]
+            # Locate the original resume text mapped to this filename
+            matching_resume = next((r for r in resume_data if r["filename"] == filename), None)
+            resume_text = matching_resume["text"] if matching_resume else ""
+            
             results_to_save.append({
-                "filename": resume_data[i]["filename"],  # Keep original filename
-                "text": resume_data[i]["text"],
+                "filename": filename,
+                "text": resume_text,
                 "score": result["score"],
                 "reasoning": result["reasoning"]
             })
