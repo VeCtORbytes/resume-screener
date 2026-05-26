@@ -26,6 +26,7 @@ class ResumeResultResponse(BaseModel):
     score: int
     reasoning: str
     created_at: datetime
+    gap_analysis: Optional[dict] = None
     
     class Config:
         from_attributes = True  # Can read from SQLAlchemy models

@@ -78,7 +78,15 @@ You MUST return your response as a valid, single JSON object with no markdown fe
   },
   "strengths": [<list of strings, 2-3 specific factual strengths based strictly on resume content>],
   "gaps": [<list of strings, 2-3 factual missing requirements or gaps relative to the job description>],
-  "recommendation": "<'Excellent Match' (score >= 80) | 'Strong Match' (score 60-79) | 'Moderate Match' (score 40-59) | 'Weak Match' (score < 40)>"
+  "recommendation": "<'Excellent Match' (score >= 80) | 'Strong Match' (score 60-79) | 'Moderate Match' (score 40-59) | 'Weak Match' (score < 40)>",
+  "gap_analysis": {
+    "must_have_matched": [<list of strings, must-have skills matching candidate resume>],
+    "must_have_missing": [<list of strings, must-have skills missing in candidate resume>],
+    "good_to_have_matched": [<list of strings, good-to-have/preferred skills matching candidate resume>],
+    "good_to_have_missing": [<list of strings, good-to-have/preferred skills missing in candidate resume>],
+    "strength_areas": [<list of strings, 3-5 specific capabilities, tools, or strengths demonstrated>],
+    "critical_gaps": [<list of strings, 1-3 serious missing skills, missing experience flags, or flags relative to JD>]
+  }
 }"""
 
         user_prompt = f"""JOB DESCRIPTION:
@@ -103,7 +111,7 @@ Respond ONLY with the requested JSON object."""
                     }
                 ],
                 temperature=0.1,  # Highly deterministic scoring
-                max_tokens=800,   # Sufficient space for detailed JSON breakdown
+                max_tokens=1000,   # Increased token allowance to support gap analysis schema
                 response_format={"type": "json_object"}  # Restrict to strictly valid JSON object
             )
             
@@ -136,6 +144,16 @@ Respond ONLY with the requested JSON object."""
             gaps = result.get("gaps", [])
             recommendation = result.get("recommendation", "Moderate Match")
             
+            # Expose Candidate Skill Gap Intelligence JSON
+            gap_analysis = result.get("gap_analysis", {
+                "must_have_matched": [],
+                "must_have_missing": [],
+                "good_to_have_matched": [],
+                "good_to_have_missing": [],
+                "strength_areas": [],
+                "critical_gaps": []
+            })
+            
             # Format structured summary report to render beautifully in reasoning column
             breakdown_str = (
                 f"Recommendation: {recommendation}\n\n"
@@ -150,7 +168,8 @@ Respond ONLY with the requested JSON object."""
             strengths_str = "✅ Strengths:\n" + "\n".join([f"• {s}" for s in strengths]) if strengths else "✅ Strengths:\n• General stack alignment."
             gaps_str = "⚠️ Gaps:\n" + "\n".join([f"• {g}" for g in gaps]) if gaps else "⚠️ Gaps:\n• No critical gaps identified."
             
-            reasoning_summary = f"{breakdown_str}{strengths_str}\n\n{gaps_str}"
+            # Construct composite reasoning text with structured JSON payload embedded safely at the end
+            reasoning_summary = f"{breakdown_str}{strengths_str}\n\n{gaps_str}\n\n---GAP_ANALYSIS_JSON---\n{json.dumps(gap_analysis)}"
             
             return {
                 "score": score,
@@ -159,9 +178,17 @@ Respond ONLY with the requested JSON object."""
         
         except json.JSONDecodeError:
             logger.error(f"Failed to parse Groq response: {response_text}")
+            fallback_gaps = {
+                "must_have_matched": ["General backend concepts"],
+                "must_have_missing": ["Failed to extract from raw response"],
+                "good_to_have_matched": [],
+                "good_to_have_missing": [],
+                "strength_areas": ["General profile alignment"],
+                "critical_gaps": ["Error parsing AI response payload"]
+            }
             return {
                 "score": 0,
-                "reasoning": "Failed to parse the screening evaluation from the AI model."
+                "reasoning": f"Failed to parse the screening evaluation from the AI model.\n\n---GAP_ANALYSIS_JSON---\n{json.dumps(fallback_gaps)}"
             }
         
         except Exception as e:

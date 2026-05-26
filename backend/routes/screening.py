@@ -155,10 +155,31 @@ def get_results(
         min_score=min_score
     )
     
+    import json
+
     # Convert to response schema
-    result_responses = [
-        ResumeResultResponse.from_orm(r) for r in results
-    ]
+    result_responses = []
+    for r in results:
+        reasoning_clean = r.reasoning
+        gap_analysis = None
+        
+        if "---GAP_ANALYSIS_JSON---" in r.reasoning:
+            parts = r.reasoning.split("---GAP_ANALYSIS_JSON---")
+            reasoning_clean = parts[0].strip()
+            try:
+                gap_analysis = json.loads(parts[1].strip())
+            except Exception:
+                gap_analysis = None
+        
+        response_item = ResumeResultResponse(
+            id=r.id,
+            resume_filename=r.resume_filename,
+            score=r.score,
+            reasoning=reasoning_clean,
+            created_at=r.created_at,
+            gap_analysis=gap_analysis
+        )
+        result_responses.append(response_item)
     
     return ResultsQueryResponse(
         screening_id=screening_uuid,
@@ -189,9 +210,27 @@ def generate_candidate_questions(
     if not screening_session:
         raise HTTPException(status_code=404, detail="Associated screening session not found")
 
+    import json
     job_description = screening_session.job_description
     resume_text = result.resume_text
-    screening_context = f"Score: {result.score}. Reasoning: {result.reasoning}"
+    
+    reasoning_clean = result.reasoning
+    gap_info = ""
+    if "---GAP_ANALYSIS_JSON---" in result.reasoning:
+        parts = result.reasoning.split("---GAP_ANALYSIS_JSON---")
+        reasoning_clean = parts[0].strip()
+        try:
+            gap_data = json.loads(parts[1].strip())
+            gap_info = (
+                f"\n\n[CRITICAL GAP ANALYSIS INTELLIGENCE]\n"
+                f"- Must-Have Missing: {', '.join(gap_data.get('must_have_missing', []))}\n"
+                f"- Good-To-Have Missing: {', '.join(gap_data.get('good_to_have_missing', []))}\n"
+                f"- Critical Gaps: {', '.join(gap_data.get('critical_gaps', []))}"
+            )
+        except Exception:
+            pass
+
+    screening_context = f"Score: {result.score}. Reasoning: {reasoning_clean}{gap_info}"
 
     try:
         questions = groq_screener.generate_interview_questions(

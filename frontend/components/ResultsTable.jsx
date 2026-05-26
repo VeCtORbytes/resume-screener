@@ -8,23 +8,23 @@ import { generateInterviewQuestions } from "../lib/api";
 // Robust regex-based reasoning text parser
 function parseReasoning(reasoning) {
     if (!reasoning) return null;
-    
+
     try {
         const hasBreakdown = reasoning.includes("Breakdown:") || reasoning.includes("Breakdown");
         const hasStrengths = reasoning.includes("Strengths:") || reasoning.includes("Strengths");
         const hasGaps = reasoning.includes("Gaps:") || reasoning.includes("Gaps");
-        
+
         if (!hasBreakdown && !hasStrengths && !hasGaps) {
             return { type: "raw", text: reasoning };
         }
-        
+
         // Extract Recommendation
         let recommendation = "";
         const recMatch = reasoning.match(/Recommendation:\s*([^\n\r]+)/i);
         if (recMatch) {
             recommendation = recMatch[1].trim();
         }
-        
+
         // Extract Breakdown metrics
         const breakdown = {
             skills: 0, maxSkills: 40,
@@ -33,22 +33,22 @@ function parseReasoning(reasoning) {
             education: 0, maxEducation: 10,
             domain: 0, maxDomain: 5
         };
-        
+
         const skillsMatch = reasoning.match(/(?:Skills|Skills Match):\s*(\d+)/i);
         if (skillsMatch) breakdown.skills = parseInt(skillsMatch[1]);
-        
+
         const expMatch = reasoning.match(/(?:Experience|Experience Relevance):\s*(\d+)/i);
         if (expMatch) breakdown.experience = parseInt(expMatch[1]);
-        
+
         const projMatch = reasoning.match(/(?:Projects|Project Relevance):\s*(\d+)/i);
         if (projMatch) breakdown.projects = parseInt(projMatch[1]);
-        
+
         const eduMatch = reasoning.match(/(?:Education|Education & Certifications):\s*(\d+)/i);
         if (eduMatch) breakdown.education = parseInt(eduMatch[1]);
-        
+
         const domMatch = reasoning.match(/(?:Domain|Domain & Keyword Fit):\s*(\d+)/i);
         if (domMatch) breakdown.domain = parseInt(domMatch[1]);
-        
+
         // Extract Strengths list
         let strengths = [];
         const strengthsParts = reasoning.split(/✅ Strengths:|Strengths:/i);
@@ -59,7 +59,7 @@ function parseReasoning(reasoning) {
                 .map(line => line.replace(/^[-•*✅\s]+/, "").trim())
                 .filter(line => line.length > 3);
         }
-        
+
         // Extract Gaps list
         let gaps = [];
         const gapsParts = reasoning.split(/⚠️ Gaps:|Gaps:/i);
@@ -69,7 +69,7 @@ function parseReasoning(reasoning) {
                 .map(line => line.replace(/^[-•*⚠️\s]+/, "").trim())
                 .filter(line => line.length > 3);
         }
-        
+
         return {
             type: "structured",
             recommendation,
@@ -108,7 +108,7 @@ export default function ResultsTable({ results = [], isLoading }) {
         e.stopPropagation();
         setGeneratingId(resultId);
         setGenerationError((prev) => ({ ...prev, [resultId]: null }));
-        
+
         try {
             const questionsData = await generateInterviewQuestions(resultId);
             setCandidateQuestions((prev) => ({
@@ -191,8 +191,8 @@ export default function ResultsTable({ results = [], isLoading }) {
                             return (
                                 <>
                                     {/* Main Row */}
-                                    <tr 
-                                        key={result.id} 
+                                    <tr
+                                        key={result.id}
                                         className={`${styles.row} ${isExpanded ? styles.expandedRow : ""}`}
                                         onClick={() => toggleExpand(result.id)}
                                     >
@@ -229,15 +229,15 @@ export default function ResultsTable({ results = [], isLoading }) {
                                         <tr key={`${result.id}-details`} className={styles.detailsRow}>
                                             <td colSpan={4} className={styles.detailsCell}>
                                                 <div className={styles.drawerContainer}>
-                                                    
+
                                                     {parsed && parsed.type === "structured" ? (
                                                         <div className={styles.structuredLayout}>
-                                                            
+
                                                             {/* 📊 Rubric Breakdown Metrics Grid */}
                                                             <div className={styles.rubricSection}>
                                                                 <h4 className={styles.sectionHeading}>📊 Rubric Alignment Breakdown</h4>
                                                                 <div className={styles.metricGrid}>
-                                                                    
+
                                                                     {/* Card 1: Technical Skills Match */}
                                                                     <div className={styles.metricCard}>
                                                                         <div className={styles.cardHeader}>
@@ -361,6 +361,111 @@ export default function ResultsTable({ results = [], isLoading }) {
                                                                 </div>
                                                             </div>
 
+                                                            {/* 🎯 Candidate Skill Gap Intelligence */}
+                                                            {result.gap_analysis && (
+                                                                <div className={styles.gapIntelligenceSection}>
+                                                                    <h4 className={styles.sectionHeading}>🎯 Candidate Skill Gap Intelligence</h4>
+                                                                    <div className={styles.gapGrid}>
+
+                                                                        {/* Card 1: Core Skill Matching */}
+                                                                        <div className={styles.gapCard}>
+                                                                            <h5 className={styles.gapCardTitle}>📌 Core Skill Matching</h5>
+                                                                            <div className={styles.gapColumns}>
+                                                                                <div className={styles.gapSubCol}>
+                                                                                    <span className={styles.gapSubLabel}>Required Matched</span>
+                                                                                    {result.gap_analysis.must_have_matched && result.gap_analysis.must_have_matched.length > 0 ? (
+                                                                                        <div className={styles.gapPills}>
+                                                                                            {result.gap_analysis.must_have_matched.map((s, i) => (
+                                                                                                <span key={i} className={`${styles.gapPill} ${styles.matchedPill}`}>✓ {s}</span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className={styles.gapEmptyText}>No matched required skills found.</span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                <div className={styles.gapSubCol}>
+                                                                                    <span className={styles.gapSubLabel}>Preferred Matched</span>
+                                                                                    {result.gap_analysis.good_to_have_matched && result.gap_analysis.good_to_have_matched.length > 0 ? (
+                                                                                        <div className={styles.gapPills}>
+                                                                                            {result.gap_analysis.good_to_have_matched.map((s, i) => (
+                                                                                                <span key={i} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {s}</span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className={styles.gapEmptyText}>No matched preferred skills found.</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Card 2: Critical Gaps */}
+                                                                        <div className={`${styles.gapCard} ${styles.criticalGapsCard}`}>
+                                                                            <h5 className={styles.gapCardTitle}>⚠️ Critical Gaps & Mismatches</h5>
+                                                                            {result.gap_analysis.must_have_missing && result.gap_analysis.must_have_missing.length > 0 ? (
+                                                                                <div className={styles.criticalListContainer}>
+                                                                                    <span className={styles.gapSubLabel}>Missing Required Stack:</span>
+                                                                                    <div className={styles.gapPills}>
+                                                                                        {result.gap_analysis.must_have_missing.map((s, i) => (
+                                                                                            <span key={i} className={`${styles.gapPill} ${styles.missingPill}`}>✗ {s}</span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : null}
+
+                                                                            {result.gap_analysis.critical_gaps && result.gap_analysis.critical_gaps.length > 0 ? (
+                                                                                <ul className={styles.criticalList}>
+                                                                                    {result.gap_analysis.critical_gaps.map((gap, i) => (
+                                                                                        <li key={i} className={styles.criticalListItem}>
+                                                                                            <span className={styles.bulletWarning}>!</span>
+                                                                                            <span>{gap}</span>
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            ) : (
+                                                                                <span className={styles.gapEmptyText}>No critical required gaps identified! Exceptional core fit.</span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Card 3: Strength & Growth Areas */}
+                                                                        <div className={styles.gapCard}>
+                                                                            <h5 className={styles.gapCardTitle}>💪 Strength & Growth Areas</h5>
+                                                                            <div className={styles.gapColumns}>
+                                                                                <div className={styles.gapSubCol}>
+                                                                                    <span className={styles.gapSubLabel}>Key Demonstrated Strengths</span>
+                                                                                    {result.gap_analysis.strength_areas && result.gap_analysis.strength_areas.length > 0 ? (
+                                                                                        <ul className={styles.strengthList}>
+                                                                                            {result.gap_analysis.strength_areas.map((str, i) => (
+                                                                                                <li key={i} className={styles.strengthListItem}>
+                                                                                                    <span className={styles.bulletCheck}>✓</span>
+                                                                                                    <span>{str}</span>
+                                                                                                </li>
+                                                                                            ))}
+                                                                                        </ul>
+                                                                                    ) : (
+                                                                                        <span className={styles.gapEmptyText}>General technical profile alignment.</span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                <div className={styles.gapSubCol}>
+                                                                                    <span className={styles.gapSubLabel}>Preferred Stack Gaps</span>
+                                                                                    {result.gap_analysis.good_to_have_missing && result.gap_analysis.good_to_have_missing.length > 0 ? (
+                                                                                        <div className={styles.gapPills}>
+                                                                                            {result.gap_analysis.good_to_have_missing.map((s, i) => (
+                                                                                                <span key={i} className={`${styles.gapPill} ${styles.prefMissingPill}`}>✗ {s}</span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className={styles.gapEmptyText}>Demonstrated all nice-to-have items!</span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
                                                         </div>
                                                     ) : (
                                                         /* Legacy Fallback */
@@ -379,28 +484,28 @@ export default function ResultsTable({ results = [], isLoading }) {
 
                                                         {candidateQuestions[result.id] ? (
                                                             <div className={styles.toolkitContainer}>
-                                                                
+
                                                                 {/* Tab controls */}
                                                                 <div className={styles.toolkitTabs}>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "technical" })); }}
                                                                         className={`${styles.toolkitTab} ${activeTab === "technical" ? styles.toolkitTabActive : ""}`}
                                                                     >
                                                                         💻 Technical Depth
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "project_deep_dive" })); }}
                                                                         className={`${styles.toolkitTab} ${activeTab === "project_deep_dive" ? styles.toolkitTabActive : ""}`}
                                                                     >
                                                                         🚀 Project Deep-Dive
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "behavioral" })); }}
                                                                         className={`${styles.toolkitTab} ${activeTab === "behavioral" ? styles.toolkitTabActive : ""}`}
                                                                     >
                                                                         🤝 Behavioral Fit
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "risk_probing" })); }}
                                                                         className={`${styles.toolkitTab} ${styles.riskTab} ${activeTab === "risk_probing" ? styles.toolkitTabActiveRisk : ""}`}
                                                                     >
@@ -421,7 +526,7 @@ export default function ResultsTable({ results = [], isLoading }) {
                                                                                 <div key={idx} className={`${styles.toolkitQuestionCard} ${accentClass}`}>
                                                                                     <div className={styles.questionCardHeader}>
                                                                                         <span className={styles.questionNumberLabel}>QUESTION {idx + 1}</span>
-                                                                                        <button 
+                                                                                        <button
                                                                                             onClick={(e) => { e.stopPropagation(); handleCopy(q); }}
                                                                                             className={`${styles.copyQuestionBtn} ${copiedText === q ? styles.copied : ""}`}
                                                                                             title="Copy to clipboard"
