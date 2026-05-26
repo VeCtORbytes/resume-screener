@@ -5,7 +5,7 @@ import FileUpload from "../components/FileUpload";
 import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
-import { screenResumes, getResults } from "../lib/api";
+import { screenResumes, getResults, getSessions } from "../lib/api";
 import styles from "./page.module.css";
 
 const SAMPLE_JD = `Role: Senior Backend Engineer
@@ -31,9 +31,42 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("Screening resumes...");
   const [error, setError] = useState(null);
+  const [sessions, setSessions] = useState([]);
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const fetchSessions = async () => {
+    try {
+      const sessionsData = await getSessions();
+      setSessions(sessionsData);
+    } catch (err) {
+      console.error("Failed to load screening history:", err);
+    }
+  };
+
+  const handleSelectSession = async (session) => {
+    setLoading(true);
+    setError(null);
+    try {
+      setScreeningId(session.id);
+      setJobDescription(session.job_description);
+      
+      const resultsData = await getResults(session.id, minScore);
+      setResults(resultsData.results);
+      setFilteredResults(resultsData.results);
+      
+      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
+    } catch (err) {
+      setError("Failed to load results for this session: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Dynamic status text cycler for a highly polished SaaS feel
   useEffect(() => {
@@ -112,6 +145,9 @@ export default function Home() {
       const resultsData = await getResults(response.screening_id, minScore);
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
+      
+      // Reload history sidebar
+      fetchSessions();
     } catch (err) {
       setError(err.message || "An unexpected error occurred during resume screening. Please check file validity.");
     } finally {
@@ -222,6 +258,67 @@ export default function Home() {
                     <span>Initiate Candidates Screening</span>
                   )}
                 </button>
+
+                {/* 🕒 Screening History Panel */}
+                <div className={styles.historyPanel}>
+                  <div className={styles.historyHeader}>
+                    <h4 className={styles.historyTitle}>
+                      <span className={styles.historyTitleIcon}>🕒</span> Previous Screenings
+                    </h4>
+                  </div>
+                  
+                  {sessions.length > 0 ? (
+                    <div className={styles.historyList}>
+                      {sessions.map((s) => {
+                        const isActive = screeningId === s.id;
+                        const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        });
+                        
+                        // Clean role name from JD text
+                        let roleName = "Screening Session";
+                        if (s.job_description) {
+                           const lines = s.job_description.split("\n");
+                           const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
+                           if (roleLine) {
+                             roleName = roleLine.replace(/(role:|title:)/i, "").trim();
+                           } else {
+                             // Fallback to first line or slice of description
+                             roleName = lines[0].trim() || s.job_description.slice(0, 30);
+                           }
+                        }
+                        if (roleName.length > 30) {
+                           roleName = roleName.slice(0, 30) + "...";
+                        }
+
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => handleSelectSession(s)}
+                            className={`${styles.historyItem} ${isActive ? styles.activeHistoryItem : ""}`}
+                          >
+                            <div className={styles.historyItemMeta}>
+                              <span className={styles.historyItemTitle} title={roleName}>
+                                {roleName}
+                              </span>
+                              <span className={styles.historyItemDate}>{dateStr}</span>
+                            </div>
+                            <div className={styles.historyItemDetails}>
+                              <span className={styles.historyItemPill}>
+                                {s.result_count} {s.result_count === 1 ? "resume" : "resumes"}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className={styles.emptyHistory}>No prior screenings found.</p>
+                  )}
+                </div>
               </div>
             </section>
 

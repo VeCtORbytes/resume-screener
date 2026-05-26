@@ -141,6 +141,11 @@ class DatabaseService:
             ResumeResult.id == result_id
         ).first()
 
+    @staticmethod
+    def get_all_screening_sessions(db: Session) -> List[ScreeningSession]:
+        """Fetch all screening sessions sorted by created_at descending"""
+        return db.query(ScreeningSession).order_by(desc(ScreeningSession.created_at)).all()
+
 
 # Create global instance
 db_service = DatabaseService()

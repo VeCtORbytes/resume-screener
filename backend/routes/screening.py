@@ -7,7 +7,7 @@ from services.db_connection import get_db
 from services.pdf_service import pdf_extractor
 from services.groq_service import groq_screener
 from services.db_service import db_service
-from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse
+from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse, ScreeningSessionResponse
 
 router = APIRouter(prefix="/api", tags=["screening"])
 
@@ -204,4 +204,19 @@ def generate_candidate_questions(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate interview questions: {str(e)}"
+        )
+
+
+@router.get("/sessions", response_model=List[ScreeningSessionResponse])
+def get_all_sessions(db: Session = Depends(get_db)):
+    """
+    Fetch all screening sessions for the screening history sidebar / dashboard.
+    """
+    try:
+        sessions = db_service.get_all_screening_sessions(db=db)
+        return [ScreeningSessionResponse.from_orm(s) for s in sessions]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching screening sessions: {str(e)}"
         )

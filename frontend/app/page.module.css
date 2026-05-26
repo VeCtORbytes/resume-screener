@@ -568,3 +568,134 @@
 .footerLinks a:hover {
   color: #0f172a;
 }
+
+/* 🕒 Screening History Panel Styles */
+.historyPanel {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.historyTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.historyTitleIcon {
+  font-size: 12px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar for history list */
+.historyList::-webkit-scrollbar {
+  width: 4px;
+}
+.historyList::-webkit-scrollbar-track {
+  background: transparent;
+}
+.historyList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.historyItem {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.15s ease-in-out;
+  text-align: left;
+}
+
+.historyItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.activeHistoryItem {
+  background: #f1f5f9;
+  border-color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.historyItemMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.historyItemTitle {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+
+.historyItemDate {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.historyItemDetails {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.historyItemPill {
+  font-size: 9px;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.emptyHistory {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 16px 0;
+  margin: 0;
+}

@@ -76,3 +76,22 @@ export async function generateInterviewQuestions(resultId) {
         throw error;
     }
 }
+
+/**
+ * Fetch all previous screening sessions for history
+ */
+export async function getSessions() {
+    try {
+        const response = await fetch(`${API_URL}/api/sessions`);
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to fetch screening sessions");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Get sessions error:", error);
+        throw error;
+    }
+}
