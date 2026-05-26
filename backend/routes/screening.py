@@ -7,7 +7,7 @@ from services.db_connection import get_db
 from services.pdf_service import pdf_extractor
 from services.groq_service import groq_screener
 from services.db_service import db_service
-from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse
+from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse, ScreeningSessionResponse, JobDescriptionParseRequest, JobDescriptionParseResponse
 
 router = APIRouter(prefix="/api", tags=["screening"])
 
@@ -71,12 +71,17 @@ async def screen_resumes(
             job_description=job_description
         )
         
-        # Step 4: Store results in database
+        # Step 4: Store results in database (map by filename to prevent score-to-resume index mismatch)
         results_to_save = []
-        for i, result in enumerate(screening_results):
+        for result in screening_results:
+            filename = result["filename"]
+            # Locate the original resume text mapped to this filename
+            matching_resume = next((r for r in resume_data if r["filename"] == filename), None)
+            resume_text = matching_resume["text"] if matching_resume else ""
+            
             results_to_save.append({
-                "filename": resume_data[i]["filename"],  # Keep original filename
-                "text": resume_data[i]["text"],
+                "filename": filename,
+                "text": resume_text,
                 "score": result["score"],
                 "reasoning": result["reasoning"]
             })
@@ -150,12 +155,122 @@ def get_results(
         min_score=min_score
     )
     
+    import json
+
     # Convert to response schema
-    result_responses = [
-        ResumeResultResponse.from_orm(r) for r in results
-    ]
+    result_responses = []
+    for r in results:
+        reasoning_clean = r.reasoning
+        gap_analysis = None
+        
+        if "---GAP_ANALYSIS_JSON---" in r.reasoning:
+            parts = r.reasoning.split("---GAP_ANALYSIS_JSON---")
+            reasoning_clean = parts[0].strip()
+            try:
+                gap_analysis = json.loads(parts[1].strip())
+            except Exception:
+                gap_analysis = None
+        
+        response_item = ResumeResultResponse(
+            id=r.id,
+            resume_filename=r.resume_filename,
+            score=r.score,
+            reasoning=reasoning_clean,
+            created_at=r.created_at,
+            gap_analysis=gap_analysis
+        )
+        result_responses.append(response_item)
     
     return ResultsQueryResponse(
         screening_id=screening_uuid,
         results=result_responses
     )
+
+
+@router.post("/results/{result_id}/questions")
+def generate_candidate_questions(
+    result_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate tailored interview questions for a candidate result on-demand.
+    """
+    try:
+        from uuid import UUID
+        result_uuid = UUID(result_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid result_id format")
+
+    result = db_service.get_resume_result(db=db, result_id=result_uuid)
+    if not result:
+        raise HTTPException(status_code=404, detail="Candidate result not found")
+
+    # Access the related job description
+    screening_session = result.screening
+    if not screening_session:
+        raise HTTPException(status_code=404, detail="Associated screening session not found")
+
+    import json
+    job_description = screening_session.job_description
+    resume_text = result.resume_text
+    
+    reasoning_clean = result.reasoning
+    gap_info = ""
+    if "---GAP_ANALYSIS_JSON---" in result.reasoning:
+        parts = result.reasoning.split("---GAP_ANALYSIS_JSON---")
+        reasoning_clean = parts[0].strip()
+        try:
+            gap_data = json.loads(parts[1].strip())
+            gap_info = (
+                f"\n\n[CRITICAL GAP ANALYSIS INTELLIGENCE]\n"
+                f"- Must-Have Missing: {', '.join(gap_data.get('must_have_missing', []))}\n"
+                f"- Good-To-Have Missing: {', '.join(gap_data.get('good_to_have_missing', []))}\n"
+                f"- Critical Gaps: {', '.join(gap_data.get('critical_gaps', []))}"
+            )
+        except Exception:
+            pass
+
+    screening_context = f"Score: {result.score}. Reasoning: {reasoning_clean}{gap_info}"
+
+    try:
+        questions = groq_screener.generate_interview_questions(
+            resume_text=resume_text,
+            job_description=job_description,
+            screening_context=screening_context
+        )
+        return questions
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate interview questions: {str(e)}"
+        )
+
+
+@router.get("/sessions", response_model=List[ScreeningSessionResponse])
+def get_all_sessions(db: Session = Depends(get_db)):
+    """
+    Fetch all screening sessions for the screening history sidebar / dashboard.
+    """
+    try:
+        sessions = db_service.get_all_screening_sessions(db=db)
+        return [ScreeningSessionResponse.from_orm(s) for s in sessions]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching screening sessions: {str(e)}"
+        )
+
+
+@router.post("/parse-jd", response_model=JobDescriptionParseResponse)
+def parse_job_description_endpoint(request: JobDescriptionParseRequest):
+    """
+    Semantically parse unstructured job description text into structured hiring intelligence.
+    """
+    try:
+        parsed_intelligence = groq_screener.parse_job_description(request.job_description)
+        return parsed_intelligence
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse job description semantically: {str(e)}"
+        )

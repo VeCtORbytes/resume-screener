@@ -134,6 +134,18 @@ class DatabaseService:
         db.commit()
         return result
 
+    @staticmethod
+    def get_resume_result(db: Session, result_id: UUID) -> ResumeResult:
+        """Fetch a single resume result by ID"""
+        return db.query(ResumeResult).filter(
+            ResumeResult.id == result_id
+        ).first()
+
+    @staticmethod
+    def get_all_screening_sessions(db: Session) -> List[ScreeningSession]:
+        """Fetch all screening sessions sorted by created_at descending"""
+        return db.query(ScreeningSession).order_by(desc(ScreeningSession.created_at)).all()
+
 
 # Create global instance
 db_service = DatabaseService()

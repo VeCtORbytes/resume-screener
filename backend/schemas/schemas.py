@@ -26,6 +26,7 @@ class ResumeResultResponse(BaseModel):
     score: int
     reasoning: str
     created_at: datetime
+    gap_analysis: Optional[dict] = None
     
     class Config:
         from_attributes = True  # Can read from SQLAlchemy models
@@ -68,3 +69,30 @@ class ResultsQueryResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class JobDescriptionParseRequest(BaseModel):
+    """Data sent from client when requesting semantic JD parsing"""
+    job_description: str = Field(..., min_length=10, max_length=5000)
+
+
+class JobDescriptionParseResponse(BaseModel):
+    """Structured hiring intelligence extracted from job description"""
+    job_title: str
+    must_have_skills: List[str]
+    good_to_have_skills: List[str]
+    responsibilities: List[str]
+    experience_requirements: List[str]
+    education_requirements: List[str]
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "job_title": "Full Stack Developer (MERN Stack)",
+                "must_have_skills": ["React.js", "JavaScript (ES6+)", "Node.js", "Express.js", "MongoDB"],
+                "good_to_have_skills": ["AI API integration (Groq / OpenAI)", "Deployment experience (Vercel / Render)"],
+                "responsibilities": ["Develop responsive React interfaces", "Build Express APIs", "Design MongoDB schemas"],
+                "experience_requirements": ["Internship / Fresher / 0–1 Year"],
+                "education_requirements": ["B.Tech / BE in Computer Science or related field"]
+            }
+        }
