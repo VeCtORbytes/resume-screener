@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./ResultsTable.module.css";
-import { getScoreColor, getScoreBadge } from "../lib/constants";
+import { getScoreBadge } from "../lib/constants";
 
 export default function ResultsTable({ results, isLoading }) {
     if (isLoading) {
@@ -16,7 +16,9 @@ export default function ResultsTable({ results, isLoading }) {
     if (!results || results.length === 0) {
         return (
             <div className={styles.empty}>
-                <p>📭 No results yet. Upload resumes to get started.</p>
+                <span className={styles.emptyIcon}>📂</span>
+                <p className={styles.emptyText}>No results yet</p>
+                <p className={styles.emptySubText}>Upload resumes and paste a job description to initiate screening.</p>
             </div>
         );
     }
@@ -38,30 +40,39 @@ export default function ResultsTable({ results, isLoading }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {results.map((result, index) => (
-                            <tr key={result.id} className={styles.row}>
-                                <td className={styles.rankCol}>{index + 1}</td>
-                                <td className={styles.nameCol}>
-                                    <span className={styles.fileName}>
-                                        {result.resume_filename}
-                                    </span>
-                                </td>
-                                <td className={styles.scoreCol}>
-                                    <div
-                                        className={styles.scoreBadge}
-                                        style={{ background: getScoreColor(result.score) }}
-                                    >
-                                        <span className={styles.scoreValue}>{result.score}</span>
-                                        <span className={styles.scoreBadgeName}>
-                                            {getScoreBadge(result.score)}
+                        {results.map((result, index) => {
+                            const score = result.score;
+                            // Match badge colors based on score tiers (Ashby SaaS dashboard style)
+                            const scoreClass = score >= 80 
+                                ? styles.excellent 
+                                : score >= 60 
+                                    ? styles.good 
+                                    : score >= 40 
+                                        ? styles.fair 
+                                        : styles.poor;
+
+                            return (
+                                <tr key={result.id} className={styles.row}>
+                                    <td className={styles.rankCol}>{index + 1}</td>
+                                    <td className={styles.nameCol}>
+                                        <span className={styles.fileName}>
+                                            {result.resume_filename}
                                         </span>
-                                    </div>
-                                </td>
-                                <td className={styles.reasoningCol}>
-                                    <p className={styles.reasoning}>{result.reasoning}</p>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className={styles.scoreCol}>
+                                        <div className={`${styles.scoreBadge} ${scoreClass}`}>
+                                            <span className={styles.scoreValue}>{score}</span>
+                                            <span className={styles.scoreBadgeName}>
+                                                {getScoreBadge(score)}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className={styles.reasoningCol}>
+                                        <p className={styles.reasoning}>{result.reasoning}</p>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
