@@ -1,66 +1,136 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import FileUpload from "../components/FileUpload";
+import JobDescInput from "../components/JobDescInput";
+import ResultsTable from "../components/ResultsTable";
+import FilterControl from "../components/FilterControl";
+import { screenResumes, getResults } from "../lib/api";
 import styles from "./page.module.css";
 
 export default function Home() {
+  const [jobDescription, setJobDescription] = useState("");
+  const [resumeFiles, setResumeFiles] = useState([]);
+  const [screeningId, setScreeningId] = useState(null);
+  const [results, setResults] = useState([]);
+  const [minScore, setMinScore] = useState(0);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Handle file selection
+  const handleFilesSelect = (files) => {
+    setResumeFiles(files);
+  };
+
+  // Handle job description change
+  const handleJobDescChange = (text) => {
+    setJobDescription(text);
+  };
+
+  // Handle min score filter change
+  const handleMinScoreChange = async (score) => {
+    setMinScore(score);
+
+    if (screeningId) {
+      try {
+        const data = await getResults(screeningId, score);
+        setFilteredResults(data.results);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
+  // Submit screening
+  const handleScreening = async () => {
+    // Validation
+    if (!jobDescription.trim() || jobDescription.trim().length < 10) {
+      setError("Job description must be at least 10 characters");
+      return;
+    }
+
+    if (resumeFiles.length === 0) {
+      setError("Please select at least one resume");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Call backend
+      const response = await screenResumes(jobDescription, resumeFiles);
+
+      setScreeningId(response.screening_id);
+
+      // Fetch results
+      const resultsData = await getResults(response.screening_id, minScore);
+      setResults(resultsData.results);
+      setFilteredResults(resultsData.results);
+
+      // Reset form
+      setJobDescription("");
+      setResumeFiles([]);
+    } catch (err) {
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <h1 className={styles.title}>🎯 Resume Screener</h1>
+          <p className={styles.subtitle}>
+            AI-powered resume screening using Groq
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </header>
+
+      <main className={styles.main}>
+        {/* Input Section */}
+        <section className={styles.inputSection}>
+          <FileUpload onFilesSelect={handleFilesSelect} isLoading={loading} />
+          <JobDescInput
+            value={jobDescription}
+            onChange={handleJobDescChange}
+            isLoading={loading}
+          />
+
+          {/* Error Message */}
+          {error && <div className={styles.errorBox}>{error}</div>}
+
+          {/* Submit Button */}
+          <button
+            onClick={handleScreening}
+            disabled={loading || !jobDescription.trim() || resumeFiles.length === 0}
+            className={styles.submitBtn}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            {loading ? "⏳ Screening..." : "🚀 Screen Resumes"}
+          </button>
+        </section>
+
+        {/* Results Section */}
+        {screeningId && (
+          <section className={styles.resultsSection}>
+            <FilterControl
+              minScore={minScore}
+              onChange={handleMinScoreChange}
+              isLoading={loading}
             />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <ResultsTable results={filteredResults} isLoading={loading} />
+          </section>
+        )}
       </main>
+
+      <footer className={styles.footer}>
+        <p>
+          Built with Next.js, FastAPI, Groq, and Supabase ✨
+        </p>
+      </footer>
     </div>
   );
 }
