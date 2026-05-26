@@ -2,6 +2,9 @@ from groq import Groq
 from config.settings import settings
 import json
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GroqScreener:
     """Handle resume screening via Groq API"""
@@ -54,8 +57,21 @@ Respond ONLY with valid JSON, no markdown or extra text."""
             # Extract response text
             response_text = response.choices[0].message.content.strip()
             
+            # Sanitize malformed JSON fenced responses from LLM markdown blocks
+            cleaned_text = response_text
+            if "```" in cleaned_text:
+                if "```json" in cleaned_text:
+                    start_idx = cleaned_text.find("```json") + 7
+                else:
+                    start_idx = cleaned_text.find("```") + 3
+                end_idx = cleaned_text.find("```", start_idx)
+                if end_idx != -1:
+                    cleaned_text = cleaned_text[start_idx:end_idx].strip()
+                else:
+                    cleaned_text = cleaned_text[start_idx:].strip()
+            
             # Parse JSON response
-            result = json.loads(response_text)
+            result = json.loads(cleaned_text)
             
             # Validate response
             score = int(result.get("score", 0))
@@ -68,17 +84,17 @@ Respond ONLY with valid JSON, no markdown or extra text."""
             }
         
         except json.JSONDecodeError:
-            print(f"Failed to parse Groq response: {response_text}")
+            logger.error(f"Failed to parse Groq response: {response_text}")
             return {
                 "score": 0,
-                "reasoning": "Error parsing Groq response"
+                "reasoning": "Failed to parse the screening evaluation from the AI model."
             }
         
         except Exception as e:
-            print(f"Groq API error: {str(e)}")
+            logger.exception("Groq API error occurred")
             return {
                 "score": 0,
-                "reasoning": f"Error calling Groq API: {str(e)}"
+                "reasoning": "An unexpected error occurred during resume screening. Please try again later."
             }
     
     async def screen_resumes_parallel(self, resumes: list[dict], job_description: str) -> list[dict]:
@@ -111,7 +127,7 @@ Respond ONLY with valid JSON, no markdown or extra text."""
     async def _screen_resume_async(self, resume_text: str, job_description: str, filename: str) -> dict:
         """Wrapper for async execution"""
         # Run blocking Groq call in thread pool (doesn't block event loop)
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None,
             self.screen_resume,
