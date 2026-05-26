@@ -8,18 +8,81 @@ import FilterControl from "../components/FilterControl";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import styles from "./page.module.css";
 
-const SAMPLE_JD = `Role: Senior Backend Engineer
+const SAMPLE_JD = `Job Description — Full Stack Developer (MERN + AI Integrations)
 
-Core Responsibilities:
-- Design, build, and optimize robust REST APIs using FastAPI and Python
-- Manage PostgreSQL databases, writing clean migrations and optimizing SQLAlchemy transactions
-- Integrate large language models (LLMs) like Groq or OpenAI to create AI-driven workflows
-- Lead key architectural choices, cloud deployment strategies, and dockerization pipelines
+Job Title: Full Stack Developer (MERN Stack)
 
-Key Requirements & Skills:
-- 5+ years of production experience in backend software engineering
-- Proficient with Python, SQL, Git, and automated testing suites
-- Degree in Computer Science, engineering, or equivalent practical industry background`;
+Location: Remote / Hybrid / On-site
+Experience: Internship / Fresher / 0–1 Year
+
+About the Role
+
+We are looking for a passionate and driven Full Stack Developer with hands-on experience in building scalable web applications using the MERN stack. The ideal candidate should have practical experience developing end-to-end applications, integrating APIs, working with databases, and implementing modern frontend interfaces.
+
+Candidates with exposure to AI/LLM integrations, cloud deployments, and strong problem-solving skills will be preferred.
+
+Key Responsibilities
+Develop responsive and interactive frontend applications using React.js
+Build scalable backend services and RESTful APIs using Node.js and Express.js
+Design and manage MongoDB databases, schemas, CRUD operations, and queries
+Integrate third-party APIs such as AI APIs, cloud media storage, and external data services
+Implement user authentication, session handling, and authorization flows
+Build dashboard interfaces, analytics views, and dynamic data visualizations
+Optimize application performance, responsiveness, and maintainability
+Debug, test, and improve application reliability
+Collaborate using Git/GitHub workflows in team environments
+Participate in architecture discussions and feature development
+Required Skills
+Frontend
+React.js
+JavaScript (ES6+)
+HTML5
+CSS3
+Tailwind CSS
+Bootstrap / Material UI
+State management
+Component architecture
+Backend
+Node.js
+Express.js
+REST API development
+Middleware
+Authentication systems
+Request/response lifecycle handling
+Database
+MongoDB
+CRUD operations
+Schema design
+Query optimization basics
+Tools
+Git
+GitHub
+Postman
+npm / yarn
+Preferred Skills
+AI API integration (Groq / OpenAI / LLM workflows)
+Cloudinary / media storage
+Deployment experience (Render / Vercel / Netlify)
+Chart.js / dashboard visualization
+Basic DevOps understanding
+DSA / problem solving
+Relevant Project Experience
+
+Candidates should ideally have built projects similar to:
+
+AI-powered code review tools
+Resume screening or HR automation platforms
+Trading/dashboard applications
+Travel marketplace / listing platforms
+Authentication-based CRUD applications
+Qualification
+B.Tech / BE in Computer Science or related field
+Final year students / recent graduates can apply
+Nice to Have
+100+ DSA problems solved
+Open-source contributions
+Technical blogging
+Internship experience in full-stack development`;
 
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
@@ -55,11 +118,11 @@ export default function Home() {
     try {
       setScreeningId(session.id);
       setJobDescription(session.job_description);
-      
+
       const resultsData = await getResults(session.id, minScore);
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
-      
+
       workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch (err) {
       setError("Failed to load results for this session: " + err.message);
@@ -145,7 +208,7 @@ export default function Home() {
       const resultsData = await getResults(response.screening_id, minScore);
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
-      
+
       // Reload history sidebar
       fetchSessions();
     } catch (err) {
@@ -162,7 +225,7 @@ export default function Home() {
         <div className={styles.navContainer}>
           <div className={styles.navLogo} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <span className={styles.logoMark}>✦</span>
-            <span className={styles.logoText}>TalentFlow</span>
+            <span className={styles.logoText}>HireLens</span>
             <span className={styles.logoBadge}>AI</span>
           </div>
           <div className={styles.navLinks}>
@@ -266,7 +329,7 @@ export default function Home() {
                       <span className={styles.historyTitleIcon}>🕒</span> Previous Screenings
                     </h4>
                   </div>
-                  
+
                   {sessions.length > 0 ? (
                     <div className={styles.historyList}>
                       {sessions.map((s) => {
@@ -277,21 +340,21 @@ export default function Home() {
                           hour: "2-digit",
                           minute: "2-digit"
                         });
-                        
+
                         // Clean role name from JD text
                         let roleName = "Screening Session";
                         if (s.job_description) {
-                           const lines = s.job_description.split("\n");
-                           const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
-                           if (roleLine) {
-                             roleName = roleLine.replace(/(role:|title:)/i, "").trim();
-                           } else {
-                             // Fallback to first line or slice of description
-                             roleName = lines[0].trim() || s.job_description.slice(0, 30);
-                           }
+                          const lines = s.job_description.split("\n");
+                          const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
+                          if (roleLine) {
+                            roleName = roleLine.replace(/(role:|title:)/i, "").trim();
+                          } else {
+                            // Fallback to first line or slice of description
+                            roleName = lines[0].trim() || s.job_description.slice(0, 30);
+                          }
                         }
                         if (roleName.length > 30) {
-                           roleName = roleName.slice(0, 30) + "...";
+                          roleName = roleName.slice(0, 30) + "...";
                         }
 
                         return (

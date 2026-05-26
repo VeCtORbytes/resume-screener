@@ -7,7 +7,7 @@ from services.db_connection import get_db
 from services.pdf_service import pdf_extractor
 from services.groq_service import groq_screener
 from services.db_service import db_service
-from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse, ScreeningSessionResponse
+from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse, ScreeningSessionResponse, JobDescriptionParseRequest, JobDescriptionParseResponse
 
 router = APIRouter(prefix="/api", tags=["screening"])
 
@@ -219,4 +219,19 @@ def get_all_sessions(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Error fetching screening sessions: {str(e)}"
+        )
+
+
+@router.post("/parse-jd", response_model=JobDescriptionParseResponse)
+def parse_job_description_endpoint(request: JobDescriptionParseRequest):
+    """
+    Semantically parse unstructured job description text into structured hiring intelligence.
+    """
+    try:
+        parsed_intelligence = groq_screener.parse_job_description(request.job_description)
+        return parsed_intelligence
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to parse job description semantically: {str(e)}"
         )
