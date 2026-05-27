@@ -35,6 +35,10 @@ Evaluate the candidate's resume using the following strictly mathematical scorin
 
 1. Skills Match (Weight: 40% - Max 40 points)
    Assess how closely the technical stack and soft skills match the requirements.
+   - SEMANTIC AI UNDERSTANDING (Mandatory): You MUST use semantic AI understanding, NOT naive exact keyword matching. For example: if the JD requires 'Node.js', 'Authentication', and 'REST API', and the candidate mentions 'Express backend APIs', 'JWT login', and 'backend endpoints', these are semantic matches and must be classified as MATCHED.
+   - SCORING PENALTIES FOR SKILLS MATCH (Mandatory):
+     * Deduct 10 to 15 points from Skills Match for each missing MUST-HAVE/required skill requested in the Job Description, up to the full 40 points (minimum Skills Match score is 0).
+     * Deduct 2 to 5 points from Skills Match for each missing GOOD-TO-HAVE/preferred skill requested in the Job Description.
    - Exact or strong match of primary required technologies: 30-40 points
    - Partial match of technologies, or missing key stack requirements: 15-29 points
    - Minimal or no relevant skills: 0-14 points
@@ -351,13 +355,14 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
 Your objective is to generate tailored, highly specific, and diagnostic interview questions for a candidate based on:
 1. The candidate's extracted RESUME text.
 2. The target JOB DESCRIPTION requirements.
-3. The AI SCREENING EVALUATION context (which details strengths, score, and gaps).
+3. The AI SCREENING EVALUATION context (which details strengths, score, gaps, and specific must-have/critical gap intelligence).
 
 You must generate exactly 5 deep, highly relevant questions for each of the following four categories:
 1. "technical": Questions probing their listed technologies, frameworks, and architectural choices.
 2. "project_deep_dive": Specific questions digging into their named portfolio projects, responsibilities, or company impact achievements listed on their resume.
 3. "behavioral": Questions testing soft skills, culture fit, leadership, teamwork, or conflict resolution tailored to their career stage.
-4. "risk_probing": Questions specifically targeting gaps, missing skills, technology switches, short tenures, or areas where they might lack experience relative to the job requirements.
+4. "risk_probing": Questions specifically targeting gaps, missing skills, technology switches, short tenures, or areas where they lack experience relative to the job requirements.
+   - DETAILED RISK PROBING: You MUST consume the specific [CRITICAL GAP ANALYSIS INTELLIGENCE] details supplied in the context. If a required MUST-HAVE skill or critical gap is flagged as missing (for example: Docker is missing), you MUST generate a direct tailored question like: 'Docker is required for this role but not evidenced in your resume. Can you describe your containerization experience?' Do NOT write generic, vague risk questions.
 
 You MUST return your response as a valid, single JSON object with no markdown fences, no conversational filler, and no notes. Use the following exact JSON schema:
 {

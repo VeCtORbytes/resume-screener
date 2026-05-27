@@ -185,6 +185,40 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
 
   const radarColors = ["#4f46e5", "#06b6d4", "#f59e0b"];
 
+  // --- Gather all unique skills from all candidates ---
+  const allUniqueSkillsSet = new Set();
+  selectedCandidates.forEach(cand => {
+    const gap = cand.gap_analysis || {};
+    (gap.must_have_matched || []).forEach(s => allUniqueSkillsSet.add(s));
+    (gap.must_have_missing || []).forEach(s => allUniqueSkillsSet.add(s));
+    (gap.good_to_have_matched || []).forEach(s => allUniqueSkillsSet.add(s));
+    (gap.good_to_have_missing || []).forEach(s => allUniqueSkillsSet.add(s));
+  });
+
+  const uniqueSkills = Array.from(allUniqueSkillsSet).sort();
+
+  // Helper to resolve cell rendering for each candidate-skill combination
+  const getSkillStatus = (cand, skill) => {
+    const gap = cand.gap_analysis || {};
+    const matched = [...(gap.must_have_matched || []), ...(gap.good_to_have_matched || [])];
+    const mustMissing = gap.must_have_missing || [];
+    const goodMissing = gap.good_to_have_missing || [];
+    const critical = gap.critical_gaps || [];
+
+    const matchesSkill = (list) => list.some(s => s.toLowerCase().trim() === skill.toLowerCase().trim());
+
+    if (matchesSkill(matched)) {
+      return { symbol: "✅ Present", class: styles.matrixMatched, label: "Present" };
+    }
+    if (matchesSkill(critical) || matchesSkill(mustMissing)) {
+      return { symbol: "❌ Missing", class: styles.matrixMissing, label: "Missing (Critical)" };
+    }
+    if (matchesSkill(goodMissing)) {
+      return { symbol: "⚠️ Missing", class: styles.matrixWarning, label: "Missing (Optional)" };
+    }
+    return { symbol: "— N/A", class: styles.matrixNone, label: "Not Listed" };
+  };
+
   return (
     <div className={styles.workspace}>
       <div className={styles.header}>
@@ -279,6 +313,57 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
             </div>
           );
         })}
+      </div>
+
+      {/* --- COMPARISON GAP MATRIX --- */}
+      <div className={styles.matrixSection}>
+        <h4 className={styles.matrixTitle}>Semantic JD Skill Gap Matrix</h4>
+        <p className={styles.matrixSubtitle}>
+          Direct side-by-side verification of MUST-HAVE and GOOD-TO-HAVE requirements
+        </p>
+        <div className={styles.matrixWrapper}>
+          <table className={styles.matrixTable}>
+            <thead>
+              <tr>
+                <th className={styles.skillHeaderCol}>Skill / Requirement</th>
+                {selectedCandidates.map((cand, idx) => {
+                  const filename = cand.resume_filename || `Candidate ${idx + 1}`;
+                  const displayName = filename.replace(/\.[^/.]+$/, "");
+                  return (
+                    <th key={cand.id} style={{ borderTop: `3px solid ${radarColors[idx % radarColors.length]}` }}>
+                      {displayName}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {uniqueSkills.length > 0 ? (
+                uniqueSkills.map((skill, sIdx) => (
+                  <tr key={sIdx}>
+                    <td className={styles.skillNameCell}>{skill}</td>
+                    {selectedCandidates.map(cand => {
+                      const status = getSkillStatus(cand, skill);
+                      return (
+                        <td key={cand.id} className={styles.matrixCell}>
+                          <span className={`${styles.matrixIndicator} ${status.class}`} title={status.label}>
+                            {status.symbol}
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={selectedCandidates.length + 1} className={styles.emptyMatrix}>
+                    No structured skill gap data is available for these candidates. Try screening them again.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* --- COMPARISON CHARTS ROW --- */}
