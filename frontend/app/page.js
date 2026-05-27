@@ -5,6 +5,7 @@ import FileUpload from "../components/FileUpload";
 import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import styles from "./page.module.css";
 
@@ -409,6 +410,7 @@ export default function Home() {
                     onChange={handleMinScoreChange}
                     isLoading={loading}
                   />
+                  <AnalyticsDashboard results={filteredResults} isLoading={loading} />
                   <ResultsTable results={filteredResults} isLoading={loading} />
                 </div>
               ) : (
