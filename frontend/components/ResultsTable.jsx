@@ -83,7 +83,7 @@ function parseReasoning(reasoning) {
     }
 }
 
-export default function ResultsTable({ results = [], isLoading }) {
+export default function ResultsTable({ results = [], isLoading, selectedIds = [], onSelect }) {
     const [expandedIds, setExpandedIds] = useState({});
     const [candidateQuestions, setCandidateQuestions] = useState({});
     const [generatingId, setGeneratingId] = useState(null);
@@ -167,6 +167,7 @@ export default function ResultsTable({ results = [], isLoading }) {
                 <table className={styles.table}>
                     <thead>
                         <tr>
+                            <th className={styles.selectCol}>Select</th>
                             <th className={styles.rankCol}>#</th>
                             <th className={styles.nameCol}>Resume</th>
                             <th className={styles.scoreCol}>Score</th>
@@ -188,14 +189,25 @@ export default function ResultsTable({ results = [], isLoading }) {
                                         ? styles.fair
                                         : styles.poor;
 
+                            const isSelected = selectedIds.includes(result.id);
+
                             return (
                                 <>
                                     {/* Main Row */}
                                     <tr
                                         key={result.id}
-                                        className={`${styles.row} ${isExpanded ? styles.expandedRow : ""}`}
+                                        className={`${styles.row} ${isExpanded ? styles.expandedRow : ""} ${isSelected ? styles.selectedRow : ""}`}
                                         onClick={() => toggleExpand(result.id)}
                                     >
+                                        <td className={styles.selectCol} onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => onSelect(result.id)}
+                                                disabled={!isSelected && selectedIds.length >= 3}
+                                                className={styles.checkboxInput}
+                                            />
+                                        </td>
                                         <td className={styles.rankCol}>{index + 1}</td>
                                         <td className={styles.nameCol}>
                                             <div className={styles.nameWrapper}>

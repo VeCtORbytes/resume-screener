@@ -6,6 +6,7 @@ import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
 import AnalyticsDashboard from "../components/AnalyticsDashboard";
+import CandidateComparison from "../components/CandidateComparison";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import styles from "./page.module.css";
 
@@ -96,6 +97,8 @@ export default function Home() {
   const [loadingText, setLoadingText] = useState("Screening resumes...");
   const [error, setError] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
@@ -116,6 +119,8 @@ export default function Home() {
   const handleSelectSession = async (session) => {
     setLoading(true);
     setError(null);
+    setSelectedCandidateIds([]);
+    setShowComparison(false);
     try {
       setScreeningId(session.id);
       setJobDescription(session.job_description);
@@ -188,6 +193,16 @@ export default function Home() {
     }
   };
 
+  const handleSelectCandidate = (id) => {
+    setSelectedCandidateIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      }
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  };
+
   const handleScreening = async () => {
     if (!jobDescription.trim() || jobDescription.trim().length < 10) {
       setError("Job description is too short. Minimum 10 characters required.");
@@ -201,6 +216,8 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+    setSelectedCandidateIds([]);
+    setShowComparison(false);
 
     try {
       const response = await screenResumes(jobDescription, resumeFiles);
@@ -405,13 +422,55 @@ export default function Home() {
               ) : screeningId ? (
                 /* Results Experience */
                 <div className={styles.resultsStack}>
-                  <FilterControl
-                    minScore={minScore}
-                    onChange={handleMinScoreChange}
-                    isLoading={loading}
-                  />
-                  <AnalyticsDashboard results={filteredResults} isLoading={loading} />
-                  <ResultsTable results={filteredResults} isLoading={loading} />
+                  {showComparison ? (
+                    <CandidateComparison
+                      selectedCandidates={filteredResults.filter(r => selectedCandidateIds.includes(r.id))}
+                      onClose={() => setShowComparison(false)}
+                    />
+                  ) : (
+                    <>
+                      <FilterControl
+                        minScore={minScore}
+                        onChange={handleMinScoreChange}
+                        isLoading={loading}
+                      />
+
+                      {/* Premium Side-by-Side Compare Action Status Bar */}
+                      <div className={styles.compareBar}>
+                        <div className={styles.compareInfo}>
+                          <span className={styles.compareIcon}>⚖️</span>
+                          <span className={styles.compareText}>
+                            Select candidates to compare side-by-side (max 3): <strong>{selectedCandidateIds.length} selected</strong>
+                          </span>
+                        </div>
+                        <div className={styles.compareActions}>
+                          {selectedCandidateIds.length > 0 && (
+                            <button
+                              onClick={() => setSelectedCandidateIds([])}
+                              className={styles.resetBtn}
+                            >
+                              Reset
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setShowComparison(true)}
+                            disabled={selectedCandidateIds.length < 2}
+                            className={styles.compareBtn}
+                          >
+                            Compare Candidates
+                          </button>
+                        </div>
+                      </div>
+
+                      <AnalyticsDashboard results={filteredResults} isLoading={loading} />
+                      <ResultsTable 
+                        results={filteredResults} 
+                        isLoading={loading} 
+                        selectedIds={selectedCandidateIds}
+                        onSelect={handleSelectCandidate}
+                      />
+                    </>
+                  )}
                 </div>
               ) : (
                 /* Elegant Empty State */

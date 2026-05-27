@@ -1,0 +1,336 @@
+.workspace {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.icon {
+  font-size: 20px;
+  display: none;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.backBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.backBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Side-by-side Cards Grid */
+.cardsGrid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.compareCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.25s;
+}
+
+.compareCard:hover {
+  background: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.cardHeader {
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardRank {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cardName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardScoreGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.cardScore {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.04em;
+  margin: 0;
+  line-height: 1;
+}
+
+.cardBadges {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.strongBadge {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.mediumBadge {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.weakBadge {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Sections inside card */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.secTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.greenTitle {
+  color: #10b981;
+}
+
+.redTitle {
+  color: #ef4444;
+}
+
+.secText {
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Bullet list for strengths & gaps */
+.bulletList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bulletItemGreen {
+  font-size: 12px;
+  color: #065f46;
+  background: #f0fdf4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.bulletItemRed {
+  font-size: 12px;
+  color: #7f1d1d;
+  background: #fef2f2;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Interview Readiness progress tracker */
+.readinessContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.readinessHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.readinessBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.readyHigh {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.readyMedHigh {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.readyMed {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.readyLow {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.readinessPercent {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.readinessTrack {
+  background: #e2e8f0;
+  height: 6px;
+  border-radius: 3px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.readinessBar {
+  height: 100%;
+  border-radius: 3px;
+}
+
+/* Charts Row Layout */
+.chartsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.chartBox {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0 0 2px 0;
+}
+
+.chartSubtitle {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 0 0 16px 0;
+}
+
+.chartContainer {
+  width: 100%;
+}
+
+/* General Empties */
+.empty {
+  text-align: center;
+  padding: 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.closeBtn {
+  margin-top: 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}

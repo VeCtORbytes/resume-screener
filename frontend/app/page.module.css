@@ -337,6 +337,75 @@
   gap: 20px;
 }
 
+.compareBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 12px 20px;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.compareInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compareIcon {
+  font-size: 16px;
+}
+
+.compareText {
+  font-size: 13px;
+  color: #475569;
+}
+
+.compareActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.resetBtn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.resetBtn:hover {
+  text-decoration: underline;
+}
+
+.compareBtn {
+  background: #10b981;
+  border: none;
+  color: #ffffff;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.compareBtn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.compareBtn:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
 /* Premium Cycle Loader State */
 .loadingWrapper {
   flex: 1;
