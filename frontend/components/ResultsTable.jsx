@@ -475,6 +475,71 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
                                                                         </div>
 
                                                                     </div>
+
+                                                                    {/* 📁 Project Intelligence section */}
+                                                                    {result.gap_analysis.project_intelligence && result.gap_analysis.project_intelligence.length > 0 && (
+                                                                        <div className={styles.projectIntelligenceWrapper}>
+                                                                            <h4 className={styles.sectionSubHeading}>📁 Project Intelligence & Competency Inference</h4>
+                                                                            <div className={styles.projectGrid}>
+                                                                                {result.gap_analysis.project_intelligence.map((proj, pIdx) => (
+                                                                                    <div key={pIdx} className={styles.projectCard}>
+                                                                                        <div className={styles.projectCardHeader}>
+                                                                                            <span className={styles.projectFolderIcon}>📁</span>
+                                                                                            <h5 className={styles.projectName}>{proj.project_name}</h5>
+                                                                                            <span className={`${styles.projectRelevanceScore} ${
+                                                                                                proj.relevance_score >= 80 
+                                                                                                    ? styles.projectHighRelevance 
+                                                                                                    : proj.relevance_score >= 50 
+                                                                                                        ? styles.projectMidRelevance 
+                                                                                                        : styles.projectLowRelevance
+                                                                                            }`}>
+                                                                                                {proj.relevance_score}% Relevance
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        
+                                                                                        <p className={styles.projectDescription}>{proj.description}</p>
+                                                                                        
+                                                                                        <div className={styles.projectIntelligenceDetails}>
+                                                                                            <div className={styles.intelSubSection}>
+                                                                                                <strong className={styles.intelLabel}>Demonstrated Capabilities:</strong>
+                                                                                                <div className={styles.gapPills}>
+                                                                                                    {proj.inferred_skills && proj.inferred_skills.map((skill, sIdx) => (
+                                                                                                        <span key={sIdx} className={`${styles.gapPill} ${styles.matchedPill}`}>✅ {skill}</span>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className={styles.intelSubSection}>
+                                                                                                <strong className={styles.intelLabel}>Matched JD Requirements:</strong>
+                                                                                                <div className={styles.gapPills}>
+                                                                                                    {proj.matched_jd_requirements && proj.matched_jd_requirements.map((skill, sIdx) => (
+                                                                                                        <span key={sIdx} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {skill}</span>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            {proj.missing_related_requirements && proj.missing_related_requirements.length > 0 && (
+                                                                                                <div className={styles.intelSubSection}>
+                                                                                                    <strong className={styles.intelLabel}>Risk Areas (Not evidenced in project):</strong>
+                                                                                                    <div className={styles.gapPills}>
+                                                                                                        {proj.missing_related_requirements.map((skill, sIdx) => (
+                                                                                                            <span key={sIdx} className={`${styles.gapPill} ${styles.missingPill}`}>⚠ {skill}</span>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
+
+                                                                                            <div className={styles.intelSubSection}>
+                                                                                                <strong className={styles.intelLabel}>Why It Matters:</strong>
+                                                                                                <p className={styles.impactSummaryText}>{proj.impact_summary}</p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+
                                                                 </div>
                                                             )}
 

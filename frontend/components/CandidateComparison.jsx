@@ -99,11 +99,22 @@ function getCandidateMetrics(cand) {
   const name = filename.replace(/\.[^/.]+$/, "");
 
   const parsed = parseReasoning(cand.reasoning);
+  
+  let projectRelevance = 0;
+  if (cand.gap_analysis?.project_intelligence && cand.gap_analysis.project_intelligence.length > 0) {
+    const scores = cand.gap_analysis.project_intelligence.map(p => p.relevance_score || 0);
+    projectRelevance = Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length);
+  } else if (parsed && parsed.breakdown) {
+    projectRelevance = Math.round((parsed.breakdown.projects / 20) * 100);
+  } else {
+    projectRelevance = Math.round(score * 0.90);
+  }
+
   const fallbackMetrics = {
     name,
     "Technical Fit": score,
     "Experience": Math.round(score * 0.95),
-    "Project Relevance": Math.round(score * 0.90),
+    "Project Relevance": projectRelevance,
     "Education": Math.round(score * 0.85),
     "Overall Score": score
   };
@@ -115,7 +126,7 @@ function getCandidateMetrics(cand) {
     name,
     "Technical Fit": Math.round((b.skills / 40) * 100),
     "Experience": Math.round((b.experience / 25) * 100),
-    "Project Relevance": Math.round((b.projects / 20) * 100),
+    "Project Relevance": projectRelevance,
     "Education": Math.round((b.education / 10) * 100),
     "Overall Score": score
   };
@@ -328,6 +339,35 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
                     <li key={i} className={styles.bulletItemRed}>⚠️ {gp}</li>
                   ))}
                 </ul>
+              </div>
+
+              {/* Project Evidence Strength */}
+              <div className={styles.section}>
+                <span className={`${styles.secTitle} ${styles.blueTitle}`}>Project Evidence Fit</span>
+                {cand.gap_analysis?.project_intelligence && cand.gap_analysis.project_intelligence.length > 0 ? (
+                  <div className={styles.projectCompareContainer}>
+                    {cand.gap_analysis.project_intelligence.slice(0, 2).map((proj, pIdx) => (
+                      <div key={pIdx} className={styles.projectCompareCard}>
+                        <div className={styles.projectCompareHeader}>
+                          <span className={styles.projectCompareName} title={proj.project_name}>
+                            📁 {proj.project_name}
+                          </span>
+                          <span className={styles.projectCompareScore}>
+                            {proj.relevance_score}% Relevance
+                          </span>
+                        </div>
+                        <p className={styles.projectCompareDesc}>{proj.description.length > 80 ? proj.description.slice(0, 80) + "..." : proj.description}</p>
+                        <div className={styles.projectComparePills}>
+                          {proj.inferred_skills.slice(0, 3).map((s, sIdx) => (
+                            <span key={sIdx} className={styles.projectComparePill}>✓ {s}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={styles.secText}>General project suitability rating: {Math.round(score * 0.9)}%</p>
+                )}
               </div>
 
               {/* Interview Readiness Indicator */}

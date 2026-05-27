@@ -452,3 +452,76 @@
   color: #64748b;
   font-style: italic;
 }
+
+/* Project Evidence Strength Compare Card Styles */
+.projectCompareContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.projectCompareCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.projectCompareHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 6px;
+}
+
+.projectCompareName {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.projectCompareScore {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #e0e7ff;
+  padding: 2px 6px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.projectCompareDesc {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.projectComparePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.projectComparePill {
+  font-size: 9.5px;
+  font-weight: 600;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.blueTitle {
+  color: #2563eb !important;
+}

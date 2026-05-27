@@ -907,3 +907,135 @@
     color: #334155;
     line-height: 1.5;
 }
+
+/* 📁 Project Intelligence section Styles */
+.projectIntelligenceWrapper {
+    margin-top: 24px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+}
+
+.sectionSubHeading {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+}
+
+.projectGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .projectGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.projectCard {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+.projectCard:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border-color: #cbd5e1;
+}
+
+.projectCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.projectFolderIcon {
+    font-size: 16px;
+}
+
+.projectName {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    flex-grow: 1;
+    letter-spacing: -0.01em;
+}
+
+.projectRelevanceScore {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.projectHighRelevance {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #d1fae5;
+}
+
+.projectMidRelevance {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fef3c7;
+}
+
+.projectLowRelevance {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.projectDescription {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #475569;
+    margin: 0;
+}
+
+.projectIntelligenceDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.intelSubSection {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.intelLabel {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.impactSummaryText {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: #57534e;
+    margin: 0;
+    font-style: italic;
+}
