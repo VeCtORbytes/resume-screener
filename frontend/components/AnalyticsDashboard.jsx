@@ -85,6 +85,7 @@ function getCandidateBreakdown(result) {
 export default function AnalyticsDashboard({ results = [], isLoading }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedCandidateId, setSelectedCandidateId] = useState("all");
 
   // Prevent Next.js SSR hydration mismatches with Recharts
   useEffect(() => {
@@ -201,6 +202,150 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
   const uniqueMissingMustHaves = Array.from(missingMustHavesSet).sort();
   const uniqueMissingGoodToHaves = Array.from(missingGoodToHavesSet).sort();
 
+  // --- 2c. Weighted Skill Gap Intelligence Math ---
+  // Get all unique skill names and their base details from the batch
+  const jdSkillsMap = {};
+  results.forEach(r => {
+    const evals = r.gap_analysis?.weighted_evaluations || [];
+    evals.forEach(ev => {
+      const norm = ev.name.trim();
+      if (!jdSkillsMap[norm] || ev.importance > (jdSkillsMap[norm].importance || 0)) {
+        jdSkillsMap[norm] = {
+          name: ev.name,
+          importance: ev.importance || 50,
+          category: ev.category || "must_have",
+          rationale: ev.evidence || ev.rationale || "Required technical skill"
+        };
+      }
+    });
+  });
+  
+  // Backfill if empty using the standard parsed sets
+  if (Object.keys(jdSkillsMap).length === 0) {
+    uniqueMatchedMustHaves.forEach(s => {
+      jdSkillsMap[s] = { name: s, importance: 85, category: "must_have", rationale: "Core must-have skill" };
+    });
+    uniqueMissingMustHaves.forEach(s => {
+      jdSkillsMap[s] = { name: s, importance: 85, category: "must_have", rationale: "Core must-have skill" };
+    });
+    uniqueMissingGoodToHaves.forEach(s => {
+      jdSkillsMap[s] = { name: s, importance: 35, category: "good_to_have", rationale: "Nice-to-have skill" };
+    });
+  }
+
+  const jdWeightedSkills = Object.values(jdSkillsMap).sort((a, b) => b.importance - a.importance);
+
+  // Compute evaluations for selectedCandidateId
+  let activeWeightedEvaluations = [];
+  let calculatedRiskScore = 0;
+  let riskClassification = "LOW RISK";
+  let riskColor = "#10b981";
+  let riskDescription = "Excellent alignment with core required stack.";
+
+  if (selectedCandidateId === "all") {
+    // Aggregated Batch View
+    activeWeightedEvaluations = jdWeightedSkills.map(skill => {
+      let matchedCount = 0;
+      let evidenceSamples = [];
+      results.forEach(r => {
+        const evals = r.gap_analysis?.weighted_evaluations || [];
+        const match = evals.find(ev => ev.name.toLowerCase().trim() === skill.name.toLowerCase().trim());
+        if (match && match.status === "matched") {
+          matchedCount++;
+          if (match.evidence) evidenceSamples.push(`${r.resume_filename.replace(/\.[^/.]+$/, "")}: "${match.evidence}"`);
+        }
+      });
+      const matchRate = results.length > 0 ? (matchedCount / results.length) : 0;
+      const statusText = matchRate >= 0.75 ? "Fully Covered" : matchRate >= 0.25 ? "Partially Matched" : "Gapped / Missing";
+      return {
+        name: skill.name,
+        category: skill.category,
+        importance: skill.importance,
+        status: statusText,
+        matchRate,
+        evidence: evidenceSamples.length > 0 ? evidenceSamples.slice(0, 2).join("; ") : "No candidate matches yet",
+        weighted_contribution: Math.round(skill.importance * matchRate)
+      };
+    });
+
+    // Batch Risk Average
+    let totalRisk = 0;
+    results.forEach(r => {
+      let candRisk = 0;
+      const evals = r.gap_analysis?.weighted_evaluations || [];
+      evals.forEach(ev => {
+        if (ev.status === "missing") {
+          candRisk += ev.importance >= 80 ? 35 : ev.importance >= 50 ? 15 : 5;
+        }
+      });
+      totalRisk += Math.min(100, candRisk);
+    });
+    calculatedRiskScore = results.length > 0 ? Math.round(totalRisk / results.length) : 0;
+  } else {
+    // Specific Candidate View
+    const candidate = results.find(r => r.id === selectedCandidateId);
+    if (candidate) {
+      const evals = candidate.gap_analysis?.weighted_evaluations || [];
+      activeWeightedEvaluations = jdWeightedSkills.map(skill => {
+        const match = evals.find(ev => ev.name.toLowerCase().trim() === skill.name.toLowerCase().trim());
+        if (match) {
+          return {
+            name: skill.name,
+            category: skill.category,
+            importance: skill.importance,
+            status: match.status === "matched" ? "Matched" : "Missing",
+            evidence: match.evidence || "No evidence listed",
+            weighted_contribution: match.status === "matched" ? skill.importance : 0
+          };
+        } else {
+          return {
+            name: skill.name,
+            category: skill.category,
+            importance: skill.importance,
+            status: "Missing",
+            evidence: "No candidate evidence found",
+            weighted_contribution: 0
+          };
+        }
+      });
+
+      let candRisk = 0;
+      const missingSkills = [];
+      activeWeightedEvaluations.forEach(ev => {
+        if (ev.status === "Missing") {
+          candRisk += ev.importance >= 80 ? 35 : ev.importance >= 50 ? 15 : 5;
+          missingSkills.push(ev);
+        }
+      });
+      calculatedRiskScore = Math.min(100, candRisk);
+
+      // Determine risk rationale
+      const highWeightMissing = missingSkills.filter(ev => ev.importance >= 80);
+      if (highWeightMissing.length > 0) {
+        riskDescription = `Missing critical mandatory stack requirements: ${highWeightMissing.map(s => s.name).join(", ")}. Critical hiring hazard.`;
+      } else if (missingSkills.filter(ev => ev.importance >= 50).length > 0) {
+        riskDescription = `All core critical requirements satisfied. Missing secondary preferred requirements: ${missingSkills.filter(ev => ev.importance >= 50).map(s => s.name).join(", ")}. Moderate onboarding gap.`;
+      } else {
+        riskDescription = `Excellent candidate coverage. No significant core stack requirements are missing.`;
+      }
+    }
+  }
+
+  // Set classifications
+  if (calculatedRiskScore >= 75) {
+    riskClassification = "CRITICAL HIRING RISK";
+    riskColor = "#ef4444";
+  } else if (calculatedRiskScore >= 50) {
+    riskClassification = "HIGH HIRING RISK";
+    riskColor = "#f59e0b";
+  } else if (calculatedRiskScore >= 25) {
+    riskClassification = "MEDIUM HIRING RISK";
+    riskColor = "#3b82f6";
+  } else {
+    riskClassification = "LOW HIRING RISK";
+    riskColor = "#10b981";
+  }
+
   // --- 2b. Score Distribution (Bar Chart) ---
   const barChartData = results.map(r => {
     const filename = r.resume_filename || "Candidate";
@@ -272,6 +417,12 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
             className={`${styles.tabBtn} ${activeTab === "comparison" ? styles.activeTab : ""}`}
           >
             Candidate Radar
+          </button>
+          <button 
+            onClick={() => setActiveTab("weighted")}
+            className={`${styles.tabBtn} ${activeTab === "weighted" ? styles.activeTab : ""}`}
+          >
+            Weighted JD Gap Intelligence
           </button>
         </div>
       </div>
@@ -357,7 +508,7 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
         </div>
       </div>
 
-      {activeTab === "overview" ? (
+      {activeTab === "overview" && (
         <>
           {/* --- EXPLICIT SKILL GAP AUDIT PANELS --- */}
           <div className={styles.explicitGapPanelSection}>
@@ -547,7 +698,9 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           </div>
         </div>
       </>
-      ) : (
+      )}
+
+      {activeTab === "comparison" && (
         /* --- RADAR CHART (TOP 3 CANDIDATE COMPARISON) --- */
         <div className={`${styles.chartCard} ${styles.radarCard}`}>
           <h4 className={styles.chartTitle}>Top Candidates Comparison</h4>
@@ -629,6 +782,197 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           ) : (
             <p className={styles.noRadarData}>Insufficient data to render radar overlay.</p>
           )}
+        </div>
+      )}
+
+      {/* --- WEIGHTED JD GAP INTELLIGENCE TAB --- */}
+      {activeTab === "weighted" && (
+        <div className={styles.weightedTabWorkspace}>
+          
+          {/* Top Selection & Risk Header Row */}
+          <div className={styles.weightedDashboardGrid}>
+            
+            {/* 1. Evaluation Context Selector Card */}
+            <div className={styles.weightedSelectorCard}>
+              <div className={styles.cardHeaderGroup}>
+                <span className={styles.cardIcon}>🔍</span>
+                <h4 className={styles.cardHeading}>Evaluation Context</h4>
+                <p className={styles.cardDescription}>Switch between collective batch view or individual candidate profiles</p>
+              </div>
+              <div className={styles.selectorInputWrapper}>
+                <select 
+                  value={selectedCandidateId}
+                  onChange={(e) => setSelectedCandidateId(e.target.value)}
+                  className={styles.contextSelectDropdown}
+                >
+                  <option value="all">All Candidates (Aggregated Batch View)</option>
+                  {results.map((r) => {
+                    const filename = r.resume_filename || "Candidate";
+                    const displayName = filename.replace(/\.[^/.]+$/, "");
+                    return (
+                      <option key={r.id} value={r.id}>
+                        {displayName} (Score: {r.score}/100)
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div className={styles.selectorFooter}>
+                <p className={styles.selectorFooterText}>
+                  {selectedCandidateId === "all" 
+                    ? "Currently viewing batch average matching distributions." 
+                    : `Currently auditing specific candidate requirement weights.`}
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Premium Risk Assessment Card */}
+            <div className={styles.weightedRiskCard}>
+              <div className={styles.cardHeaderGroup}>
+                <span className={styles.cardIcon} style={{ color: riskColor }}>🛡️</span>
+                <h4 className={styles.cardHeading}>Weighted Risk Assessment</h4>
+                <p className={styles.cardDescription}>Dynamic calculated hiring risk factor based on requirement priority</p>
+              </div>
+              <div className={styles.riskCardBody}>
+                <div className={styles.riskGaugeProgress}>
+                  <svg className={styles.riskCircularSvg} viewBox="0 0 36 36">
+                    <path
+                      className={styles.circularBg}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={styles.circularBar}
+                      stroke={riskColor}
+                      strokeDasharray={`${calculatedRiskScore}, 100`}
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className={styles.riskProgressValueText}>
+                    <span className={styles.riskScoreVal} style={{ color: riskColor }}>{calculatedRiskScore}%</span>
+                    <span className={styles.riskScoreLabel}>Risk Score</span>
+                  </div>
+                </div>
+                <div className={styles.riskCardDetails}>
+                  <div 
+                    className={styles.riskLevelBadge}
+                    style={{ backgroundColor: riskColor + "15", color: riskColor, borderColor: riskColor + "30" }}
+                  >
+                    {riskClassification}
+                  </div>
+                  <p className={styles.riskDescriptionParagraph}>{riskDescription}</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 3. Recharts Overlapping Skill Contribution Chart */}
+          <div className={styles.weightedChartContainerCard}>
+            <div className={styles.cardHeaderGroup}>
+              <h4 className={styles.cardHeading}>Weighted Skill Contribution Overlay</h4>
+              <p className={styles.cardDescription}>Comparing job description requirement importance against actual candidate fit</p>
+            </div>
+            
+            <div className={styles.rechartsChartWrapper}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart 
+                  data={activeWeightedEvaluations.map(ev => ({
+                    name: ev.name,
+                    "Required JD Importance": ev.importance,
+                    "Candidate Match": ev.weighted_contribution
+                  }))} 
+                  margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    axisLine={{ stroke: "#e2e8f0" }}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    domain={[0, 100]} 
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    axisLine={{ stroke: "#e2e8f0" }}
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      background: "#ffffff", 
+                      border: "1px solid #e2e8f0", 
+                      borderRadius: "8px", 
+                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
+                    }}
+                    labelStyle={{ fontWeight: 600, color: "#0f172a", fontSize: 12 }}
+                    itemStyle={{ fontSize: 12 }}
+                  />
+                  <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Required JD Importance" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Candidate Match" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 4. JD Skill Weight Heatmap Section */}
+          <div className={styles.weightedHeatmapSectionCard}>
+            <div className={styles.cardHeaderGroup} style={{ marginBottom: "20px" }}>
+              <h4 className={styles.cardHeading}>JD Skill Weight Heatmap</h4>
+              <p className={styles.cardDescription}>Factual row-by-row match status and direct semantic evidence listed across priority weights</p>
+            </div>
+            
+            <div className={styles.heatmapTableContainer}>
+              <table className={styles.heatmapTable}>
+                <thead>
+                  <tr>
+                    <th>Skill Requirement</th>
+                    <th>Importance Weight</th>
+                    <th>Category</th>
+                    <th>Match Status</th>
+                    <th>Semantic Evidence & Phrasing Context</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeWeightedEvaluations.map((ev, idx) => {
+                    const isMatched = ev.status === "Matched" || ev.status === "Fully Covered" || ev.status === "Partially Matched";
+                    return (
+                      <tr key={idx} className={styles.heatmapRow}>
+                        <td className={styles.heatmapSkillNameCell}>{ev.name}</td>
+                        <td className={styles.heatmapImportanceCell}>
+                          <div className={styles.progressBarWrapper}>
+                            <div className={styles.progressBarBg}>
+                              <div className={styles.progressBarFill} style={{ width: `${ev.importance}%` }}></div>
+                            </div>
+                            <span className={styles.importancePercentLabel}>{ev.importance}/100</span>
+                          </div>
+                        </td>
+                        <td className={styles.heatmapCategoryCell}>
+                          <span className={`${styles.categoryPill} ${ev.category === "must_have" ? styles.mustHavePill : styles.goodToHavePill}`}>
+                            {ev.category === "must_have" ? "Must-Have" : "Good-to-Have"}
+                          </span>
+                        </td>
+                        <td className={styles.heatmapStatusCell}>
+                          <span 
+                            className={styles.statusTextBadge}
+                            style={{
+                              backgroundColor: isMatched ? "#e6fbf1" : "#fef2f2",
+                              color: isMatched ? "#10b981" : "#ef4444"
+                            }}
+                          >
+                            {isMatched ? "✅ Matched" : "❌ Missing"}
+                          </span>
+                        </td>
+                        <td className={styles.heatmapEvidenceCell} title={ev.evidence}>
+                          {ev.evidence}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       )}
     </div>

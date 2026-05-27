@@ -20,7 +20,7 @@ class GroqScreener:
             self._client = Groq(api_key=settings.GROQ_API_KEY)
         return self._client
     
-    def screen_resume(self, resume_text: str, job_description: str) -> dict:
+    def screen_resume(self, resume_text: str, job_description: str, filename: str = "Unknown Candidate") -> dict:
         """
         Score a single resume against job description using a deterministic rubric.
         
@@ -34,11 +34,12 @@ Do NOT reward formatting, length, wordiness, or self-promotional language. Focus
 Evaluate the candidate's resume using the following strictly mathematical scoring rubric (Total 100 points):
 
 1. Skills Match (Weight: 40% - Max 40 points)
-   Assess how closely the technical stack and soft skills match the requirements.
+   Assess how closely the technical stack and soft skills match the requirements, weighted strictly by skill importance.
    - SEMANTIC AI UNDERSTANDING (Mandatory): You MUST use semantic AI understanding, NOT naive exact keyword matching. For example: if the JD requires 'Node.js', 'Authentication', and 'REST API', and the candidate mentions 'Express backend APIs', 'JWT login', and 'backend endpoints', these are semantic matches and must be classified as MATCHED.
-   - SCORING PENALTIES FOR SKILLS MATCH (Mandatory):
-     * Deduct 10 to 15 points from Skills Match for each missing MUST-HAVE/required skill requested in the Job Description, up to the full 40 points (minimum Skills Match score is 0).
-     * Deduct 2 to 5 points from Skills Match for each missing GOOD-TO-HAVE/preferred skill requested in the Job Description.
+   - WEIGHTED SCORING PENALTIES FOR SKILLS MATCH (Mandatory):
+     * Missing high-weight must-have skills (importance 80-100) MUST heavily penalize the Skills Match score: deduct 10 to 15 points each, up to the full 40 points.
+     * Missing mid-weight mandatory skills (importance 50-79) deducts 5 to 9 points each.
+     * Missing low-weight good-to-have/preferred skills (importance <= 40) only minimally affects the score: deduct 1 to 3 points each.
    - Exact or strong match of primary required technologies: 30-40 points
    - Partial match of technologies, or missing key stack requirements: 15-29 points
    - Minimal or no relevant skills: 0-14 points
@@ -88,8 +89,18 @@ You MUST return your response as a valid, single JSON object with no markdown fe
     "must_have_missing": [<list of strings, must-have skills missing in candidate resume>],
     "good_to_have_matched": [<list of strings, good-to-have/preferred skills matching candidate resume>],
     "good_to_have_missing": [<list of strings, good-to-have/preferred skills missing in candidate resume>],
-    "strength_areas": [<list of strings, 3-5 specific capabilities, tools, or strengths demonstrated>],
-    "critical_gaps": [<list of strings, 1-3 serious missing skills, missing experience flags, or flags relative to JD>]
+    "strength_areas": [<list of strings, 3-5 demonstrated capabilities>],
+    "critical_gaps": [<list of strings, serious missing skills relative to JD>],
+    "weighted_evaluations": [
+      {
+        "name": "string, technical skill normalization",
+        "category": "must_have" | "good_to_have",
+        "importance": integer, 0-100,
+        "status": "matched" | "missing",
+        "evidence": "string explaining direct evidence or blank if missing",
+        "weighted_contribution": integer (importance * 1 if status is matched, or 0 if missing)
+      }
+    ]
   }
 }"""
 
@@ -100,6 +111,35 @@ RESUME:
 {resume_text}
 
 Respond ONLY with the requested JSON object."""
+
+        # --- TEMPORARY DEBUG LOGGING (AS REQUESTED) ---
+        print("\n" + "="*80)
+        print(f"DEBUG: START SCREENING FOR CANDIDATE: {filename}")
+        print("="*80)
+        print("1. RAW/EXTRACTED RESUME TEXT PREVIEW (First 2000 chars):")
+        print(resume_text[:2000])
+        print("..." if len(resume_text) > 2000 else "")
+        print("-"*80)
+        
+        # Check presence of key requested skills
+        key_skills_to_check = ["JavaScript", "React", "Node.js", "Express", "MongoDB", "JWT", "REST APIs"]
+        print("2. SKILL PRESENCE AUDIT IN RESUME (Case-Insensitive Substring Match):")
+        for skill in key_skills_to_check:
+            present = skill.lower() in resume_text.lower()
+            status_symbol = "✅ PRESENT" if present else "❌ MISSING"
+            print(f"  • {skill}: {status_symbol}")
+        print("-"*80)
+
+        cleaned_text = resume_text.strip()
+        print("3. CLEANED RESUME TEXT PREVIEW (First 2000 chars):")
+        print(cleaned_text[:2000])
+        print("..." if len(cleaned_text) > 2000 else "")
+        print("-"*80)
+
+        print("4. EXACT PAYLOAD / PROMPT SENT TO GROQ AI EVALUATOR:")
+        print(f"--- SYSTEM PROMPT (First 300 chars) --- \n{system_prompt[:300]}...\n")
+        print(f"--- USER PROMPT --- \n{user_prompt}\n")
+        print("="*80 + "\n")
 
         try:
             response = self.client.chat.completions.create(
@@ -149,14 +189,23 @@ Respond ONLY with the requested JSON object."""
             recommendation = result.get("recommendation", "Moderate Match")
             
             # Expose Candidate Skill Gap Intelligence JSON
-            gap_analysis = result.get("gap_analysis", {
-                "must_have_matched": [],
-                "must_have_missing": [],
-                "good_to_have_matched": [],
-                "good_to_have_missing": [],
-                "strength_areas": [],
-                "critical_gaps": []
-            })
+            gap_analysis = result.get("gap_analysis", {})
+            
+            # Safe defaults for top-level fields
+            for key in ["must_have_matched", "must_have_missing", "good_to_have_matched", "good_to_have_missing", "strength_areas", "critical_gaps"]:
+                if key not in gap_analysis:
+                    gap_analysis[key] = []
+                    
+            if "weighted_evaluations" not in gap_analysis or not gap_analysis["weighted_evaluations"]:
+                gap_analysis["weighted_evaluations"] = []
+                for s in gap_analysis.get("must_have_matched", []):
+                    gap_analysis["weighted_evaluations"].append({"name": s, "category": "must_have", "importance": 85, "status": "matched", "evidence": "Evidenced in candidate profile", "weighted_contribution": 85})
+                for s in gap_analysis.get("must_have_missing", []):
+                    gap_analysis["weighted_evaluations"].append({"name": s, "category": "must_have", "importance": 85, "status": "missing", "evidence": "", "weighted_contribution": 0})
+                for s in gap_analysis.get("good_to_have_matched", []):
+                    gap_analysis["weighted_evaluations"].append({"name": s, "category": "good_to_have", "importance": 35, "status": "matched", "evidence": "Evidenced in candidate profile", "weighted_contribution": 35})
+                for s in gap_analysis.get("good_to_have_missing", []):
+                    gap_analysis["weighted_evaluations"].append({"name": s, "category": "good_to_have", "importance": 35, "status": "missing", "evidence": "", "weighted_contribution": 0})
             
             # Format structured summary report to render beautifully in reasoning column
             breakdown_str = (
@@ -219,6 +268,17 @@ Use semantic understanding to identify and categorize requirements precisely:
 - "job_title": The formal name of the position.
 - "must_have_skills": Technical stacks, frameworks, languages, or soft skills explicitly required, mandatory, or stated as "must have", "proficient in", "highly required".
 - "good_to_have_skills": Stated as "nice to have", "plus", "preferred", "beneficial", "optional", "good to have".
+- "weighted_skills": An array of objects for EVERY single technical or key skill found in the job description.
+  For each skill, determine:
+    * "name": Short, normalized, clean name of the skill/technology (e.g., "JavaScript", "React", "Docker").
+    * "importance": An integer from 0 to 100 based strictly on semantic emphasis:
+      - "highly proficient", "expert", "mastery required", "core role" -> 90-100 importance.
+      - "required", "expertise needed", "strong proficiency" -> 80-89 importance.
+      - "experience with", "good understanding", "knowledge of" -> 50-79 importance.
+      - "plus", "preferred", "good to have", "desired" -> 30-49 importance.
+      - "nice to have", "familiarity", "beneficial" -> 10-29 importance.
+    * "category": "must_have" or "good_to_have".
+    * "rationale": The phrasing context from the job description explaining why this specific weight/importance was assigned.
 - "responsibilities": Day-to-day duties, expectations, tasks, or role deliverables.
 - "experience_requirements": Seniority, years of experience, track record expectations.
 - "education_requirements": Degrees, academic fields, or professional standard certifications requested.
@@ -228,6 +288,14 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
   "job_title": "string",
   "must_have_skills": ["string", "string"],
   "good_to_have_skills": ["string", "string"],
+  "weighted_skills": [
+    {
+      "name": "string",
+      "importance": integer,
+      "category": "must_have" | "good_to_have",
+      "rationale": "string"
+    }
+  ],
   "responsibilities": ["string", "string"],
   "experience_requirements": ["string", "string"],
   "education_requirements": ["string", "string"]
@@ -239,7 +307,7 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
                     }
                 ],
                 temperature=0.1,  # Highly deterministic parsing
-                max_tokens=600,
+                max_tokens=800,   # Increased token allowance to support weighted skills schema
                 response_format={"type": "json_object"}
             )
             
@@ -265,6 +333,15 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
                 "job_title": str(parsed.get("job_title", "Position Specified")),
                 "must_have_skills": [str(x) for x in parsed.get("must_have_skills", []) if x],
                 "good_to_have_skills": [str(x) for x in parsed.get("good_to_have_skills", []) if x],
+                "weighted_skills": [
+                    {
+                        "name": str(s.get("name", "")),
+                        "importance": int(s.get("importance", 50)),
+                        "category": str(s.get("category", "must_have")),
+                        "rationale": str(s.get("rationale", ""))
+                    }
+                    for s in parsed.get("weighted_skills", []) if s and s.get("name")
+                ],
                 "responsibilities": [str(x) for x in parsed.get("responsibilities", []) if x],
                 "experience_requirements": [str(x) for x in parsed.get("experience_requirements", []) if x],
                 "education_requirements": [str(x) for x in parsed.get("education_requirements", []) if x]
@@ -278,6 +355,13 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
                 "job_title": "Full Stack Developer",
                 "must_have_skills": ["React.js", "JavaScript", "Node.js", "Express.js", "MongoDB"],
                 "good_to_have_skills": ["AI API Integration", "Groq / OpenAI", "Tailwind CSS", "Vercel / Render"],
+                "weighted_skills": [
+                    {"name": "JavaScript", "importance": 100, "category": "must_have", "rationale": "Must be highly proficient in JavaScript"},
+                    {"name": "React", "importance": 90, "category": "must_have", "rationale": "Strong React expertise required"},
+                    {"name": "Node.js", "importance": 80, "category": "must_have", "rationale": "Experience with Node.js backend integration"},
+                    {"name": "AI API Integration", "importance": 40, "category": "good_to_have", "rationale": "Good to have AI API Integration"},
+                    {"name": "Tailwind CSS", "importance": 20, "category": "good_to_have", "rationale": "Nice to have Tailwind CSS"}
+                ],
                 "responsibilities": ["Develop responsive frontend applications using React", "Build REST APIs using Express", "Design and optimize Mongo databases"],
                 "experience_requirements": ["Internship / Fresher / 0-1 Year experience"],
                 "education_requirements": ["B.Tech / BE in Computer Science or related field"]
@@ -334,7 +418,8 @@ Format your output STRICTLY as a single, valid JSON object with the following ex
             None,
             self.screen_resume,
             resume_text,
-            job_description
+            job_description,
+            filename
         )
         result["filename"] = filename
         return result

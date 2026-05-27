@@ -691,3 +691,317 @@
   color: #f59e0b;
   font-weight: bold;
 }
+
+/* --- Premium Weighted Intelligence Workspace Styles --- */
+.weightedTabWorkspace {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.weightedDashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .weightedDashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.weightedSelectorCard,
+.weightedRiskCard,
+.weightedChartContainerCard,
+.weightedHeatmapSectionCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weightedSelectorCard:hover,
+.weightedRiskCard:hover,
+.weightedChartContainerCard:hover,
+.weightedHeatmapSectionCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+
+.cardHeaderGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.cardIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.cardHeading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.cardDescription {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.selectorInputWrapper {
+  margin-bottom: 16px;
+}
+
+.contextSelectDropdown {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contextSelectDropdown:focus {
+  background-color: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.selectorFooterText {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Risk Card Body */
+.riskCardBody {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+@media (max-width: 600px) {
+  .riskCardBody {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+.riskGaugeProgress {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.riskCircularSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.riskProgressValueText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.riskScoreVal {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.riskScoreLabel {
+  font-size: 8px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.riskCardDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-grow: 1;
+}
+
+.riskLevelBadge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.riskDescriptionParagraph {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Chart Card and Heatmap Section Styles */
+.rechartsChartWrapper {
+  margin-top: 10px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
+}
+
+.heatmapTableContainer {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.heatmapTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.heatmapTable th {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  border-bottom: 2px solid #f1f5f9;
+  letter-spacing: 0.03em;
+}
+
+.heatmapRow {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.heatmapRow:hover {
+  background-color: #f8fafc;
+}
+
+.heatmapRow:last-child {
+  border-bottom: none;
+}
+
+.heatmapSkillNameCell {
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.heatmapImportanceCell {
+  padding: 16px;
+  min-width: 160px;
+}
+
+.progressBarWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progressBarBg {
+  flex-grow: 1;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  max-width: 100px;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #818cf8);
+  border-radius: 3px;
+}
+
+.importancePercentLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  min-width: 48px;
+}
+
+.heatmapCategoryCell {
+  padding: 16px;
+}
+
+.categoryPill {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.mustHavePill {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.goodToHavePill {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.heatmapStatusCell {
+  padding: 16px;
+}
+
+.statusTextBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.heatmapEvidenceCell {
+  padding: 16px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

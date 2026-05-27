@@ -185,27 +185,63 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
 
   const radarColors = ["#4f46e5", "#06b6d4", "#f59e0b"];
 
-  // --- Gather all unique skills from all candidates ---
-  const allUniqueSkillsSet = new Set();
+  // --- Gather all unique skills from all candidates, prioritized by importance weight ---
+  const skillsMap = {};
   selectedCandidates.forEach(cand => {
-    const gap = cand.gap_analysis || {};
-    (gap.must_have_matched || []).forEach(s => allUniqueSkillsSet.add(s));
-    (gap.must_have_missing || []).forEach(s => allUniqueSkillsSet.add(s));
-    (gap.good_to_have_matched || []).forEach(s => allUniqueSkillsSet.add(s));
-    (gap.good_to_have_missing || []).forEach(s => allUniqueSkillsSet.add(s));
+    const evals = cand.gap_analysis?.weighted_evaluations || [];
+    evals.forEach(ev => {
+      const norm = ev.name.trim();
+      if (!skillsMap[norm] || ev.importance > skillsMap[norm].importance) {
+        skillsMap[norm] = {
+          name: ev.name,
+          importance: ev.importance || 50,
+          category: ev.category || "must_have"
+        };
+      }
+    });
   });
 
-  const uniqueSkills = Array.from(allUniqueSkillsSet).sort();
+  // Fallback to legacy arrays if no weighted evaluations found
+  if (Object.keys(skillsMap).length === 0) {
+    selectedCandidates.forEach(cand => {
+      const gap = cand.gap_analysis || {};
+      (gap.must_have_matched || []).forEach(s => { skillsMap[s] = { name: s, importance: 85, category: "must_have" }; });
+      (gap.must_have_missing || []).forEach(s => { skillsMap[s] = { name: s, importance: 85, category: "must_have" }; });
+      (gap.good_to_have_matched || []).forEach(s => { skillsMap[s] = { name: s, importance: 35, category: "good_to_have" }; });
+      (gap.good_to_have_missing || []).forEach(s => { skillsMap[s] = { name: s, importance: 35, category: "good_to_have" }; });
+    });
+  }
+
+  // Sort unique skills descending by importance weight
+  const sortedUniqueSkills = Object.values(skillsMap).sort((a, b) => b.importance - a.importance);
 
   // Helper to resolve cell rendering for each candidate-skill combination
-  const getSkillStatus = (cand, skill) => {
+  const getSkillStatus = (cand, skillObj) => {
     const gap = cand.gap_analysis || {};
+    const evals = gap.weighted_evaluations || [];
+    
+    // Attempt to locate via weighted evaluations
+    const match = evals.find(ev => ev.name.toLowerCase().trim() === skillObj.name.toLowerCase().trim());
+    if (match) {
+      if (match.status === "matched") {
+        return { symbol: "✅ Present", class: styles.matrixMatched, label: `Present` };
+      } else {
+        const isCritical = skillObj.category === "must_have" || skillObj.importance >= 60;
+        return { 
+          symbol: isCritical ? "❌ Missing" : "⚠️ Missing", 
+          class: isCritical ? styles.matrixMissing : styles.matrixWarning, 
+          label: isCritical ? `Missing (Critical)` : `Missing (Optional)`
+        };
+      }
+    }
+
+    // Fallback to legacy arrays
     const matched = [...(gap.must_have_matched || []), ...(gap.good_to_have_matched || [])];
     const mustMissing = gap.must_have_missing || [];
     const goodMissing = gap.good_to_have_missing || [];
     const critical = gap.critical_gaps || [];
 
-    const matchesSkill = (list) => list.some(s => s.toLowerCase().trim() === skill.toLowerCase().trim());
+    const matchesSkill = (list) => list.some(s => s.toLowerCase().trim() === skillObj.name.toLowerCase().trim());
 
     if (matchesSkill(matched)) {
       return { symbol: "✅ Present", class: styles.matrixMatched, label: "Present" };
@@ -338,10 +374,15 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
               </tr>
             </thead>
             <tbody>
-              {uniqueSkills.length > 0 ? (
-                uniqueSkills.map((skill, sIdx) => (
+              {sortedUniqueSkills.length > 0 ? (
+                sortedUniqueSkills.map((skill, sIdx) => (
                   <tr key={sIdx}>
-                    <td className={styles.skillNameCell}>{skill}</td>
+                    <td className={styles.skillNameCell}>
+                      {skill.name}
+                      <span className={styles.importanceBadgeLabel} style={{ fontSize: "10px", color: "#64748b", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", marginLeft: "8px", fontWeight: "700" }}>
+                        w: {skill.importance}
+                      </span>
+                    </td>
                     {selectedCandidates.map(cand => {
                       const status = getSkillStatus(cand, skill);
                       return (
