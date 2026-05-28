@@ -82,9 +82,13 @@ async def screen_resumes(
                 # Extract text
                 text = pdf_extractor.extract_text(file_bytes, resume_file.filename)
                 
+                # Compute extraction confidence
+                conf_data = pdf_extractor.calculate_extraction_confidence(text, resume_file.filename)
+                
                 resume_data.append({
                     "filename": resume_file.filename,
-                    "text": text
+                    "text": text,
+                    "extraction_confidence": conf_data
                 })
             
             except ValueError as e:

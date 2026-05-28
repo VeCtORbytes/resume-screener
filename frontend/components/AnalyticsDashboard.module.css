@@ -1005,3 +1005,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Phase D: Warning and alert status cards */
+.kpiWarningCard {
+  background: hsl(45, 100%, 97%) !important;
+  border: 1px solid hsl(45, 93%, 85%) !important;
+  box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.05), 0 2px 4px -1px rgba(217, 119, 6, 0.03);
+}
+
+.kpiWarningCard:hover {
+  background: hsl(45, 100%, 96%) !important;
+  border-color: hsl(45, 93%, 75%) !important;
+}

@@ -408,19 +408,28 @@ class ExportService:
         if len(job_role_title) > 60:
             job_role_title = job_role_title[:60] + "..."
             
+        reliability = gap.get("reliability_signals", {})
+        ai_conf = reliability.get("ai_confidence_score", 92)
+        
+        ext_conf = gap.get("extraction_confidence", {})
+        ext_label = ext_conf.get("label", "High")
+        ext_score = ext_conf.get("score", 95)
+            
         info_panel = [
             Paragraph(f"<font size='11' color='{c_primary.hexval()}'><b>{clean_pdf_text(cand_name)}</b></font>", bold_body_style),
             Paragraph(f"<b>Mandate:</b> {clean_pdf_text(job_role_title)}", body_style),
         ]
         
         score_panel = [
-            Paragraph(f"<b>Match Grade:</b> <font color='{c_secondary.hexval()}'><b>{tier}</b></font>  |  <b>Risk Profile:</b> <font color='{score_color.hexval()}'><b>{risk}</b></font>", body_style)
+            Paragraph(f"<b>Match Grade:</b> <font color='{c_secondary.hexval()}'><b>{tier}</b></font>  |  <b>Risk Profile:</b> <font color='{score_color.hexval()}'><b>{risk}</b></font>", body_style),
+            Spacer(1, 2),
+            Paragraph(f"<b>AI Confidence:</b> <b>{ai_conf}%</b>  |  <b>Parsing Reliability:</b> <b>{ext_score}% ({ext_label})</b>", meta_style)
         ]
         
         header_grid_data = [
             [info_panel, score_panel]
         ]
-        header_grid = Table(header_grid_data, colWidths=[380, 192])
+        header_grid = Table(header_grid_data, colWidths=[330, 242])
         header_grid.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,-1), c_light),
             ('BOX', (0,0), (-1,-1), 0.5, c_border),
@@ -429,6 +438,24 @@ class ExportService:
         ]))
         story.append(header_grid)
         story.append(Spacer(1, 4))
+        
+        # Dynamic Recruiter Alerts Warning Banner
+        alerts = gap.get("recruiter_alerts", [])
+        filtered_alerts = [a for a in alerts if "✨" not in a] if alerts else []
+        if filtered_alerts:
+            alert_paragraphs = []
+            for alert_text in filtered_alerts[:2]:
+                alert_paragraphs.append(Paragraph(f"<font color='#854d0e'><b>Alert:</b></font> {clean_pdf_text(alert_text)}", ParagraphStyle('AlertText', parent=meta_style, fontSize=7, leading=8.5, textColor=colors.HexColor("#854d0e"))))
+            
+            alert_banner_table = Table([[alert_paragraphs]], colWidths=[572])
+            alert_banner_table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#fef9c3")),
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#fef08a")),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('PADDING', (0,0), (-1,-1), 4),
+            ]))
+            story.append(alert_banner_table)
+            story.append(Spacer(1, 4))
 
         # ----------------------------------------------------
         # SECTION 1 — EXECUTIVE MATCH OVERVIEW
@@ -500,16 +527,21 @@ class ExportService:
             s_name = ev.get("name", "Skill")
             s_weight = ev.get("importance", 50)
             status_raw = ev.get("status", "missing")
+            confidence = ev.get("confidence", "high").title()
             
             if len(s_name) > 20:
                 s_name = s_name[:18] + ".."
                 
             if status_raw == "matched":
-                status_p = Paragraph(f"<font color='{c_success.hexval()}'><b>Matched</b></font>", body_style)
+                status_p = Paragraph(f"<font color='{c_success.hexval()}'><b>Matched</b></font> <font color='#64748b' size='6.5'>({confidence})</font>", body_style)
+            elif status_raw == "inferred":
+                status_p = Paragraph(f"<font color='{c_secondary.hexval()}'><b>Inferred</b></font> <font color='#64748b' size='6.5'>({confidence})</font>", body_style)
+            elif status_raw == "ambiguous":
+                status_p = Paragraph(f"<font color='{c_warning.hexval()}'><b>Ambiguous</b></font> <font color='#64748b' size='6.5'>({confidence})</font>", body_style)
             elif status_raw == "partial":
-                status_p = Paragraph(f"<font color='{c_warning.hexval()}'><b>Partial</b></font>", body_style)
+                status_p = Paragraph(f"<font color='{c_warning.hexval()}'><b>Partial</b></font> <font color='#64748b' size='6.5'>({confidence})</font>", body_style)
             else:
-                status_p = Paragraph(f"<font color='{c_danger.hexval()}'><b>Missing</b></font>", body_style)
+                status_p = Paragraph(f"<font color='{c_danger.hexval()}'><b>Missing</b></font> <font color='#64748b' size='6.5'>({confidence})</font>", body_style)
                 
             mini_skills_data.append([
                 Paragraph(clean_pdf_text(s_name), body_style),
@@ -561,6 +593,15 @@ class ExportService:
             if status_raw == "matched":
                 evidence_text = f"{name} experienced in profile"
                 match_val = f"<font color='{c_success.hexval()}'><b>✅ Present</b></font>"
+            elif status_raw == "inferred":
+                evidence_text = "Inferred via projects/experience"
+                match_val = f"<font color='{c_secondary.hexval()}'><b>✓ Inferred</b></font>"
+            elif status_raw == "ambiguous":
+                evidence_text = "Ambiguous/weak evidence"
+                match_val = f"<font color='{c_warning.hexval()}'><b>⚠ Ambiguous</b></font>"
+            elif status_raw == "partial":
+                evidence_text = "Partial evidence found"
+                match_val = f"<font color='{c_warning.hexval()}'><b>⚠ Partial</b></font>"
             else:
                 evidence_text = "No explicit profile evidence"
                 match_val = f"<font color='{c_danger.hexval()}'><b>❌ Gapped</b></font>"
