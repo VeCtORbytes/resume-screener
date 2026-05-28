@@ -1,3 +1,9 @@
+import os
+
+print("DATABASE_URL:", bool(os.getenv("DATABASE_URL")))
+print("GROQ_API_KEY:", bool(os.getenv("GROQ_API_KEY")))
+print("FRONTEND_URL:", bool(os.getenv("FRONTEND_URL")))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
@@ -12,12 +18,20 @@ app = FastAPI(
 )
 
 # Configure CORS (allow frontend to call backend)
+import os
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Frontend URLs
+    allow_origins=[
+        FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize database tables
@@ -25,7 +39,7 @@ app.add_middleware(
 def startup_event():
     """Run on app startup"""
     print("Initializing database...")
-    init_db()
+    # init_db()
     print("Database ready!")
 
 # Health check endpoint
@@ -38,4 +52,4 @@ app.include_router(screening_router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=settings.DEBUG)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)

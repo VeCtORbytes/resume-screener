@@ -1467,3 +1467,252 @@
     border-radius: 3px;
     border: 1px solid #e2e8f0;
 }
+
+/* Phase D: Extraction Quality & AI Reliability Styles */
+.lowConfidenceAlert {
+    display: flex;
+    gap: 12px;
+    background: hsl(45, 100%, 96%);
+    border: 1px solid hsl(45, 93%, 85%);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.alertIcon {
+    font-size: 20px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.alertContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.alertTitle {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: hsl(24, 74%, 25%);
+    margin: 0;
+}
+
+.alertDescription {
+    font-size: 12px;
+    line-height: 1.6;
+    color: hsl(24, 40%, 30%);
+    margin: 0;
+}
+
+.reliabilityPanel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 768px) {
+    .reliabilityPanel {
+        grid-template-columns: 1.5fr 1fr 1fr 2.5fr;
+    }
+}
+
+.reliabilityMetric {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding-right: 12px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.reliabilityMetric:last-of-type,
+.alertsListContainer {
+    border-right: none;
+}
+
+.reliabilityLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.reliabilityValueBadge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reliabilityProgressBg {
+    width: 70px;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.reliabilityProgressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #4f46e5);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.reliabilityScoreText {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.alertsListContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recruiterAlertItem {
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #f59e0b;
+    padding: 6px 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* Semantic Match Evaluation Matrix Grid */
+.skillsEvalGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .skillsEvalGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.skillsEvalCard {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.skillsEvalCard:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.skillsEvalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.skillsEvalName {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.skillsEvalCategory {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.skillsEvalDetails {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.skillsEvalEvidence {
+    font-size: 11px;
+    line-height: 1.4;
+    color: #475569;
+    margin: 4px 0 0 0;
+    font-style: italic;
+    background: #f8fafc;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border-left: 2px solid #cbd5e1;
+}
+
+/* Evaluated status styling variations */
+.matchedEvalCard {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(to right, #f0fdf4, #ffffff);
+}
+
+.matchedEvalCard .skillsEvalStatus {
+    color: #059669;
+}
+
+.inferredEvalCard {
+    border-left: 4px solid #6366f1;
+    background: linear-gradient(to right, #e0e7ff, #ffffff);
+}
+
+.inferredEvalCard .skillsEvalStatus {
+    color: #4f46e5;
+}
+
+.ambiguousEvalCard {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(to right, #fffbeb, #ffffff);
+}
+
+.ambiguousEvalCard .skillsEvalStatus {
+    color: #d97706;
+}
+
+.missingEvalCard {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(to right, #fef2f2, #ffffff);
+}
+
+.missingEvalCard .skillsEvalStatus {
+    color: #dc2626;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
