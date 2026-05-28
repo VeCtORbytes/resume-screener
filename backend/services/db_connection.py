@@ -3,12 +3,19 @@ from sqlalchemy.orm import sessionmaker, Session
 from config.settings import settings
 from models.models import Base
 
-# Create database engine
+# Create database engine safely
+db_url = settings.DATABASE_URL or "sqlite:///:memory:"
+is_sqlite = db_url.startswith("sqlite")
+
+engine_kwargs = {}
+if not is_sqlite:
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 20
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=settings.DEBUG,  # Log SQL queries if DEBUG=True
-    pool_size=10,
-    max_overflow=20
+    **engine_kwargs
 )
 
 # Create session factory
