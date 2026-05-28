@@ -5,12 +5,12 @@ class Settings(BaseSettings):
     """App configuration from environment variables"""
     
     # Groq API
-    GROQ_API_KEY: str
+    GROQ_API_KEY: str = ""
     
     # Supabase
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-    DATABASE_URL: str
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    DATABASE_URL: str = ""
     
     # App
     DEBUG: bool = False

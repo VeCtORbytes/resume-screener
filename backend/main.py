@@ -65,13 +65,16 @@ async def health_check():
 # Register routes
 app.include_router(screening_router)
 
-# Local development only
+# Local development & production entry point
 if __name__ == "__main__":
     import uvicorn
+
+    # Render sets the PORT environment variable dynamically
+    port = int(os.getenv("PORT", 8000))
 
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=False
     )
