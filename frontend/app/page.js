@@ -119,13 +119,14 @@ export default function Home() {
   const handleSelectSession = async (session) => {
     setLoading(true);
     setError(null);
+    setMinScore(0);
     setSelectedCandidateIds([]);
     setShowComparison(false);
     try {
       setScreeningId(session.id);
       setJobDescription(session.job_description);
 
-      const resultsData = await getResults(session.id, minScore);
+      const resultsData = await getResults(session.id, 0);
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
 
@@ -216,6 +217,7 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+    setMinScore(0);
     setSelectedCandidateIds([]);
     setShowComparison(false);
 
@@ -223,7 +225,7 @@ export default function Home() {
       const response = await screenResumes(jobDescription, resumeFiles);
       setScreeningId(response.screening_id);
 
-      const resultsData = await getResults(response.screening_id, minScore);
+      const resultsData = await getResults(response.screening_id, 0);
       setResults(resultsData.results);
       setFilteredResults(resultsData.results);
 

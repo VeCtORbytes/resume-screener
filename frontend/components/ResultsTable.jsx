@@ -103,6 +103,21 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
         return () => window.removeEventListener("click", closeShare);
     }, [isShareOpen]);
 
+    // Reset dependent drawer and generation states when the screening session transitions
+    useEffect(() => {
+        setExpandedIds({});
+        setCandidateQuestions({});
+        setGeneratingId(null);
+        setGenerationError({});
+        setActiveQuestionTab({});
+        setCopiedText(null);
+        setExportingPdfId(null);
+        setExportPdfError({});
+        setExportingGlobal(false);
+        setGlobalExportError(null);
+        setIsShareOpen(false);
+    }, [screeningId]);
+
     const toggleShareDropdown = (e) => {
         e.stopPropagation();
         setIsShareOpen((prev) => !prev);

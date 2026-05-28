@@ -17,10 +17,14 @@ class DatabaseService:
         Returns: ScreeningSession object
         """
         session = ScreeningSession(job_description=job_description)
-        db.add(session)
-        db.commit()
-        db.refresh(session)
-        return session
+        try:
+            db.add(session)
+            db.commit()
+            db.refresh(session)
+            return session
+        except Exception as e:
+            db.rollback()
+            raise e
     
     @staticmethod
     def create_resume_result(
@@ -43,10 +47,14 @@ class DatabaseService:
             score=score,
             reasoning=reasoning
         )
-        db.add(result)
-        db.commit()
-        db.refresh(result)
-        return result
+        try:
+            db.add(result)
+            db.commit()
+            db.refresh(result)
+            return result
+        except Exception as e:
+            db.rollback()
+            raise e
     
     @staticmethod
     def create_bulk_results(
@@ -64,20 +72,22 @@ class DatabaseService:
         Returns: List of created ResumeResult objects
         """
         created_results = []
-        
-        for data in results_data:
-            result = ResumeResult(
-                screening_id=screening_id,
-                resume_filename=data["filename"],
-                resume_text=data["text"],
-                score=data["score"],
-                reasoning=data["reasoning"]
-            )
-            db.add(result)
-            created_results.append(result)
-        
-        db.commit()
-        return created_results
+        try:
+            for data in results_data:
+                result = ResumeResult(
+                    screening_id=screening_id,
+                    resume_filename=data["filename"],
+                    resume_text=data["text"],
+                    score=data["score"],
+                    reasoning=data["reasoning"]
+                )
+                db.add(result)
+                created_results.append(result)
+            db.commit()
+            return created_results
+        except Exception as e:
+            db.rollback()
+            raise e
     
     @staticmethod
     def get_screening_session(db: Session, screening_id: UUID) -> ScreeningSession:
@@ -116,8 +126,12 @@ class DatabaseService:
         ).first()
         
         if session:
-            session.result_count = count
-            db.commit()
+            try:
+                session.result_count = count
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                raise e
     
     @staticmethod
     def delete_expired_records(db: Session) -> int:
@@ -127,12 +141,15 @@ class DatabaseService:
         Returns: Number of records deleted
         """
         # Delete expired resume_results (cascade will handle screening_sessions)
-        result = db.query(ResumeResult).filter(
-            ResumeResult.expires_at < datetime.now(datetime.timezone.utc)
-        ).delete()
-        
-        db.commit()
-        return result
+        try:
+            result = db.query(ResumeResult).filter(
+                ResumeResult.expires_at < datetime.now(datetime.timezone.utc)
+            ).delete()
+            db.commit()
+            return result
+        except Exception as e:
+            db.rollback()
+            raise e
 
     @staticmethod
     def get_resume_result(db: Session, result_id: UUID) -> ResumeResult:
