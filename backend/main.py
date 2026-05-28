@@ -1,3 +1,9 @@
+import os
+
+print("DATABASE_URL:", bool(os.getenv("DATABASE_URL")))
+print("GROQ_API_KEY:", bool(os.getenv("GROQ_API_KEY")))
+print("FRONTEND_URL:", bool(os.getenv("FRONTEND_URL")))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
