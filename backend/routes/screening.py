@@ -144,10 +144,12 @@ async def screen_resumes(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
         logger.error(f"Internal Screening Failure: {str(e)}", exc_info=True)
+        detailed_error = f"Internal Screening Failure: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
         raise HTTPException(
             status_code=500,
-            detail="An internal server error occurred while processing the candidate evaluation. Please verify file integrity and try again."
+            detail=detailed_error
         )
 
 
