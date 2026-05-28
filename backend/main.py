@@ -1,13 +1,16 @@
 import os
-
-print("DATABASE_URL:", bool(os.getenv("DATABASE_URL")))
-print("GROQ_API_KEY:", bool(os.getenv("GROQ_API_KEY")))
-print("FRONTEND_URL:", bool(os.getenv("FRONTEND_URL")))
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Safe startup diagnostics
+print("=== STARTUP DEBUG ===")
+print("DATABASE_URL exists:", bool(os.getenv("DATABASE_URL")))
+print("GROQ_API_KEY exists:", bool(os.getenv("GROQ_API_KEY")))
+print("FRONTEND_URL exists:", bool(os.getenv("FRONTEND_URL")))
+print("=====================")
+
+# Local imports
 from config.settings import settings
-from services.db_connection import init_db
 from routes.screening import router as screening_router
 
 # Initialize FastAPI app
@@ -17,11 +20,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS (allow frontend to call backend)
-import os
+# Environment-aware frontend URL
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:3000"
+)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -34,22 +39,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize database tables
+# Safe startup hook
 @app.on_event("startup")
-def startup_event():
-    """Run on app startup"""
-    print("Initializing database...")
-    # init_db()
-    print("Database ready!")
+async def startup_event():
+    try:
+        print("Starting Resume Screener API...")
+        print("Application startup completed successfully.")
+
+    except Exception as e:
+        print("STARTUP ERROR:", str(e))
+
+        import traceback
+        traceback.print_exc()
+
+        raise e
 
 # Health check endpoint
 @app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "resume-screener-api"}
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "resume-screener-api"
+    }
 
-# Include screening routes
+# Register routes
 app.include_router(screening_router)
 
+# Local development only
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False
+    )
