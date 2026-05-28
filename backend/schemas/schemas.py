@@ -137,3 +137,15 @@ class JobDescriptionParseResponse(BaseModel):
                 "education_requirements": ["B.Tech / BE in Computer Science or related field"]
             }
         }
+
+
+# Export request schemas
+class CSVExportRequest(BaseModel):
+    screening_id: UUID
+    filtered_results: Optional[List[dict]] = None
+
+class PDFExportRequest(BaseModel):
+    result_id: UUID
+
+class ComparisonExportRequest(BaseModel):
+    result_ids: List[UUID]

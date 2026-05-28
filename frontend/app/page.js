@@ -463,11 +463,12 @@ export default function Home() {
                       </div>
 
                       <AnalyticsDashboard results={filteredResults} isLoading={loading} />
-                      <ResultsTable 
-                        results={filteredResults} 
-                        isLoading={loading} 
+                      <ResultsTable
+                        results={filteredResults}
+                        isLoading={loading}
                         selectedIds={selectedCandidateIds}
                         onSelect={handleSelectCandidate}
+                        screeningId={screeningId}
                       />
                     </>
                   )}

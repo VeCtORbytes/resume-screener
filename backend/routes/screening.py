@@ -1,13 +1,27 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
 import asyncio
+import io
+from uuid import UUID
 
 from services.db_connection import get_db
 from services.pdf_service import pdf_extractor
 from services.groq_service import groq_screener
 from services.db_service import db_service
-from schemas.schemas import ScreenResumeResponse, ResultsQueryResponse, ResumeResultResponse, ScreeningSessionResponse, JobDescriptionParseRequest, JobDescriptionParseResponse
+from services.export_service import ExportService
+from schemas.schemas import (
+    ScreenResumeResponse,
+    ResultsQueryResponse,
+    ResumeResultResponse,
+    ScreeningSessionResponse,
+    JobDescriptionParseRequest,
+    JobDescriptionParseResponse,
+    CSVExportRequest,
+    PDFExportRequest,
+    ComparisonExportRequest
+)
 
 router = APIRouter(prefix="/api", tags=["screening"])
 
@@ -274,3 +288,108 @@ def parse_job_description_endpoint(request: JobDescriptionParseRequest):
             status_code=500,
             detail=f"Failed to parse job description semantically: {str(e)}"
         )
+
+
+@router.post("/export/csv")
+def export_candidates_csv(
+    request: CSVExportRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        session = db_service.get_screening_session(db=db, screening_id=request.screening_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Screening session not found")
+        
+        results = []
+        if request.filtered_results:
+            for fr in request.filtered_results:
+                res_id = UUID(fr["id"])
+                res_obj = db_service.get_resume_result(db=db, result_id=res_id)
+                if res_obj:
+                    results.append(res_obj)
+        else:
+            results = db_service.get_results_for_screening(db=db, screening_id=request.screening_id)
+
+        csv_content = ExportService.generate_csv(results, session.job_description)
+        
+        return StreamingResponse(
+            io.BytesIO(csv_content.encode("utf-8")),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=screening_report_{str(request.screening_id)[:8]}.csv",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export CSV: {str(e)}")
+
+
+@router.post("/export/pdf")
+def export_candidate_pdf(
+    request: PDFExportRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        result = db_service.get_resume_result(db=db, result_id=request.result_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Candidate result not found")
+        
+        session = result.screening
+        if not session:
+            raise HTTPException(status_code=404, detail="Screening session not found")
+            
+        pdf_bytes = ExportService.generate_candidate_pdf(result, session.job_description)
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename={result.resume_filename.split('.')[0]}_recruiter_report.pdf",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export candidate PDF: {str(e)}")
+
+
+@router.post("/export/comparison")
+def export_comparison_pdf(
+    request: ComparisonExportRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        if not request.result_ids:
+            raise HTTPException(status_code=400, detail="At least one candidate result ID is required")
+            
+        results = []
+        session = None
+        
+        for rid in request.result_ids:
+            res_obj = db_service.get_resume_result(db=db, result_id=rid)
+            if res_obj:
+                results.append(res_obj)
+                if not session:
+                    session = res_obj.screening
+                    
+        if not results:
+            raise HTTPException(status_code=404, detail="No matching candidate results found")
+            
+        job_desc = session.job_description if session else "Standard Job Mandate"
+        pdf_bytes = ExportService.generate_comparison_pdf(results, job_desc)
+        
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": "attachment; filename=candidate_comparison_report.pdf",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export comparison PDF: {str(e)}")

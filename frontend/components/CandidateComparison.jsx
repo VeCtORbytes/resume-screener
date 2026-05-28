@@ -18,6 +18,7 @@ import {
   Cell
 } from "recharts";
 import styles from "./CandidateComparison.module.css";
+import { exportComparison } from "../lib/api";
 
 // Robust parsing of candidate scores & reasoning (matches the ResultsTable breakdown logic)
 function parseReasoning(reasoning) {
@@ -99,7 +100,7 @@ function getCandidateMetrics(cand) {
   const name = filename.replace(/\.[^/.]+$/, "");
 
   const parsed = parseReasoning(cand.reasoning);
-  
+
   let projectRelevance = 0;
   if (cand.gap_analysis?.project_intelligence && cand.gap_analysis.project_intelligence.length > 0) {
     const scores = cand.gap_analysis.project_intelligence.map(p => p.relevance_score || 0);
@@ -134,6 +135,22 @@ function getCandidateMetrics(cand) {
 
 export default function CandidateComparison({ selectedCandidates = [], onClose }) {
   const [mounted, setMounted] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
+
+  const handleExportComparison = async () => {
+    if (selectedCandidates.length === 0) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      const ids = selectedCandidates.map(c => c.id);
+      await exportComparison(ids);
+    } catch (err) {
+      setExportError("Failed to generate comparison report: " + err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -230,7 +247,7 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
   const getSkillStatus = (cand, skillObj) => {
     const gap = cand.gap_analysis || {};
     const evals = gap.weighted_evaluations || [];
-    
+
     // Attempt to locate via weighted evaluations
     const match = evals.find(ev => ev.name.toLowerCase().trim() === skillObj.name.toLowerCase().trim());
     if (match) {
@@ -238,9 +255,9 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
         return { symbol: "✅ Present", class: styles.matrixMatched, label: `Present` };
       } else {
         const isCritical = skillObj.category === "must_have" || skillObj.importance >= 60;
-        return { 
-          symbol: isCritical ? "❌ Missing" : "⚠️ Missing", 
-          class: isCritical ? styles.matrixMissing : styles.matrixWarning, 
+        return {
+          symbol: isCritical ? "❌ Missing" : "⚠️ Missing",
+          class: isCritical ? styles.matrixMissing : styles.matrixWarning,
           label: isCritical ? `Missing (Critical)` : `Missing (Optional)`
         };
       }
@@ -268,15 +285,39 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
 
   return (
     <div className={styles.workspace}>
+      {/* Premium Recruiter Loading Modal Overlay */}
+      {exporting && (
+        <div className={styles.premiumModalOverlay}>
+          <div className={styles.premiumModalContent}>
+            <div className={styles.premiumPulseSpinner}></div>
+            <h4 className={styles.premiumModalTitle}>Generating recruiter comparison report...</h4>
+            <p className={styles.premiumModalSubtitle}>Assembling multi-profile overall score alignments, comparative weighted skill matrices, critical gap analyses, portfolio evidence, and interview readiness indexes.</p>
+          </div>
+        </div>
+      )}
+
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className={styles.icon}>⚖️</span>
           <h3 className={styles.title}>Candidate Comparison Matrix</h3>
           <p className={styles.subtitle}>Side-by-side evaluation comparison of top candidate profiles</p>
         </div>
-        <button onClick={onClose} className={styles.backBtn}>
-          ← Back to Candidates List
-        </button>
+        <div className={styles.headerActions}>
+          {exportError && (
+            <span className={styles.compareErrorText}>{exportError}</span>
+          )}
+          <button
+            onClick={handleExportComparison}
+            disabled={exporting || selectedCandidates.length === 0}
+            className={styles.exportCompareBtn}
+            title="Generate downloadable Lever-style multi-profile side-by-side comparison report PDF"
+          >
+            ⚖️ Generate Comparison Report
+          </button>
+          <button onClick={onClose} className={styles.backBtn}>
+            ← Back to Candidates List
+          </button>
+        </div>
       </div>
 
       {/* --- SIDE-BY-SIDE CARDS GRID --- */}
@@ -293,12 +334,12 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
           const strengths = cand.gap_analysis?.strength_areas?.length
             ? cand.gap_analysis.strength_areas
             : (parsed?.strengths || ["Technical stack suitability"]);
-          
+
           const gaps = cand.gap_analysis?.critical_gaps?.length
             ? cand.gap_analysis.critical_gaps
             : (parsed?.gaps || ["No major gaps flagged"]);
 
-          const summary = parsed?.recommendation 
+          const summary = parsed?.recommendation
             ? `${parsed.recommendation}. Standard mathematical evaluation matching job directives.`
             : "Satisfactory candidate evaluation matching guidelines.";
 
@@ -379,8 +420,8 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
                     <span className={styles.readinessPercent}>{readiness.value}%</span>
                   </div>
                   <div className={styles.readinessTrack}>
-                    <div 
-                      className={`${styles.readinessBar} ${readiness.class}`} 
+                    <div
+                      className={`${styles.readinessBar} ${readiness.class}`}
                       style={{ width: `${readiness.value}%` }}
                     ></div>
                   </div>
@@ -457,22 +498,22 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   tick={{ fill: "#64748b", fontSize: 11 }}
                   axisLine={{ stroke: "#e2e8f0" }}
                   tickLine={false}
                 />
-                <YAxis 
-                  domain={[0, 100]} 
+                <YAxis
+                  domain={[0, 100]}
                   tick={{ fill: "#64748b", fontSize: 11 }}
                   axisLine={{ stroke: "#e2e8f0" }}
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    background: "#ffffff", 
-                    border: "1px solid #e2e8f0", 
+                <Tooltip
+                  contentStyle={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
                     borderRadius: "8px",
                     fontSize: 12
                   }}
@@ -495,13 +536,13 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
             <ResponsiveContainer width="100%" height={240}>
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarChartData}>
                 <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis 
-                  dataKey="subject" 
+                <PolarAngleAxis
+                  dataKey="subject"
                   tick={{ fill: "#475569", fontSize: 10, fontWeight: 500 }}
                 />
-                <PolarRadiusAxis 
-                  angle={30} 
-                  domain={[0, 100]} 
+                <PolarRadiusAxis
+                  angle={30}
+                  domain={[0, 100]}
                   tick={{ fill: "#94a3b8", fontSize: 8 }}
                   axisLine={false}
                 />
@@ -518,17 +559,17 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
                     />
                   );
                 })}
-                <Tooltip 
-                  contentStyle={{ 
-                    background: "#ffffff", 
-                    border: "1px solid #e2e8f0", 
+                <Tooltip
+                  contentStyle={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
                     borderRadius: "8px",
                     fontSize: 11
                   }}
                 />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={32} 
+                <Legend
+                  verticalAlign="bottom"
+                  height={32}
                   iconType="circle"
                   iconSize={6}
                   wrapperStyle={{ fontSize: "10px", color: "#475569", paddingTop: "10px" }}

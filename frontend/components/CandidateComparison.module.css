@@ -525,3 +525,136 @@
 .blueTitle {
   color: #2563eb !important;
 }
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exportCompareBtn {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.exportCompareBtn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.exportCompareBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #94a3b8;
+  border-color: #94a3b8;
+}
+
+.compareErrorText {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* Premium SaaS Recruiter Overlay Modal */
+.premiumModalOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 12px;
+    animation: fadeInModalCompare 0.25s ease-out;
+}
+
+.premiumModalContent {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: scaleInModalCompare 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.premiumPulseSpinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #4f46e5;
+    position: relative;
+    animation: pulseLoaderCompare 1.4s ease-in-out infinite;
+}
+
+.premiumPulseSpinner::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 50%;
+    border: 2px solid #4f46e5;
+    opacity: 0.8;
+    animation: pulseRingCompare 1.4s ease-in-out infinite;
+}
+
+.premiumModalTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.premiumModalSubtitle {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #64748b;
+    margin: 0;
+}
+
+@keyframes fadeInModalCompare {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInModalCompare {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseLoaderCompare {
+    0%, 100% { transform: scale(0.85); opacity: 0.6; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes pulseRingCompare {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
