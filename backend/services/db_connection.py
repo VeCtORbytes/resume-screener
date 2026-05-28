@@ -1,7 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import UUID
 from config.settings import settings
 from models.models import Base
+
+# Teach SQLite how to compile PostgreSQL UUID fields during mock startup
+@compiles(UUID, "sqlite")
+def compile_uuid_sqlite(type_, compiler, **kw):
+    return "CHAR(36)"
 
 # Create database engine safely
 db_url = settings.DATABASE_URL or "sqlite:///:memory:"
