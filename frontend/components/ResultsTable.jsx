@@ -448,6 +448,21 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
 
                                                     {parsed && parsed.type === "structured" ? (
                                                         <div className={styles.structuredLayout}>
+                                                             {result.gap_analysis?.extraction_confidence && result.gap_analysis.extraction_confidence.score < 80 && (
+                                                                 <div className={styles.lowConfidenceAlert}>
+                                                                     <span className={styles.alertIcon}>⚠️</span>
+                                                                     <div className={styles.alertContent}>
+                                                                         <h5 className={styles.alertTitle}>
+                                                                             Low Resume Extraction Quality (Confidence: {result.gap_analysis.extraction_confidence.score}%)
+                                                                         </h5>
+                                                                         <p className={styles.alertDescription}>
+                                                                             Resume text density is unusually sparse or heavily corrupted (e.g., poor scanned OCR or image-only file). 
+                                                                             Reasons: <strong>{result.gap_analysis.extraction_confidence.reasons?.join("; ") || "Corrupted character patterns or missing mandatory sections."}</strong>.
+                                                                             Please check the raw PDF file directly to verify experience.
+                                                                         </p>
+                                                                     </div>
+                                                                 </div>
+                                                             )}
 
                                                             {/* 📊 Rubric Breakdown Metrics Grid */}
                                                             <div className={styles.rubricSection}>
@@ -542,6 +557,38 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
                                                                 </div>
                                                             </div>
 
+                                                            {/* 🛡️ AI Reliability & Recruitment Guardrails */}
+                                                            {result.gap_analysis?.reliability_signals && (
+                                                                <div className={styles.reliabilityPanel}>
+                                                                    <div className={styles.reliabilityMetric}>
+                                                                        <span className={styles.reliabilityLabel}>🛡️ AI Confidence Score</span>
+                                                                        <div className={styles.reliabilityValueBadge}>
+                                                                            <div className={styles.reliabilityProgressBg}>
+                                                                                <div className={styles.reliabilityProgressFill} style={{ width: `${result.gap_analysis.reliability_signals.ai_confidence_score}%` }}></div>
+                                                                            </div>
+                                                                            <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.ai_confidence_score}%</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className={styles.reliabilityMetric}>
+                                                                        <span className={styles.reliabilityLabel}>⚡ Evidence Strength</span>
+                                                                        <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.evidence_strength}%</span>
+                                                                    </div>
+                                                                    <div className={styles.reliabilityMetric}>
+                                                                        <span className={styles.reliabilityLabel}>🔍 Parsing Reliability</span>
+                                                                        <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.parsing_reliability}%</span>
+                                                                    </div>
+                                                                    {result.gap_analysis.recruiter_alerts && result.gap_analysis.recruiter_alerts.length > 0 && (
+                                                                        <div className={styles.alertsListContainer}>
+                                                                            {result.gap_analysis.recruiter_alerts.map((alert, idx) => (
+                                                                                <div key={idx} className={styles.recruiterAlertItem}>
+                                                                                    {alert.includes("⚠️") || alert.includes("💡") ? alert : `💡 ${alert}`}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+
                                                             {/* Side-by-Side Strengths and Gaps */}
                                                             <div className={styles.feedbackGrid}>
                                                                 <div className={styles.feedbackCol}>
@@ -584,38 +631,80 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
                                                                     <div className={styles.gapGrid}>
 
                                                                         {/* Card 1: Core Skill Matching */}
-                                                                        <div className={styles.gapCard}>
-                                                                            <h5 className={styles.gapCardTitle}>📌 Core Skill Matching</h5>
-                                                                            <div className={styles.gapColumns}>
-                                                                                <div className={styles.gapSubCol}>
-                                                                                    <span className={styles.gapSubLabel}>Required Matched</span>
-                                                                                    {result.gap_analysis.must_have_matched && result.gap_analysis.must_have_matched.length > 0 ? (
-                                                                                        <div className={styles.gapPills}>
-                                                                                            {result.gap_analysis.must_have_matched.map((s, i) => (
-                                                                                                <span key={i} className={`${styles.gapPill} ${styles.matchedPill}`}>✓ {s}</span>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <span className={styles.gapEmptyText}>No matched required skills found.</span>
-                                                                                    )}
-                                                                                </div>
+                                                                         <div className={styles.gapCard}>
+                                                                             <h5 className={styles.gapCardTitle}>📌 Skill Evaluation & Semantic Match Confidence</h5>
+                                                                             
+                                                                             {result.gap_analysis.weighted_evaluations && result.gap_analysis.weighted_evaluations.length > 0 ? (
+                                                                                 <div className={styles.skillsEvalGrid}>
+                                                                                     {result.gap_analysis.weighted_evaluations.map((ev, i) => {
+                                                                                         const status = ev.status || "missing";
+                                                                                         const confidence = ev.confidence || "high";
+                                                                                         const quality = ev.evidence_quality || 100;
+                                                                                         const category = ev.category === "must_have" ? "Must-Have" : "Good-to-Have";
+                                                                                         
+                                                                                         let pillClass = styles.missingEvalCard;
+                                                                                         let statusSymbol = "❌";
+                                                                                         if (status === "matched") {
+                                                                                             pillClass = styles.matchedEvalCard;
+                                                                                             statusSymbol = "✅";
+                                                                                         } else if (status === "inferred") {
+                                                                                             pillClass = styles.inferredEvalCard;
+                                                                                             statusSymbol = "✓";
+                                                                                         } else if (status === "ambiguous") {
+                                                                                             pillClass = styles.ambiguousEvalCard;
+                                                                                             statusSymbol = "⚠️";
+                                                                                         } else if (status === "partial") {
+                                                                                             pillClass = styles.ambiguousEvalCard;
+                                                                                             statusSymbol = "⚠️";
+                                                                                         }
+                                                                                         
+                                                                                         return (
+                                                                                             <div key={i} className={`${styles.skillsEvalCard} ${pillClass}`}>
+                                                                                                 <div className={styles.skillsEvalHeader}>
+                                                                                                     <span className={styles.skillsEvalName}>{ev.name}</span>
+                                                                                                     <span className={styles.skillsEvalCategory}>{category}</span>
+                                                                                                 </div>
+                                                                                                 <div className={styles.skillsEvalDetails}>
+                                                                                                     <span className={styles.skillsEvalStatus}>{statusSymbol} {status.toUpperCase()}</span>
+                                                                                                     <span className={styles.skillsEvalConfidence}>Confidence: {confidence.toUpperCase()} ({quality}%)</span>
+                                                                                                 </div>
+                                                                                                 {ev.evidence && (
+                                                                                                     <p className={styles.skillsEvalEvidence}>{ev.evidence}</p>
+                                                                                                 )}
+                                                                                             </div>
+                                                                                         );
+                                                                                     })}
+                                                                                 </div>
+                                                                             ) : (
+                                                                                 <div className={styles.gapColumns}>
+                                                                                     <div className={styles.gapSubCol}>
+                                                                                         <span className={styles.gapSubLabel}>Required Matched</span>
+                                                                                         {result.gap_analysis.must_have_matched && result.gap_analysis.must_have_matched.length > 0 ? (
+                                                                                             <div className={styles.gapPills}>
+                                                                                                 {result.gap_analysis.must_have_matched.map((s, i) => (
+                                                                                                     <span key={i} className={`${styles.gapPill} ${styles.matchedPill}`}>✓ {s}</span>
+                                                                                                 ))}
+                                                                                             </div>
+                                                                                         ) : (
+                                                                                             <span className={styles.gapEmptyText}>No matched required skills found.</span>
+                                                                                         )}
+                                                                                     </div>
 
-                                                                                <div className={styles.gapSubCol}>
-                                                                                    <span className={styles.gapSubLabel}>Preferred Matched</span>
-                                                                                    {result.gap_analysis.good_to_have_matched && result.gap_analysis.good_to_have_matched.length > 0 ? (
-                                                                                        <div className={styles.gapPills}>
-                                                                                            {result.gap_analysis.good_to_have_matched.map((s, i) => (
-                                                                                                <span key={i} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {s}</span>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <span className={styles.gapEmptyText}>No matched preferred skills found.</span>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {/* Card 2: Critical Gaps */}
+                                                                                     <div className={styles.gapSubCol}>
+                                                                                         <span className={styles.gapSubLabel}>Preferred Matched</span>
+                                                                                         {result.gap_analysis.good_to_have_matched && result.gap_analysis.good_to_have_matched.length > 0 ? (
+                                                                                             <div className={styles.gapPills}>
+                                                                                                 {result.gap_analysis.good_to_have_matched.map((s, i) => (
+                                                                                                     <span key={i} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {s}</span>
+                                                                                                 ))}
+                                                                                             </div>
+                                                                                         ) : (
+                                                                                             <span className={styles.gapEmptyText}>No matched preferred skills found.</span>
+                                                                                         )}
+                                                                                     </div>
+                                                                                 </div>
+                                                                             )}
+                                                                         </div>\n\n                                                                         {/* Card 2: Critical Gaps */}
                                                                         <div className={`${styles.gapCard} ${styles.criticalGapsCard}`}>
                                                                             <h5 className={styles.gapCardTitle}>⚠️ Critical Gaps & Mismatches</h5>
                                                                             {result.gap_analysis.must_have_missing && result.gap_analysis.must_have_missing.length > 0 ? (

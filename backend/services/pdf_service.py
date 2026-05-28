@@ -91,6 +91,64 @@ class PDFExtractor:
             
         return extracted_text.strip()
 
+    @staticmethod
+    def calculate_extraction_confidence(text: str, filename: str) -> dict:
+        """
+        Evaluate extracted text metrics to compute an objective extraction confidence level.
+        """
+        if not text:
+            return {"score": 0, "label": "Low", "reasons": ["Empty document detected."]}
+            
+        score = 100
+        reasons = []
+        
+        # 1. Page count vs character density check
+        char_count = len(text)
+        page_count = max(1, text.count("--- Page "))
+        density = char_count / page_count
+        
+        if density < 150:
+            score -= 35
+            reasons.append("Extremely low text density (likely scanned image or low-quality OCR).")
+        elif density < 400:
+            score -= 15
+            reasons.append("Low text density detected.")
+            
+        # 2. Section completeness check (Standard HR Sections)
+        sections = {
+            "experience": ["experience", "employment", "work history", "career", "history"],
+            "education": ["education", "university", "college", "degree", "academic"],
+            "skills": ["skills", "technologies", "languages", "tools", "competencies"]
+        }
+        
+        text_lower = text.lower()
+        for section_name, keywords in sections.items():
+            if not any(keyword in text_lower for keyword in keywords):
+                score -= 10
+                reasons.append(f"Missing distinct '{section_name.title()}' section markers.")
+                
+        # 3. OCR conversion corruption patterns
+        letters = sum(c.isalpha() for c in text)
+        if char_count > 0:
+            letter_ratio = letters / char_count
+            if letter_ratio < 0.65:
+                score -= 15
+                reasons.append("High ratio of non-alphabet characters (possible OCR conversion corruption).")
+                
+        score = max(10, min(100, score))
+        
+        label = "High"
+        if score < 50:
+            label = "Low"
+        elif score < 80:
+            label = "Medium"
+            
+        return {
+            "score": score,
+            "label": label,
+            "reasons": reasons
+        }
+
 
 # Create global instance
 pdf_extractor = PDFExtractor()
