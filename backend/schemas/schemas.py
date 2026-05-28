@@ -71,6 +71,14 @@ class ResultsQueryResponse(BaseModel):
         from_attributes = True
 
 
+class WeightedSkill(BaseModel):
+    """Represents a job requirement skill with assigned semantic importance"""
+    name: str
+    importance: int = Field(..., ge=0, le=100)
+    category: str = Field(..., pattern="^(must_have|good_to_have)$")
+    rationale: str
+
+
 class JobDescriptionParseRequest(BaseModel):
     """Data sent from client when requesting semantic JD parsing"""
     job_description: str = Field(..., min_length=10, max_length=5000)
@@ -79,11 +87,12 @@ class JobDescriptionParseRequest(BaseModel):
 class JobDescriptionParseResponse(BaseModel):
     """Structured hiring intelligence extracted from job description"""
     job_title: str
-    must_have_skills: List[str]
-    good_to_have_skills: List[str]
-    responsibilities: List[str]
-    experience_requirements: List[str]
-    education_requirements: List[str]
+    must_have_skills: List[str] = []
+    good_to_have_skills: List[str] = []
+    responsibilities: List[str] = []
+    experience_requirements: List[str] = []
+    education_requirements: List[str] = []
+    weighted_skills: List[WeightedSkill] = []
 
     class Config:
         json_schema_extra = {
@@ -91,8 +100,52 @@ class JobDescriptionParseResponse(BaseModel):
                 "job_title": "Full Stack Developer (MERN Stack)",
                 "must_have_skills": ["React.js", "JavaScript (ES6+)", "Node.js", "Express.js", "MongoDB"],
                 "good_to_have_skills": ["AI API integration (Groq / OpenAI)", "Deployment experience (Vercel / Render)"],
+                "weighted_skills": [
+                    {
+                        "name": "JavaScript",
+                        "importance": 100,
+                        "category": "must_have",
+                        "rationale": "Must be highly proficient in JavaScript"
+                    },
+                    {
+                        "name": "React",
+                        "importance": 90,
+                        "category": "must_have",
+                        "rationale": "Strong React expertise required"
+                    },
+                    {
+                        "name": "REST APIs",
+                        "importance": 80,
+                        "category": "must_have",
+                        "rationale": "Experience with REST APIs"
+                    },
+                    {
+                        "name": "Docker",
+                        "importance": 40,
+                        "category": "good_to_have",
+                        "rationale": "Good to have Docker"
+                    },
+                    {
+                        "name": "AWS",
+                        "importance": 20,
+                        "category": "good_to_have",
+                        "rationale": "Nice to have AWS"
+                    }
+                ],
                 "responsibilities": ["Develop responsive React interfaces", "Build Express APIs", "Design MongoDB schemas"],
                 "experience_requirements": ["Internship / Fresher / 0–1 Year"],
                 "education_requirements": ["B.Tech / BE in Computer Science or related field"]
             }
         }
+
+
+# Export request schemas
+class CSVExportRequest(BaseModel):
+    screening_id: UUID
+    filtered_results: Optional[List[dict]] = None
+
+class PDFExportRequest(BaseModel):
+    result_id: UUID
+
+class ComparisonExportRequest(BaseModel):
+    result_ids: List[UUID]

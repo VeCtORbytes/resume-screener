@@ -95,3 +95,109 @@ export async function getSessions() {
         throw error;
     }
 }
+
+/**
+ * Export filtered candidate list as a CSV
+ */
+export async function exportCSV(screeningId, filteredResults = []) {
+    try {
+        const response = await fetch(`${API_URL}/api/export/csv`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                screening_id: screeningId,
+                filtered_results: filteredResults
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to export CSV");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `screening_report_${screeningId.slice(0, 8)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Export CSV error:", error);
+        throw error;
+    }
+}
+
+/**
+ * Export premium multi-page candidate suitability PDF report
+ */
+export async function exportPDF(resultId, candidateName) {
+    try {
+        const response = await fetch(`${API_URL}/api/export/pdf`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                result_id: resultId
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to export PDF");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${candidateName.replace(/\s+/g, "_")}_recruiter_report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Export PDF error:", error);
+        throw error;
+    }
+}
+
+/**
+ * Export recruiter side-by-side comparison matrix PDF report
+ */
+export async function exportComparison(resultIds) {
+    try {
+        const response = await fetch(`${API_URL}/api/export/comparison`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                result_ids: resultIds
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to export comparison PDF");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `candidate_comparison_report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Export comparison error:", error);
+        throw error;
+    }
+}
