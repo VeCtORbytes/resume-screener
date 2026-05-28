@@ -33,7 +33,7 @@ app.add_middleware(
 def startup_event():
     """Run on app startup"""
     print("Initializing database...")
-    init_db()
+    # init_db()
     print("Database ready!")
 
 # Health check endpoint
