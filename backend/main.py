@@ -1,6 +1,11 @@
 import os
 import sys
 import traceback
+# pyrefly: ignore [missing-import]
+from dotenv import load_dotenv
+
+# Explicitly load .env into os.environ at startup
+load_dotenv()
 
 print("=== STARTUP DIAGNOSTIC CHECK ===")
 print("DATABASE_URL exists:", bool(os.getenv("DATABASE_URL")))
@@ -42,7 +47,9 @@ except Exception as e:
 # 4. Safe FastAPI Initialization
 try:
     print("4. Initializing FastAPI application...")
+    # pyrefly: ignore [missing-import]
     from fastapi import FastAPI
+    # pyrefly: ignore [missing-import]
     from fastapi.middleware.cors import CORSMiddleware
     
     app = FastAPI(
@@ -110,11 +117,12 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "resume-screener-api",
-        "database_configured": bool(os.getenv("DATABASE_URL"))
+        "database_configured": bool(settings.DATABASE_URL)
     }
 
 # Local development & production entry point
 if __name__ == "__main__":
+    # pyrefly: ignore [missing-import]
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     print(f"Starting server on port {port}...")
