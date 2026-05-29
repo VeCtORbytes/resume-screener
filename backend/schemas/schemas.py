@@ -146,6 +146,9 @@ class CSVExportRequest(BaseModel):
 
 class PDFExportRequest(BaseModel):
     result_id: UUID
+    recruiter_notes: Optional[str] = None
+    current_stage: Optional[str] = None
+    interview_questions: Optional[List[str]] = None
 
 class ComparisonExportRequest(BaseModel):
     result_ids: List[UUID]

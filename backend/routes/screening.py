@@ -400,7 +400,13 @@ def export_candidate_pdf(
         if not session:
             raise HTTPException(status_code=404, detail="Screening session not found")
             
-        pdf_bytes = ExportService.generate_candidate_pdf(result, session.job_description)
+        pdf_bytes = ExportService.generate_candidate_pdf(
+            result,
+            session.job_description,
+            recruiter_notes=body.recruiter_notes,
+            current_stage=body.current_stage,
+            interview_questions=body.interview_questions
+        )
         
         # Sanitize filename to prevent directory traversal or CRLF header injections
         clean_filename = "".join(c for c in result.resume_filename.split('.')[0] if c.isalnum() or c in ("-", "_"))

@@ -95,6 +95,7 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCandidateId, setSelectedCandidateId] = useState("all");
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   // Prevent Next.js SSR hydration mismatches with Recharts
   useEffect(() => {
@@ -456,39 +457,27 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
 
   return (
     <div className={styles.dashboard}>
-      {/* Tabbed view selector for dashboard and insights */}
+      {/* 🚀 Recruiter-First Header */}
       <div className={styles.dashboardHeader}>
         <div className={styles.headerTitleGroup}>
-          <h3 className={styles.dashboardTitle}>Screening Analytics</h3>
-          <p className={styles.dashboardSubtitle}>Executive summary of current candidate batch evaluation</p>
+          <h3 className={styles.dashboardTitle}>Hiring Decision Workspace</h3>
+          <p className={styles.dashboardSubtitle}>High-level performance summary of your current candidate batch</p>
         </div>
-        <div className={styles.tabs}>
-          <button 
-            onClick={() => setActiveTab("overview")}
-            className={`${styles.tabBtn} ${activeTab === "overview" ? styles.activeTab : ""}`}
-          >
-            Overview
-          </button>
-          <button 
-            onClick={() => setActiveTab("comparison")}
-            className={`${styles.tabBtn} ${activeTab === "comparison" ? styles.activeTab : ""}`}
-          >
-            Candidate Radar
-          </button>
-          <button 
-            onClick={() => setActiveTab("weighted")}
-            className={`${styles.tabBtn} ${activeTab === "weighted" ? styles.activeTab : ""}`}
-          >
-            Weighted JD Gap Intelligence
-          </button>
-        </div>
+        
+        {/* Toggle Button for Recruiter Progressive Disclosure */}
+        <button 
+          onClick={() => setIsAdvancedOpen(prev => !prev)}
+          className={styles.advancedToggleBtn}
+        >
+          {isAdvancedOpen ? "📊 Hide Technical Analytics" : "⚙️ Show Advanced Analytics"}
+        </button>
       </div>
 
-      {/* --- KPI SUMMARY CARDS --- */}
+      {/* --- RECRUITER PRIMARY KPI SUMMARY CARDS --- */}
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Total Candidates</span>
+            <span className={styles.kpiLabel}>Candidates Screened</span>
             <span className={styles.kpiIcon}>👥</span>
           </div>
           <h2 className={styles.kpiValue}>{totalCandidates}</h2>
@@ -497,20 +486,11 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
 
         <div className={styles.kpiCard}>
           <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Top Candidate Score</span>
-            <span className={`${styles.kpiIcon} ${styles.topScoreIcon}`}>🏆</span>
-          </div>
-          <h2 className={styles.kpiValue}>{topScore}<span className={styles.percentSymbol}>/100</span></h2>
-          <p className={styles.kpiFooter}>Highest mathematical match</p>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average Score</span>
+            <span className={styles.kpiLabel}>Average Match Score</span>
             <span className={styles.kpiIcon}>📊</span>
           </div>
           <h2 className={styles.kpiValue}>{avgScore}<span className={styles.percentSymbol}>/100</span></h2>
-          <p className={styles.kpiFooter}>Batch mean score</p>
+          <p className={styles.kpiFooter}>Mean batch suitability score</p>
         </div>
 
         <div className={styles.kpiCard}>
@@ -521,9 +501,46 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           <h2 className={styles.kpiValue}>{strongMatches}</h2>
           <p className={styles.kpiFooter}>Scored 80 or above</p>
         </div>
+
+        {isAdvancedOpen && (
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiMeta}>
+              <span className={styles.kpiLabel}>Top Candidate Score</span>
+              <span className={`${styles.kpiIcon} ${styles.topScoreIcon}`}>🏆</span>
+            </div>
+            <h2 className={styles.kpiValue}>{topScore}<span className={styles.percentSymbol}>/100</span></h2>
+            <p className={styles.kpiFooter}>Highest candidate match score</p>
+          </div>
+        )}
       </div>
 
-      {/* --- Upgraded Critical Gap KPI Cards --- */}
+      {isAdvancedOpen && (
+        <>
+          {/* Tabbed view selector inside advanced view */}
+          <div className={styles.tabsHeaderRow} style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <div className={styles.tabs}>
+              <button 
+                onClick={() => setActiveTab("overview")}
+                className={`${styles.tabBtn} ${activeTab === "overview" ? styles.activeTab : ""}`}
+              >
+                JD Gap Intelligence
+              </button>
+              <button 
+                onClick={() => setActiveTab("comparison")}
+                className={`${styles.tabBtn} ${activeTab === "comparison" ? styles.activeTab : ""}`}
+              >
+                Candidate Radar
+              </button>
+              <button 
+                onClick={() => setActiveTab("weighted")}
+                className={`${styles.tabBtn} ${activeTab === "weighted" ? styles.activeTab : ""}`}
+              >
+                Skill Weight Distribution
+              </button>
+            </div>
+          </div>
+
+          {/* --- Upgraded Critical Gap KPI Cards --- */}
       <div className={styles.sectionDivider}>
         <span className={styles.secDividerLabel}>Job Requirement Gap Insights</span>
       </div>
@@ -1115,6 +1132,8 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
 
         </div>
       )}
+      
+      </>)}
     </div>
   );
 }

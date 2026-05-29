@@ -1716,3 +1716,396 @@
         transform: translateY(0);
     }
 }
+
+.fileNameRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rowSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.rowSummarySection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rowSummaryLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+
+.rowSummaryPills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.rowStrengthPill {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.rowGapPill {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.drawerTabs {
+    display: flex;
+    border-bottom: 1px solid #e2e8f0;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    align-items: center;
+}
+
+.drawerTab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.drawerTab:hover {
+    color: #0f172a;
+    background: #f8fafc;
+    border-radius: 6px 6px 0 0;
+}
+
+.drawerTabActive {
+    border-bottom-color: #0f172a;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.drawerPdfBtn {
+    margin-left: auto;
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.drawerPdfBtn:hover:not(:disabled) {
+    background: #1e293b;
+    border-color: #1e293b;
+}
+
+.drawerPdfBtn:disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.drawerTabContent {
+    min-height: 200px;
+}
+
+.tabPanel {
+    animation: fadeIn 0.25s ease-out;
+}
+
+.pdfExportErrorRow {
+    margin-bottom: 12px;
+}
+
+/* Factual Fit Classification Callout */
+.fitCalloutCard {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #0f172a;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.fitCalloutHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.fitCalloutLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fitCalloutBadge {
+    font-size: 11px;
+    font-weight: 700;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.fitCalloutDesc {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #334155;
+    margin: 0;
+}
+
+/* Shortlist Star styles */
+.shortlistStarBtn {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    color: #cbd5e1;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-right: 4px;
+    transition: transform 0.1s, color 0.1s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shortlistStarBtn:hover {
+    transform: scale(1.2);
+    color: #fbbf24;
+}
+
+.shortlistStarBtn.shortlisted {
+    color: #f59e0b;
+}
+
+/* Recommendation badge */
+.recBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.strongHire {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.hire {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.needsInterview {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.needsReview {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.reject {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* Hiring Stage Select styles */
+.stageSelect {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    border: 1px solid transparent;
+    transition: all 0.15s ease-in-out;
+    width: 140px;
+}
+
+.stageApplied {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+
+.stageScreened {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.stageShortlisted {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #bbf7d0;
+}
+
+.stageInterviewScheduled {
+    background: #fdf4ff;
+    color: #a21caf;
+    border-color: #f5d0fe;
+}
+
+.stageInterviewed {
+    background: #faf5ff;
+    color: #7e22ce;
+    border-color: #e9d5ff;
+}
+
+.stageOffer {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.stageRejected {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+/* Action button styles */
+.viewDetailsBtn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.viewDetailsBtn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.pdfActionBtn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #64748b;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.pdfActionBtn:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+/* Notes Tab styles */
+.notesWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notesHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notesTitle {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.notesSubtitle {
+    font-size: 11.5px;
+    color: #64748b;
+    margin: 0;
+}
+
+.notesTextarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.notesTextarea:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.notesFooter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.notesSaveIndicator {
+    font-size: 11px;
+    color: #10b981;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}

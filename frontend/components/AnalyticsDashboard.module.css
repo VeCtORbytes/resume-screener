@@ -39,6 +39,33 @@
   margin: 0;
 }
 
+.advancedToggleBtn {
+  background: #f8fafc;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.advancedToggleBtn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.tabsHeaderRow {
+  display: flex;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
 /* Tabs */
 .tabs {
   display: flex;

@@ -99,6 +99,32 @@ export default function Home() {
   const [sessions, setSessions] = useState([]);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [shortlistCount, setShortlistCount] = useState(0);
+
+  useEffect(() => {
+    const updateCount = () => {
+      if (!screeningId) {
+        setShortlistCount(0);
+        return;
+      }
+      try {
+        const stored = localStorage.getItem(`hirelens_shortlist_${screeningId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const count = Object.values(parsed).filter(Boolean).length;
+          setShortlistCount(count);
+        } else {
+          setShortlistCount(0);
+        }
+      } catch (e) {
+        setShortlistCount(0);
+      }
+    };
+
+    updateCount();
+    window.addEventListener("hirelens_shortlist_update", updateCount);
+    return () => window.removeEventListener("hirelens_shortlist_update", updateCount);
+  }, [screeningId]);
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
@@ -436,6 +462,21 @@ export default function Home() {
                         onChange={handleMinScoreChange}
                         isLoading={loading}
                       />
+
+                      {/* Premium ATS Shortlist Status Ribbon */}
+                      <div className={styles.atsRibbon}>
+                        <div className={styles.atsPill}>
+                          <span className={styles.atsPillIcon}>⭐</span>
+                          <span className={styles.atsPillText}>
+                            <strong>{shortlistCount}</strong> Candidate{shortlistCount !== 1 ? "s" : ""} Shortlisted
+                          </span>
+                        </div>
+                        {shortlistCount > 0 && (
+                          <div className={styles.atsViewPill}>
+                            <span>Sorted at top of hiring pipeline</span>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Premium Side-by-Side Compare Action Status Bar */}
                       <div className={styles.compareBar}>

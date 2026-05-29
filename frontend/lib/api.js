@@ -135,7 +135,7 @@ export async function exportCSV(screeningId, filteredResults = []) {
 /**
  * Export premium multi-page candidate suitability PDF report
  */
-export async function exportPDF(resultId, candidateName) {
+export async function exportPDF(resultId, candidateName, recruiterNotes = null, currentStage = null, interviewQuestions = null) {
     try {
         const response = await fetch(`${API_URL}/api/export/pdf`, {
             method: "POST",
@@ -143,7 +143,10 @@ export async function exportPDF(resultId, candidateName) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                result_id: resultId
+                result_id: resultId,
+                recruiter_notes: recruiterNotes,
+                current_stage: currentStage,
+                interview_questions: interviewQuestions
             }),
         });
 
