@@ -8,6 +8,8 @@ import FilterControl from "../components/FilterControl";
 import AnalyticsDashboard from "../components/AnalyticsDashboard";
 import CandidateComparison from "../components/CandidateComparison";
 import { screenResumes, getResults, getSessions } from "../lib/api";
+import useStructuredJob from "../hooks/useStructuredJob";
+import { buildJdFromStructured } from "../lib/jdBuilders";
 import styles from "./page.module.css";
 
 const SAMPLE_JD = `Job Description — Full Stack Developer (MERN + AI Integrations)
@@ -100,6 +102,31 @@ export default function Home() {
   const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
   const [shortlistCount, setShortlistCount] = useState(0);
+  const [activeSession, setActiveSession] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [inputMode, setInputMode] = useState("paste");
+  const {
+    structuredJob,
+    setStructuredJob,
+    updateRoleInfo,
+    addMustHaveSkill,
+    removeMustHaveSkill,
+    addGoodToHaveSkill,
+    removeGoodToHaveSkill,
+    updateTextField,
+    resetJob
+  } = useStructuredJob();
+
+  useEffect(() => {
+    if (screeningId && sessions.length > 0) {
+      const found = sessions.find(s => s.id === screeningId);
+      if (found) {
+        setActiveSession(found);
+      }
+    } else if (!screeningId) {
+      setActiveSession(null);
+    }
+  }, [screeningId, sessions]);
 
   useEffect(() => {
     const updateCount = () => {
@@ -151,6 +178,7 @@ export default function Home() {
     try {
       setScreeningId(session.id);
       setJobDescription(session.job_description);
+      setInputMode("paste"); // Force history sessions to Pasteur mode
 
       const resultsData = await getResults(session.id, 0);
       setResults(resultsData.results);
@@ -197,6 +225,7 @@ export default function Home() {
 
   const handleClearJD = () => {
     setJobDescription("");
+    resetJob();
   };
 
   const scrollToWorkspace = () => {
@@ -231,9 +260,20 @@ export default function Home() {
   };
 
   const handleScreening = async () => {
-    if (!jobDescription.trim() || jobDescription.trim().length < 10) {
-      setError("Job description is too short. Minimum 10 characters required.");
-      return;
+    let targetJD = jobDescription;
+
+    if (inputMode === "build") {
+      if (!structuredJob.roleInfo.title || !structuredJob.roleInfo.title.trim()) {
+        setError("Job Title is required in structured requirements builder mode.");
+        return;
+      }
+      targetJD = buildJdFromStructured(structuredJob);
+      setJobDescription(targetJD);
+    } else {
+      if (!jobDescription.trim() || jobDescription.trim().length < 10) {
+        setError("Job description is too short. Minimum 10 characters required.");
+        return;
+      }
     }
 
     if (resumeFiles.length === 0) {
@@ -248,7 +288,7 @@ export default function Home() {
     setShowComparison(false);
 
     try {
-      const response = await screenResumes(jobDescription, resumeFiles);
+      const response = await screenResumes(targetJD, resumeFiles);
       setScreeningId(response.screening_id);
 
       const resultsData = await getResults(response.screening_id, 0);
@@ -293,20 +333,16 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* 2. HERO SECTION */}
+      {/* 2. EDITORIAL HERO SECTION */}
       <header className={styles.hero}>
         <div className={styles.heroContent}>
-          <div className={styles.heroTag}> Recruiter intelligence workspace</div>
-          <h1 className={styles.heroTitle}>Screen Candidates in Minutes, Not Hours</h1>
+          <h1 className={styles.heroTitle}>Review candidates,<br />not resumes.</h1>
           <p className={styles.heroSubtitle}>
-            Accelerate your hiring funnel. Upload a batch of resume PDFs and instantly rank technical, experience, and domain alignment against your specific job description in seconds.
+            Create hiring requirements and let HireLens surface the strongest matches. Intentional recruitment software designed to find target capabilities with absolute simplicity.
           </p>
           <div className={styles.heroActions}>
             <button onClick={scrollToWorkspace} className={styles.heroCta}>
-              Start Screening ➔
-            </button>
-            <button onClick={scrollToHowItWorks} className={styles.heroSecondaryCta}>
-              Learn more
+              Create Hiring Requirements
             </button>
           </div>
         </div>
@@ -315,27 +351,144 @@ export default function Home() {
       {/* 3. MAIN WORKSPACE */}
       <main ref={workspaceRef} className={styles.workspaceSection}>
         <div className={styles.workspaceContainer}>
-          <div className={styles.workspaceLayout}>
-            {/* LEFT PANEL = Inputs */}
-            <section className={styles.leftPanel}>
-              <div className={styles.panelHeader}>
-                <h3 className={styles.panelTitle}>Screening Setup</h3>
-                <p className={styles.panelSubtitle}>Configure your evaluation constraints</p>
+          
+          {/* Horizontal Recruiter Workflow Timeline Navigator */}
+          <div className={styles.workflowNav}>
+            <div className={`${styles.workflowNavStep} ${(!screeningId && !resumeFiles.length) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>01</span>
+              <div className={styles.navStepText}>
+                <strong>Job Requirements</strong>
+                <span>Define criteria</span>
               </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(resumeFiles.length > 0 && !screeningId) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>02</span>
+              <div className={styles.navStepText}>
+                <strong>Upload Resumes</strong>
+                <span>Ingest profiles</span>
+              </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(screeningId && !activeSession) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>03</span>
+              <div className={styles.navStepText}>
+                <strong>Review Candidates</strong>
+                <span>Evaluate list</span>
+              </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(activeSession) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>04</span>
+              <div className={styles.navStepText}>
+                <strong>Hiring Decision</strong>
+                <span>Finalize choice</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Collapsible Horizontal Screening History Panel */}
+          <div className={styles.topHistorySection}>
+            <button
+              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              className={styles.historyToggleBtn}
+              title={isHistoryOpen ? "Hide Screening History" : "View Screening History"}
+            >
+              {isHistoryOpen ? "✕ Hide Screening History" : "🕒 View Previous Screening History"}
+            </button>
+            
+            {isHistoryOpen && (
+              <div className={styles.topHistoryList}>
+                {sessions.length > 0 ? (
+                  sessions.map((s) => {
+                    const isActive = screeningId === s.id;
+                    const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    });
+                    let roleName = "Screening Session";
+                    if (s.job_description) {
+                      const lines = s.job_description.split("\n");
+                      const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
+                      if (roleLine) {
+                        roleName = roleLine.replace(/(role:|title:)/i, "").trim();
+                      } else {
+                        roleName = lines[0].trim() || s.job_description.slice(0, 30);
+                      }
+                    }
+                    if (roleName.length > 30) {
+                      roleName = roleName.slice(0, 30) + "...";
+                    }
 
-              <div className={styles.inputStack}>
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => handleSelectSession(s)}
+                        className={`${styles.topHistoryItem} ${isActive ? styles.activeTopHistoryItem : ""}`}
+                      >
+                        <div className={styles.topHistoryItemMeta}>
+                          <span className={styles.topHistoryItemTitle} title={roleName}>
+                            {roleName}
+                          </span>
+                          <span className={styles.topHistoryItemDate}>{dateStr}</span>
+                        </div>
+                        <span className={styles.topHistoryItemPill}>
+                          {s.result_count} {s.result_count === 1 ? "resume" : "resumes"}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className={styles.emptyHistory}>No prior screenings found.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.workflowStack}>
+            
+            {/* STEP 1: Job Description */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepBadge}>STEP 1</span>
+                <h3 className={styles.stepTitle}>Job Description & Mandates</h3>
+                <p className={styles.stepDesc}>Define the target role description, key skills, and mandatory requirements</p>
+              </div>
+              <div className={styles.workflowCard}>
+                <JobDescInput
+                  inputMode={inputMode}
+                  onInputModeChange={setInputMode}
+                  freeTextValue={jobDescription}
+                  onFreeTextChange={handleJobDescChange}
+                  structuredJob={structuredJob}
+                  updateRoleInfo={updateRoleInfo}
+                  addMustHaveSkill={addMustHaveSkill}
+                  removeMustHaveSkill={removeMustHaveSkill}
+                  addGoodToHaveSkill={addGoodToHaveSkill}
+                  removeGoodToHaveSkill={removeGoodToHaveSkill}
+                  updateTextField={updateTextField}
+                  setStructuredJob={setStructuredJob}
+                  isLoading={loading}
+                  onUseSample={handleUseSample}
+                  onClear={handleClearJD}
+                />
+              </div>
+            </div>
+
+            {/* STEP 2: Resume Upload & Screening Ingestion */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepBadge}>STEP 2</span>
+                <h3 className={styles.stepTitle}>Candidate Resumes Ingestion</h3>
+                <p className={styles.stepDesc}>Upload candidate resume PDFs and trigger the standardized grading rubric</p>
+              </div>
+              <div className={styles.workflowCard}>
                 <FileUpload
                   files={resumeFiles}
                   onFilesSelect={handleFilesSelect}
                   isLoading={loading}
-                />
-
-                <JobDescInput
-                  value={jobDescription}
-                  onChange={handleJobDescChange}
-                  isLoading={loading}
-                  onUseSample={handleUseSample}
-                  onClear={handleClearJD}
                 />
 
                 {/* Validation UX - elegant inline box */}
@@ -361,78 +514,23 @@ export default function Home() {
                   {loading ? (
                     <>
                       <div className={styles.loaderSpinner}></div>
-                      <span>Analyzing...</span>
+                      <span>{loadingText}</span>
                     </>
                   ) : (
-                    <span>Initiate Candidates Screening</span>
+                    <span>Initiate Candidate Resume Screenings</span>
                   )}
                 </button>
-
-                {/* 🕒 Screening History Panel */}
-                <div className={styles.historyPanel}>
-                  <div className={styles.historyHeader}>
-                    <h4 className={styles.historyTitle}>
-                      <span className={styles.historyTitleIcon}>🕒</span> Previous Screenings
-                    </h4>
-                  </div>
-
-                  {sessions.length > 0 ? (
-                    <div className={styles.historyList}>
-                      {sessions.map((s) => {
-                        const isActive = screeningId === s.id;
-                        const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        });
-
-                        // Clean role name from JD text
-                        let roleName = "Screening Session";
-                        if (s.job_description) {
-                          const lines = s.job_description.split("\n");
-                          const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
-                          if (roleLine) {
-                            roleName = roleLine.replace(/(role:|title:)/i, "").trim();
-                          } else {
-                            // Fallback to first line or slice of description
-                            roleName = lines[0].trim() || s.job_description.slice(0, 30);
-                          }
-                        }
-                        if (roleName.length > 30) {
-                          roleName = roleName.slice(0, 30) + "...";
-                        }
-
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => handleSelectSession(s)}
-                            className={`${styles.historyItem} ${isActive ? styles.activeHistoryItem : ""}`}
-                          >
-                            <div className={styles.historyItemMeta}>
-                              <span className={styles.historyItemTitle} title={roleName}>
-                                {roleName}
-                              </span>
-                              <span className={styles.historyItemDate}>{dateStr}</span>
-                            </div>
-                            <div className={styles.historyItemDetails}>
-                              <span className={styles.historyItemPill}>
-                                {s.result_count} {s.result_count === 1 ? "resume" : "resumes"}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className={styles.emptyHistory}>No prior screenings found.</p>
-                  )}
-                </div>
               </div>
-            </section>
+            </div>
 
-            {/* RIGHT PANEL = Results */}
-            <section className={styles.rightPanel}>
+            {/* STEP 3: Candidate Results */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepBadge}>STEP 3</span>
+                <h3 className={styles.stepTitle}>Hiring Suitability Results</h3>
+                <p className={styles.stepDesc}>Explore screened candidates, match score comparisons, and make final decisions</p>
+              </div>
+              
               {loading ? (
                 /* Premium Dynamic Loading State */
                 <div className={styles.loadingWrapper}>
@@ -443,7 +541,7 @@ export default function Home() {
                     </div>
                     <h4 className={styles.loadingTitle}>{loadingText}</h4>
                     <p className={styles.loadingSub}>
-                      Our recruiting models are evaluating candidate files against your deterministic mathematical rubric.
+                      Our AI models are evaluating candidate files against your standardized mathematical grading rubric.
                     </p>
                   </div>
                 </div>
@@ -512,23 +610,25 @@ export default function Home() {
                         selectedIds={selectedCandidateIds}
                         onSelect={handleSelectCandidate}
                         screeningId={screeningId}
+                        activeSession={activeSession}
                       />
                     </>
                   )}
                 </div>
               ) : (
-                /* Elegant Empty State */
+                /* Elegant simplified recruiter empty state */
                 <div className={styles.emptyResultsWrapper}>
                   <div className={styles.emptyStateCard}>
-                    <span className={styles.emptyStateIcon}>📊</span>
-                    <h4 className={styles.emptyStateTitle}>Evaluation Workspace</h4>
+                    <span className={styles.emptyStateIcon}>📂</span>
+                    <h4 className={styles.emptyStateTitle}>No resumes uploaded yet</h4>
                     <p className={styles.emptyStateDesc}>
-                      Configure your job requirements and upload candidate PDFs on the left, then trigger screening to load the ranked candidate list here.
+                      Upload candidate resumes in Step 2 to start reviewing and screening candidates.
                     </p>
                   </div>
                 </div>
               )}
-            </section>
+            </div>
+
           </div>
         </div>
       </main>

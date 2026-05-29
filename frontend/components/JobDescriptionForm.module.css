@@ -1,0 +1,485 @@
+.container {
+    background: var(--surface);
+    padding: 32px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: none;
+}
+
+.headerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.titleWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    font-family: var(--font-serif), Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.utilityActions {
+    display: flex;
+    gap: 10px;
+}
+
+.utilityBtn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.utilityBtn:hover:not(:disabled) {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+.clearBtn {
+    background: transparent;
+    color: #b91c1c;
+    border: 1px solid #fee2e2;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.clearBtn:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.utilityBtn:disabled, .clearBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* SECTION 1 — Segmented Selector */
+.tabsWrapper {
+    display: flex;
+    background: var(--bg-secondary);
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 28px;
+    gap: 2px;
+    border: 1px solid var(--border);
+}
+
+.tabBtn {
+    flex: 1;
+    text-align: center;
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tabBtn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.activeTab {
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+}
+
+/* SECTION 2 — free-form text input */
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.textarea {
+    width: 100%;
+    min-height: 240px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.15s ease-in-out;
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.08);
+}
+
+.textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.textarea:disabled {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-color: var(--border);
+    cursor: not-allowed;
+}
+
+.footer {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.charCount {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.charCount.error {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+/* SECTION 2 — Structured Form Builder */
+.builderWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+}
+
+.formSection {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 36px;
+}
+
+.formSection:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.sectionHeader {
+    font-family: var(--font-serif), Georgia, serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.sectionHelper {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin: -8px 0 4px 0;
+    line-height: 1.5;
+}
+
+.formRowGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .formRowGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.formRowGrid3Col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .formRowGrid3Col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.required {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.input, .select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: all 0.15s ease-in-out;
+}
+
+.input:focus, .select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.08);
+}
+
+.input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235B5B5B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 14px;
+    padding-right: 40px;
+}
+
+/* Skills chip input styling */
+.tagInputContainer {
+    display: flex;
+    gap: 10px;
+}
+
+.tagInput {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: all 0.15s ease;
+}
+
+.tagInput:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.08);
+}
+
+.addTagBtn {
+    background: var(--accent);
+    color: #ffffff;
+    border: 1px solid var(--accent);
+    padding: 10px 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.addTagBtn:hover:not(:disabled) {
+    background: #194030;
+    border-color: #194030;
+}
+
+.addTagBtn:disabled {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+.chipsWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    align-items: center;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.mustHaveChip {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.mustHaveChip:hover {
+    background: #c7ebd7;
+}
+
+.goodToHaveChip {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.goodToHaveChip:hover {
+    background: var(--bg-secondary);
+}
+
+.removeChipBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    transition: background 0.15s;
+}
+
+.removeChipBtn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.emptyChipsText {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.builderTextarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.15s ease-in-out;
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.builderTextarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.08);
+}
+
+/* Hiring Priorities grid radios */
+.radioGroupGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 640px) {
+    .radioGroupGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.radioBoxLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.radioBoxLabel:hover {
+    border-color: var(--border);
+    background: var(--bg-secondary);
+}
+
+.activeRadioBox {
+    background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+}
+
+.radioInput {
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.radioTextContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.radioBoxHeading {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.radioBoxDesc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}

@@ -4,6 +4,14 @@ import { useState, Fragment, useEffect } from "react";
 import styles from "./ResultsTable.module.css";
 import { getScoreBadge } from "../lib/constants";
 import { generateInterviewQuestions, exportPDF, exportCSV, exportComparison } from "../lib/api";
+import {
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
+} from "recharts";
 
 function getCandidateName(filename) {
     if (!filename) return "Unknown Candidate";
@@ -109,13 +117,120 @@ function parseReasoning(reasoning) {
     }
 }
 
-export default function ResultsTable({ results = [], isLoading, selectedIds = [], onSelect, screeningId }) {
+function getCandidateRadarData(result) {
+    const score = result.score || 0;
+    const parsed = parseReasoning(result.reasoning);
+    
+    if (!parsed || parsed.type !== "structured" || !parsed.breakdown) {
+        return [
+            { subject: "Technical Fit", score: score },
+            { subject: "Experience", score: Math.round(score * 0.95) },
+            { subject: "Project Relevance", score: Math.round(score * 0.90) },
+            { subject: "Education", score: Math.round(score * 0.85) },
+            { subject: "Domain Fit", score: Math.round(score * 0.80) }
+        ];
+    }
+    
+    const b = parsed.breakdown;
+    return [
+        { subject: "Technical Fit", score: Math.round((b.skills / 40) * 100) },
+        { subject: "Experience", score: Math.round((b.experience / 25) * 100) },
+        { subject: "Project Relevance", score: Math.round((b.projects / 20) * 100) },
+        { subject: "Education", score: Math.round((b.education / 10) * 100) },
+        { subject: "Domain Fit", score: Math.round((b.domain / 5) * 100) }
+    ];
+}
+
+function renderAiSummary(result, parsed) {
+    const rawSummary = result.reasoning.split(/Strengths:|Gaps:/i)[0].replace(/Recommendation:\s*[^\n\r]+/i, "").trim();
+    // Split by sentences to form clean bullets
+    let bullets = rawSummary.split(/[.!?]\s+/).map(s => s.trim()).filter(s => s.length > 8);
+    
+    if (bullets.length === 0 && parsed && parsed.strengths) {
+        bullets = parsed.strengths;
+    }
+    
+    return (
+        <div className={styles.aiSummaryCard}>
+            <h4 className={styles.aiSummaryTitle}>🧠 AI Recruiter Summary</h4>
+            <ul className={styles.aiSummaryList}>
+                {bullets.map((bullet, idx) => {
+                    const cleanBullet = bullet.replace(/^[-•*✅⚠️\s]+/, "").trim();
+                    if (!cleanBullet) return null;
+                    return (
+                        <li key={idx} className={styles.aiSummaryItem}>
+                            <span className={styles.aiSummaryBullet}>✦</span>
+                            <span className={styles.aiSummaryText}>{cleanBullet}{cleanBullet.endsWith('.') ? '' : '.'}</span>
+                        </li>
+                    );
+                })}
+            </ul>
+        </div>
+    );
+}
+
+function renderSkillsOverviewList(title, matched, missing, customClass) {
+    const total = matched.length + missing.length;
+    const matchPct = total > 0 ? Math.round((matched.length / total) * 100) : 0;
+    
+    return (
+        <div className={`${styles.skillsSection} ${customClass}`}>
+            <div className={styles.skillsSectionHeader}>
+                <h5 className={styles.skillsSectionTitle}>{title}</h5>
+                <span className={styles.skillsSectionProgress}>{matched.length} of {total} Matched ({matchPct}%)</span>
+            </div>
+            
+            <div className={styles.skillsProgressBarBg}>
+                <div className={styles.skillsProgressBarFill} style={{ width: `${matchPct}%` }}></div>
+            </div>
+            
+            <ul className={styles.skillsOverviewList}>
+                {matched.map((skill, idx) => (
+                    <li key={`matched-${idx}`} className={`${styles.skillsOverviewItem} ${styles.matchedSkill}`}>
+                        <span className={styles.skillCheckMark}>✓</span>
+                        <span className={styles.skillNameText}>{skill}</span>
+                        <span className={styles.skillStatusLabelMatched}>Matched</span>
+                    </li>
+                ))}
+                {missing.map((skill, idx) => (
+                    <li key={`missing-${idx}`} className={`${styles.skillsOverviewItem} ${styles.missingSkill}`}>
+                        <span className={styles.skillCrossMark}>✗</span>
+                        <span className={styles.skillNameText}>{skill}</span>
+                        <span className={styles.skillStatusLabelMissing}>Missing</span>
+                    </li>
+                ))}
+                {total === 0 && (
+                    <li className={styles.skillsEmptyItem}>No specific requirements listed.</li>
+                )}
+            </ul>
+        </div>
+    );
+}
+
+export default function ResultsTable({ results = [], isLoading, selectedIds = [], onSelect, screeningId, activeSession }) {
     const [expandedIds, setExpandedIds] = useState({});
     const [candidateQuestions, setCandidateQuestions] = useState({});
     const [generatingId, setGeneratingId] = useState(null);
     const [generationError, setGenerationError] = useState({});
     const [activeQuestionTab, setActiveQuestionTab] = useState({}); // Stores active tab name mapped per candidate
     const [detailActiveTab, setDetailActiveTab] = useState({}); // Stores active details drawer tab per candidate
+    const [advancedInsightsOpen, setAdvancedInsightsOpen] = useState({}); // Stores expanded state of Detailed Analysis drawer
+    const [activeCandidateId, setActiveCandidateId] = useState(null); // Stores currently active candidate in vertical workflow
+
+    const toggleAdvancedOpen = (candId) => {
+        setAdvancedInsightsOpen(prev => ({
+            ...prev,
+            [candId]: !prev[candId]
+        }));
+    };
+
+    useEffect(() => {
+        if (results && results.length > 0) {
+            setActiveCandidateId(results[0].id);
+        } else {
+            setActiveCandidateId(null);
+        }
+    }, [results, screeningId]);
     const [shortlist, setShortlist] = useState({}); // Stores shortlist state mapped per candidate
     const [notes, setNotes] = useState({}); // Stores recruiter notes mapped per candidate
     const [stages, setStages] = useState({}); // Stores candidate pipeline stages mapped per candidate
@@ -468,10 +583,7 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
                     <tbody>
                         {sortedResults.map((result, index) => {
                             const score = result.score;
-                            const isExpanded = !!expandedIds[result.id];
                             const parsed = parseReasoning(result.reasoning);
-                            const activeTab = activeQuestionTab[result.id] || "technical";
-                            const activeDetailTab = detailActiveTab[result.id] || "overview";
 
                             const scoreClass = score >= 80
                                 ? styles.excellent
@@ -485,766 +597,592 @@ export default function ResultsTable({ results = [], isLoading, selectedIds = []
                             const recInfo = getHiringRecommendation(score);
 
                             return (
-                                <Fragment key={result.id}>
-                                    {/* Main Row */}
-                                    <tr
-                                        key={result.id}
-                                        className={`${styles.row} ${isExpanded ? styles.expandedRow : ""} ${isSelected ? styles.selectedRow : ""}`}
-                                        onClick={() => toggleExpand(result.id)}
-                                    >
-                                        <td className={styles.selectCol} onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => onSelect(result.id)}
-                                                disabled={!isSelected && selectedIds.length >= 3}
-                                                className={styles.checkboxInput}
-                                            />
-                                        </td>
-                                        <td className={styles.nameCol}>
-                                            <div className={styles.nameWrapper}>
-                                                <div className={styles.fileNameRow} onClick={(e) => e.stopPropagation()}>
-                                                    <button
-                                                        onClick={(e) => handleToggleShortlist(e, result.id)}
-                                                        className={`${styles.shortlistStarBtn} ${shortlist[result.id] ? styles.shortlisted : ""}`}
-                                                        title={shortlist[result.id] ? "Remove from Shortlist" : "Add to Shortlist"}
-                                                    >
-                                                        {shortlist[result.id] ? "★" : "☆"}
-                                                    </button>
-                                                    <span className={styles.fileName} onClick={() => toggleExpand(result.id)} style={{ cursor: "pointer" }}>
-                                                        {getCandidateName(result.resume_filename)}
-                                                    </span>
-                                                </div>
-                                                
-                                                {/* Recruiter-First Summary of Strengths and Gaps */}
-                                                {parsed && parsed.type === "structured" && (
-                                                    <div className={styles.rowSummary}>
-                                                        {parsed.strengths && parsed.strengths.length > 0 && (
-                                                            <div className={styles.rowSummarySection}>
-                                                                <span className={styles.rowSummaryLabel}>Strengths:</span>
-                                                                <div className={styles.rowSummaryPills}>
-                                                                    {parsed.strengths.slice(0, 3).map((str, idx) => (
-                                                                        <span key={idx} className={styles.rowStrengthPill} title={str}>
-                                                                            ✓ {str.length > 20 ? str.slice(0, 20) + "..." : str}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {parsed.gaps && parsed.gaps.length > 0 && (
-                                                            <div className={styles.rowSummarySection}>
-                                                                <span className={styles.rowSummaryLabel}>Missing:</span>
-                                                                <div className={styles.rowSummaryPills}>
-                                                                    {parsed.gaps.slice(0, 3).map((gap, idx) => (
-                                                                        <span key={idx} className={styles.rowGapPill} title={gap}>
-                                                                            ✗ {gap.length > 20 ? gap.slice(0, 20) + "..." : gap}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className={styles.scoreCol}>
-                                            <div className={`${styles.scoreBadge} ${scoreClass}`}>
-                                                <span className={styles.scoreValue}>{score}%</span>
-                                            </div>
-                                        </td>
-                                        <td className={styles.recommendationCol}>
-                                            <span className={`${styles.recBadge} ${recInfo.class}`}>
-                                                {recInfo.emoji} {recInfo.text}
-                                            </span>
-                                        </td>
-                                        <td className={styles.stageCol} onClick={(e) => e.stopPropagation()}>
-                                            <select
-                                                value={stages[result.id] || "Applied"}
-                                                onChange={(e) => handleChangeStage(e, result.id, e.target.value)}
-                                                className={`${styles.stageSelect} ${styles[getStageClass(stages[result.id] || "Applied")]}`}
-                                            >
-                                                <option value="Applied">Applied</option>
-                                                <option value="Screened">Screened</option>
-                                                <option value="Shortlisted">Shortlisted</option>
-                                                <option value="Interview Scheduled">Interview Scheduled</option>
-                                                <option value="Interviewed">Interviewed</option>
-                                                <option value="Offer">Offer</option>
-                                                <option value="Rejected">Rejected</option>
-                                            </select>
-                                        </td>
-                                        <td className={styles.actionCol} onClick={(e) => e.stopPropagation()}>
-                                            <div className={styles.actionCellContainer}>
-                                                <button 
-                                                    onClick={() => toggleExpand(result.id)}
-                                                    className={styles.viewDetailsBtn}
-                                                >
-                                                    {isExpanded ? "Hide Details" : "View Details"}
-                                                </button>
+                                <tr
+                                    key={result.id}
+                                    className={`${styles.row} ${activeCandidateId === result.id ? styles.activeCandidateRow : ""} ${isSelected ? styles.selectedRow : ""}`}
+                                    onClick={() => setActiveCandidateId(result.id)}
+                                >
+                                    <td className={styles.selectCol} onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(result.id)}
+                                            disabled={!isSelected && selectedIds.length >= 3}
+                                            className={styles.checkboxInput}
+                                        />
+                                    </td>
+                                    <td className={styles.nameCol}>
+                                        <div className={styles.nameWrapper}>
+                                            <div className={styles.fileNameRow} onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={(e) => handleExportPDF(e, result.id, result.resume_filename)}
-                                                    disabled={exportingPdfId === result.id}
-                                                    className={styles.pdfActionBtn}
-                                                    title="Download Recruiter Intelligence Report"
+                                                    onClick={(e) => handleToggleShortlist(e, result.id)}
+                                                    className={`${styles.shortlistStarBtn} ${shortlist[result.id] ? styles.shortlisted : ""}`}
+                                                    title={shortlist[result.id] ? "Remove from Shortlist" : "Add to Shortlist"}
                                                 >
-                                                    {exportingPdfId === result.id ? "..." : "📄 Export"}
+                                                    {shortlist[result.id] ? "★" : "☆"}
                                                 </button>
+                                                <span className={styles.fileName} onClick={() => setActiveCandidateId(result.id)} style={{ cursor: "pointer" }}>
+                                                    {getCandidateName(result.resume_filename)}
+                                                </span>
                                             </div>
-                                        </td>
-                                    </tr>
-                                    {/* Expandable Dashboard Details Workspace */}
-                                    {isExpanded && (
-                                        <tr key={`${result.id}-details`} className={styles.detailsRow}>
-                                            <td colSpan={6} className={styles.detailsCell}>
-                                                <div className={styles.drawerContainer}>
-
-                                                    {/* Premium Recruiter Loading Modal Overlay */}
-                                                    {exportingPdfId === result.id && (
-                                                        <div className={styles.premiumModalOverlay}>
-                                                            <div className={styles.premiumModalContent}>
-                                                                <div className={styles.premiumPulseSpinner}></div>
-                                                                <h4 className={styles.premiumModalTitle}>Generating recruiter intelligence report...</h4>
-                                                                <p className={styles.premiumModalSubtitle}>Assembling executive summaries, weighted capability mapping, inferred portfolio evidence, and structured diagnostic interviewing toolkits.</p>
+                                            
+                                            {/* Recruiter-First Summary of Strengths and Gaps */}
+                                            {parsed && parsed.type === "structured" && (
+                                                <div className={styles.rowSummary}>
+                                                    {parsed.strengths && parsed.strengths.length > 0 && (
+                                                        <div className={styles.rowSummarySection}>
+                                                            <span className={styles.rowSummaryLabel}>Strengths:</span>
+                                                            <div className={styles.rowSummaryPills}>
+                                                                {parsed.strengths.slice(0, 3).map((str, idx) => (
+                                                                    <span key={idx} className={styles.rowStrengthPill} title={str}>
+                                                                        ✓ {str.length > 20 ? str.slice(0, 20) + "..." : str}
+                                                                    </span>
+                                                                ))}
                                                             </div>
                                                         </div>
                                                     )}
-
-                                                    {/* Recruiter-First Navigation Tabs inside Candidate Drawer */}
-                                                    <div className={styles.drawerTabs}>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "overview" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "overview" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            👤 Overview
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "skills_match" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "skills_match" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            🎯 Skills Match
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "projects_experience" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "projects_experience" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            📁 Projects & Experience
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "interview_questions" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "interview_questions" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            💬 Interview Questions
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "notes" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "notes" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            📝 Notes
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setDetailActiveTab(prev => ({ ...prev, [result.id]: "advanced_insights" })); }}
-                                                            className={`${styles.drawerTab} ${activeDetailTab === "advanced_insights" ? styles.drawerTabActive : ""}`}
-                                                        >
-                                                            ⚙️ Detailed Analysis
-                                                        </button>
-                                                        
-                                                        {/* Action to export candidate PDF directly from header */}
-                                                        <button
-                                                            onClick={(e) => handleExportPDF(e, result.id, result.resume_filename)}
-                                                            disabled={exportingPdfId === result.id}
-                                                            className={styles.drawerPdfBtn}
-                                                        >
-                                                            📄 {exportingPdfId === result.id ? "Generating PDF..." : "Export Report (PDF)"}
-                                                        </button>
-                                                    </div>
-
-                                                    {exportPdfError[result.id] && (
-                                                        <div className={styles.pdfExportErrorRow}>
-                                                            <span className={styles.pdfExportError}>⚠️ {exportPdfError[result.id]}</span>
+                                                    {parsed.gaps && parsed.gaps.length > 0 && (
+                                                        <div className={styles.rowSummarySection}>
+                                                            <span className={styles.rowSummaryLabel}>Missing:</span>
+                                                            <div className={styles.rowSummaryPills}>
+                                                                {parsed.gaps.slice(0, 3).map((gap, idx) => (
+                                                                    <span key={idx} className={styles.rowGapPill} title={gap}>
+                                                                        ✗ {gap.length > 20 ? gap.slice(0, 20) + "..." : gap}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     )}
-
-                                                    {/* TAB CONTENT PANELS */}
-                                                    <div className={styles.drawerTabContent}>
-
-                                                        {/* 1. OVERVIEW TAB */}
-                                                        {activeDetailTab === "overview" && (
-                                                            <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                {result.gap_analysis?.extraction_confidence && result.gap_analysis.extraction_confidence.score < 80 && (
-                                                                    <div className={styles.lowConfidenceAlert}>
-                                                                        <span className={styles.alertIcon}>⚠️</span>
-                                                                        <div className={styles.alertContent}>
-                                                                            <h5 className={styles.alertTitle}>
-                                                                                Low Resume Extraction Quality (Confidence: {result.gap_analysis.extraction_confidence.score}%)
-                                                                            </h5>
-                                                                            <p className={styles.alertDescription}>
-                                                                                Resume text density is unusually sparse or heavily corrupted (e.g., poor scanned OCR or image-only file). 
-                                                                                Reasons: <strong>{result.gap_analysis.extraction_confidence.reasons?.join("; ") || "Corrupted character patterns or missing mandatory sections."}</strong>.
-                                                                                Please check the raw PDF file directly to verify experience.
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {parsed && parsed.type === "structured" && parsed.recommendation && (
-                                                                    <div className={styles.fitCalloutCard}>
-                                                                        <div className={styles.fitCalloutHeader}>
-                                                                            <span className={styles.fitCalloutLabel}>Recommendation Match:</span>
-                                                                            <span className={styles.fitCalloutBadge}>{parsed.recommendation}</span>
-                                                                        </div>
-                                                                        <p className={styles.fitCalloutDesc}>
-                                                                            This candidate is classified as a <strong>{parsed.recommendation}</strong> based on their technical skills coverage, experience relevance, and project evidence.
-                                                                        </p>
-                                                                    </div>
-                                                                )}
-
-                                                                {parsed && parsed.type === "structured" ? (
-                                                                    <>
-                                                                        {/* Side-by-Side Strengths and Gaps */}
-                                                                        <div className={styles.feedbackGrid}>
-                                                                            <div className={styles.feedbackCol}>
-                                                                                <h5 className={`${styles.feedbackTitle} ${styles.strengthHeader}`}>✅ Core Strengths</h5>
-                                                                                {parsed.strengths.length > 0 ? (
-                                                                                    <ul className={styles.feedbackList}>
-                                                                                        {parsed.strengths.map((str, idx) => (
-                                                                                            <li key={idx} className={styles.feedbackItem}>
-                                                                                                <span className={styles.bulletCheck}>✓</span>
-                                                                                                <span className={styles.feedbackText}>{str}</span>
-                                                                                            </li>
-                                                                                        ))}
-                                                                                    </ul>
-                                                                                ) : (
-                                                                                    <p className={styles.emptyFeedback}>General alignment observed.</p>
-                                                                                )}
-                                                                            </div>
-
-                                                                            <div className={styles.feedbackCol}>
-                                                                                <h5 className={`${styles.feedbackTitle} ${styles.gapHeader}`}>⚠️ Areas of Misalignment / Gaps</h5>
-                                                                                {parsed.gaps.length > 0 ? (
-                                                                                    <ul className={styles.feedbackList}>
-                                                                                        {parsed.gaps.map((gap, idx) => (
-                                                                                            <li key={idx} className={styles.feedbackItem}>
-                                                                                                <span className={styles.bulletWarning}>!</span>
-                                                                                                <span className={styles.feedbackText}>{gap}</span>
-                                                                                            </li>
-                                                                                        ))}
-                                                                                    </ul>
-                                                                                ) : (
-                                                                                    <p className={styles.emptyFeedback}>No critical mismatches detected.</p>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {/* High-level Description & Evaluation Reasoning */}
-                                                                        <div className={styles.legacyReasoning} style={{ marginTop: "16px" }}>
-                                                                            <h4 className={styles.sectionHeading} style={{ marginBottom: "12px" }}>🔍 Executive Summary & Rationale</h4>
-                                                                            <p className={styles.legacyText}>
-                                                                                {result.reasoning.split(/Strengths:|Gaps:/i)[0].replace(/Recommendation:\s*[^\n\r]+/i, "").trim()}
-                                                                            </p>
-                                                                        </div>
-                                                                    </>
-                                                                ) : (
-                                                                    <div className={styles.legacyReasoning}>
-                                                                        <h4 className={styles.sectionHeading}>Evaluation Reasoning</h4>
-                                                                        <p className={styles.legacyText}>{result.reasoning}</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* 2. SKILLS MATCH TAB */}
-                                                        {activeDetailTab === "skills_match" && (
-                                                            <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                {result.gap_analysis ? (
-                                                                    <div className={styles.gapIntelligenceSection} style={{ marginTop: 0 }}>
-                                                                        <h4 className={styles.sectionHeading}>🎯 Candidate Skill Gap Intelligence</h4>
-                                                                        <div className={styles.gapGrid}>
-
-                                                                            {/* Card 1: Core Skill Matching */}
-                                                                            <div className={styles.gapCard}>
-                                                                                <h5 className={styles.gapCardTitle}>📌 Skill Evaluation & Semantic Match Confidence</h5>
-                                                                                {result.gap_analysis.weighted_evaluations && result.gap_analysis.weighted_evaluations.length > 0 ? (
-                                                                                    <div className={styles.skillsEvalGrid}>
-                                                                                        {result.gap_analysis.weighted_evaluations.map((ev, i) => {
-                                                                                            const status = ev.status || "missing";
-                                                                                            const confidence = ev.confidence || "high";
-                                                                                            const quality = ev.evidence_quality || 100;
-                                                                                            const category = ev.category === "must_have" ? "Must-Have" : "Good-to-Have";
-                                                                                            
-                                                                                            let pillClass = styles.missingEvalCard;
-                                                                                            let statusSymbol = "❌";
-                                                                                            if (status === "matched") {
-                                                                                                pillClass = styles.matchedEvalCard;
-                                                                                                statusSymbol = "✅";
-                                                                                            } else if (status === "inferred") {
-                                                                                                pillClass = styles.inferredEvalCard;
-                                                                                                statusSymbol = "✓";
-                                                                                            } else if (status === "ambiguous" || status === "partial") {
-                                                                                                pillClass = styles.ambiguousEvalCard;
-                                                                                                statusSymbol = "⚠️";
-                                                                                            }
-                                                                                            
-                                                                                            return (
-                                                                                                <div key={i} className={`${styles.skillsEvalCard} ${pillClass}`}>
-                                                                                                    <div className={styles.skillsEvalHeader}>
-                                                                                                        <span className={styles.skillsEvalName}>{ev.name}</span>
-                                                                                                        <span className={styles.skillsEvalCategory}>{category}</span>
-                                                                                                    </div>
-                                                                                                    <div className={styles.skillsEvalDetails}>
-                                                                                                        <span className={styles.skillsEvalStatus}>{statusSymbol} {status.toUpperCase()}</span>
-                                                                                                        <span className={styles.skillsEvalConfidence}>Confidence: {confidence.toUpperCase()} ({quality}%)</span>
-                                                                                                    </div>
-                                                                                                    {ev.evidence && (
-                                                                                                        <p className={styles.skillsEvalEvidence}>{ev.evidence}</p>
-                                                                                                    )}
-                                                                                                </div>
-                                                                                            );
-                                                                                        })}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className={styles.gapColumns}>
-                                                                                        <div className={styles.gapSubCol}>
-                                                                                            <span className={styles.gapSubLabel}>Required Matched</span>
-                                                                                            {result.gap_analysis.must_have_matched && result.gap_analysis.must_have_matched.length > 0 ? (
-                                                                                                <div className={styles.gapPills}>
-                                                                                                    {result.gap_analysis.must_have_matched.map((s, i) => (
-                                                                                                        <span key={i} className={`${styles.gapPill} ${styles.matchedPill}`}>✓ {s}</span>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <span className={styles.gapEmptyText}>No matched required skills found.</span>
-                                                                                            )}
-                                                                                        </div>
-
-                                                                                        <div className={styles.gapSubCol}>
-                                                                                            <span className={styles.gapSubLabel}>Preferred Matched</span>
-                                                                                            {result.gap_analysis.good_to_have_matched && result.gap_analysis.good_to_have_matched.length > 0 ? (
-                                                                                                <div className={styles.gapPills}>
-                                                                                                    {result.gap_analysis.good_to_have_matched.map((s, i) => (
-                                                                                                        <span key={i} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {s}</span>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <span className={styles.gapEmptyText}>No matched preferred skills found.</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {/* Card 2: Critical Gaps */}
-                                                                            <div className={`${styles.gapCard} ${styles.criticalGapsCard}`}>
-                                                                                <h5 className={styles.gapCardTitle}>⚠️ Critical Gaps & Mismatches</h5>
-                                                                                {result.gap_analysis.must_have_missing && result.gap_analysis.must_have_missing.length > 0 ? (
-                                                                                    <div className={styles.criticalListContainer}>
-                                                                                        <span className={styles.gapSubLabel}>Missing Required Stack:</span>
-                                                                                        <div className={styles.gapPills}>
-                                                                                            {result.gap_analysis.must_have_missing.map((s, i) => (
-                                                                                                <span key={i} className={`${styles.gapPill} ${styles.missingPill}`}>✗ {s}</span>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                ) : null}
-
-                                                                                {result.gap_analysis.critical_gaps && result.gap_analysis.critical_gaps.length > 0 ? (
-                                                                                    <ul className={styles.criticalList}>
-                                                                                        {result.gap_analysis.critical_gaps.map((gap, i) => (
-                                                                                            <li key={i} className={styles.criticalListItem}>
-                                                                                                <span className={styles.bulletWarning}>!</span>
-                                                                                                <span>{gap}</span>
-                                                                                            </li>
-                                                                                        ))}
-                                                                                    </ul>
-                                                                                ) : (
-                                                                                    <span className={styles.gapEmptyText}>No critical required gaps identified! Exceptional core fit.</span>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {/* Card 3: Strength & Growth Areas */}
-                                                                            <div className={styles.gapCard}>
-                                                                                <h5 className={styles.gapCardTitle}>💪 Strength & Growth Areas</h5>
-                                                                                <div className={styles.gapColumns}>
-                                                                                    <div className={styles.gapSubCol}>
-                                                                                        <span className={styles.gapSubLabel}>Key Demonstrated Strengths</span>
-                                                                                        {result.gap_analysis.strength_areas && result.gap_analysis.strength_areas.length > 0 ? (
-                                                                                            <ul className={styles.strengthList}>
-                                                                                                {result.gap_analysis.strength_areas.map((str, i) => (
-                                                                                                    <li key={i} className={styles.strengthListItem}>
-                                                                                                        <span className={styles.bulletCheck}>✓</span>
-                                                                                                        <span>{str}</span>
-                                                                                                    </li>
-                                                                                                ))}
-                                                                                            </ul>
-                                                                                        ) : (
-                                                                                            <span className={styles.gapEmptyText}>General technical profile alignment.</span>
-                                                                                        )}
-                                                                                    </div>
-
-                                                                                    <div className={styles.gapSubCol}>
-                                                                                        <span className={styles.gapSubLabel}>Preferred Stack Gaps</span>
-                                                                                        {result.gap_analysis.good_to_have_missing && result.gap_analysis.good_to_have_missing.length > 0 ? (
-                                                                                            <div className={styles.gapPills}>
-                                                                                                {result.gap_analysis.good_to_have_missing.map((s, i) => (
-                                                                                                    <span key={i} className={`${styles.gapPill} ${styles.prefMissingPill}`}>✗ {s}</span>
-                                                                                                ))}
-                                                                                            </div>
-                                                                                        ) : (
-                                                                                            <span className={styles.gapEmptyText}>Demonstrated all nice-to-have items!</span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className={styles.legacyReasoning}>
-                                                                        <p className={styles.legacyText}>No skill gap analysis data detected in candidate evaluation.</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* 3. PROJECTS & EXPERIENCE TAB */}
-                                                        {activeDetailTab === "projects_experience" && (
-                                                            <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                {result.gap_analysis?.project_intelligence && result.gap_analysis.project_intelligence.length > 0 ? (
-                                                                    <div className={styles.projectIntelligenceWrapper} style={{ marginTop: 0 }}>
-                                                                        <h4 className={styles.sectionSubHeading}>📁 Project Intelligence & Competency Inference</h4>
-                                                                        <div className={styles.projectGrid}>
-                                                                            {result.gap_analysis.project_intelligence.map((proj, pIdx) => (
-                                                                                <div key={pIdx} className={styles.projectCard}>
-                                                                                    <div className={styles.projectCardHeader}>
-                                                                                        <span className={styles.projectFolderIcon}>📁</span>
-                                                                                        <h5 className={styles.projectName}>{proj.project_name}</h5>
-                                                                                        <span className={`${styles.projectRelevanceScore} ${proj.relevance_score >= 80
-                                                                                                ? styles.projectHighRelevance
-                                                                                                : proj.relevance_score >= 50
-                                                                                                    ? styles.projectMidRelevance
-                                                                                                    : styles.projectLowRelevance
-                                                                                            }`}>
-                                                                                            {proj.relevance_score}% Relevance
-                                                                                        </span>
-                                                                                    </div>
-
-                                                                                    <p className={styles.projectDescription}>{proj.description}</p>
-
-                                                                                    <div className={styles.projectIntelligenceDetails}>
-                                                                                        <div className={styles.intelSubSection}>
-                                                                                            <strong className={styles.intelLabel}>Demonstrated Capabilities:</strong>
-                                                                                            <div className={styles.gapPills}>
-                                                                                                {proj.inferred_skills && proj.inferred_skills.map((skill, sIdx) => (
-                                                                                                    <span key={sIdx} className={`${styles.gapPill} ${styles.matchedPill}`}>✅ {skill}</span>
-                                                                                                ))}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        <div className={styles.intelSubSection}>
-                                                                                            <strong className={styles.intelLabel}>Matched JD Requirements:</strong>
-                                                                                            <div className={styles.gapPills}>
-                                                                                                {proj.matched_jd_requirements && proj.matched_jd_requirements.map((skill, sIdx) => (
-                                                                                                    <span key={sIdx} className={`${styles.gapPill} ${styles.prefMatchedPill}`}>✓ {skill}</span>
-                                                                                                ))}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {proj.missing_related_requirements && proj.missing_related_requirements.length > 0 && (
-                                                                                            <div className={styles.intelSubSection}>
-                                                                                                <strong className={styles.intelLabel}>Risk Areas (Not evidenced in project):</strong>
-                                                                                                <div className={styles.gapPills}>
-                                                                                                    {proj.missing_related_requirements.map((skill, sIdx) => (
-                                                                                                        <span key={sIdx} className={`${styles.gapPill} ${styles.missingPill}`}>⚠ {skill}</span>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        )}
-
-                                                                                        <div className={styles.intelSubSection}>
-                                                                                            <strong className={styles.intelLabel}>Why It Matters:</strong>
-                                                                                            <p className={styles.impactSummaryText}>{proj.impact_summary}</p>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className={styles.legacyReasoning}>
-                                                                        <p className={styles.legacyText}>No project evidence or capability mapping detected in candidate file.</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* 4. INTERVIEW QUESTIONS TAB */}
-                                                        {activeDetailTab === "interview_questions" && (
-                                                            <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                <div className={styles.questionsWrapper} style={{ marginTop: 0, padding: 0, border: "none", boxShadow: "none" }}>
-                                                                    <div className={styles.toolkitHeader}>
-                                                                        <h4 className={styles.toolkitTitle}>💬 Candidate Interviewing Toolkit</h4>
-                                                                        <p className={styles.toolkitSubtitle}>Tailored diagnostic questions mapping achievements, tech stacks, and gaps</p>
-                                                                    </div>
-
-                                                                    {candidateQuestions[result.id] ? (
-                                                                        <div className={styles.toolkitContainer}>
-                                                                            {/* Tab controls */}
-                                                                            <div className={styles.toolkitTabs}>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "technical" })); }}
-                                                                                    className={`${styles.toolkitTab} ${activeTab === "technical" ? styles.toolkitTabActive : ""}`}
-                                                                                >
-                                                                                    💻 Technical Depth
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "project_deep_dive" })); }}
-                                                                                    className={`${styles.toolkitTab} ${activeTab === "project_deep_dive" ? styles.toolkitTabActive : ""}`}
-                                                                                >
-                                                                                    🚀 Project Deep-Dive
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "behavioral" })); }}
-                                                                                    className={`${styles.toolkitTab} ${activeTab === "behavioral" ? styles.toolkitTabActive : ""}`}
-                                                                                >
-                                                                                    🤝 Behavioral Fit
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); setActiveQuestionTab(prev => ({ ...prev, [result.id]: "risk_probing" })); }}
-                                                                                    className={`${styles.toolkitTab} ${styles.riskTab} ${activeTab === "risk_probing" ? styles.toolkitTabActiveRisk : ""}`}
-                                                                                >
-                                                                                    ⚠️ Concern Probes
-                                                                                </button>
-                                                                            </div>
-
-                                                                            {/* Active Tab Panel */}
-                                                                            <div className={styles.toolkitContent}>
-                                                                                <div className={styles.questionToolkitGrid}>
-                                                                                    {(candidateQuestions[result.id][activeTab] || []).map((q, idx) => {
-                                                                                        let accentClass = styles.techAccent;
-                                                                                        if (activeTab === "project_deep_dive") accentClass = styles.projAccent;
-                                                                                        if (activeTab === "behavioral") accentClass = styles.behavioralAccent;
-                                                                                        if (activeTab === "risk_probing") accentClass = styles.riskAccent;
-
-                                                                                        return (
-                                                                                            <div key={idx} className={`${styles.toolkitQuestionCard} ${accentClass}`}>
-                                                                                                <div className={styles.questionCardHeader}>
-                                                                                                    <span className={styles.questionNumberLabel}>QUESTION {idx + 1}</span>
-                                                                                                    <button
-                                                                                                        onClick={(e) => { e.stopPropagation(); handleCopy(q); }}
-                                                                                                        className={`${styles.copyQuestionBtn} ${copiedText === q ? styles.copied : ""}`}
-                                                                                                        title="Copy to clipboard"
-                                                                                                    >
-                                                                                                        {copiedText === q ? "✓ Copied" : "📋 Copy"}
-                                                                                                    </button>
-                                                                                                </div>
-                                                                                                <p className={styles.toolkitQuestionText}>{q}</p>
-                                                                                            </div>
-                                                                                        );
-                                                                                    })}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className={styles.generatorPrompt}>
-                                                                            <p className={styles.generatorText}>
-                                                                                Formulate candidate-specific technical, project, behavioral, and risk questions based on their experience relative to job requirements.
-                                                                            </p>
-                                                                            {generationError[result.id] && (
-                                                                                <div className={styles.genErrorBox}>
-                                                                                    ⚠️ {generationError[result.id]}
-                                                                                </div>
-                                                                            )}
-                                                                            <button
-                                                                                onClick={(e) => handleGenerateQuestions(e, result.id)}
-                                                                                disabled={generatingId === result.id}
-                                                                                className={styles.generatorBtn}
-                                                                            >
-                                                                                {generatingId === result.id ? (
-                                                                                    <>
-                                                                                        <span className={styles.miniSpinner}></span>
-                                                                                        <span>Formulating Toolkit...</span>
-                                                                                    </>
-                                                                                ) : (
-                                                                                    "Generate Tailored Interview Questions"
-                                                                                )}
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                         {/* 5. NOTES TAB */}
-                                                         {activeDetailTab === "notes" && (
-                                                             <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                 <div className={styles.notesWrapper}>
-                                                                     <div className={styles.notesHeader}>
-                                                                         <h4 className={styles.notesTitle}>📝 Recruiter Decision Notes</h4>
-                                                                         <p className={styles.notesSubtitle}>Add custom commentary or onboarding requirements for this candidate</p>
-                                                                     </div>
-                                                                     <textarea
-                                                                         className={styles.notesTextarea}
-                                                                         placeholder="Write recruiter notes here... (e.g., 'Strong MERN skills, needs AWS verification')"
-                                                                         value={notes[result.id] || ""}
-                                                                         onChange={(e) => handleSaveNote(result.id, e.target.value)}
-                                                                     />
-                                                                     <div className={styles.notesFooter}>
-                                                                         <span className={styles.notesSaveIndicator}>
-                                                                             ✓ Changes saved persistently in local workspace
-                                                                         </span>
-                                                                     </div>
-                                                                 </div>
-                                                             </div>
-                                                         )}
-
-                                                        {/* 6. DETAILED ANALYSIS TAB */}
-                                                        {activeDetailTab === "advanced_insights" && (
-                                                            <div className={styles.tabPanel} style={{ animation: "fadeIn 0.20s ease-out" }}>
-                                                                {parsed && parsed.type === "structured" ? (
-                                                                    <>
-                                                                        {/* Rubric Breakdown Metrics Grid */}
-                                                                        <div className={styles.rubricSection}>
-                                                                            <h4 className={styles.sectionHeading}>📊 Rubric Alignment Breakdown</h4>
-                                                                            <div className={styles.metricGrid}>
-
-                                                                                {/* Card 1: Technical Skills Match */}
-                                                                                <div className={styles.metricCard}>
-                                                                                    <div className={styles.cardHeader}>
-                                                                                        <span className={styles.cardLabel}>Technical Skills Match</span>
-                                                                                        <span className={`${styles.tileFitBadge} ${getRatioBadge(parsed.breakdown.skills, 40).class}`}>
-                                                                                            {getRatioBadge(parsed.breakdown.skills, 40).text}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className={styles.cardValueRow}>
-                                                                                        <span className={styles.cardBigVal}>{parsed.breakdown.skills}</span>
-                                                                                        <span className={styles.cardMaxVal}>/ 40</span>
-                                                                                    </div>
-                                                                                    <div className={styles.meterContainer}>
-                                                                                        <div className={`${styles.meterFill} ${styles.skillsMeter}`} style={{ width: `${(parsed.breakdown.skills / 40) * 100}%` }}></div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Card 2: Experience Relevance */}
-                                                                                <div className={styles.metricCard}>
-                                                                                    <div className={styles.cardHeader}>
-                                                                                        <span className={styles.cardLabel}>Experience Relevance</span>
-                                                                                        <span className={`${styles.tileFitBadge} ${getRatioBadge(parsed.breakdown.experience, 25).class}`}>
-                                                                                            {getRatioBadge(parsed.breakdown.experience, 25).text}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className={styles.cardValueRow}>
-                                                                                        <span className={styles.cardBigVal}>{parsed.breakdown.experience}</span>
-                                                                                        <span className={styles.cardMaxVal}>/ 25</span>
-                                                                                    </div>
-                                                                                    <div className={styles.meterContainer}>
-                                                                                        <div className={`${styles.meterFill} ${styles.expMeter}`} style={{ width: `${(parsed.breakdown.experience / 25) * 100}%` }}></div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Card 3: Project Relevance */}
-                                                                                <div className={styles.metricCard}>
-                                                                                    <div className={styles.cardHeader}>
-                                                                                        <span className={styles.cardLabel}>Project Relevance</span>
-                                                                                        <span className={`${styles.tileFitBadge} ${getRatioBadge(parsed.breakdown.projects, 20).class}`}>
-                                                                                            {getRatioBadge(parsed.breakdown.projects, 20).text}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className={styles.cardValueRow}>
-                                                                                        <span className={styles.cardBigVal}>{parsed.breakdown.projects}</span>
-                                                                                        <span className={styles.cardMaxVal}>/ 20</span>
-                                                                                    </div>
-                                                                                    <div className={styles.meterContainer}>
-                                                                                        <div className={`${styles.meterFill} ${styles.projMeter}`} style={{ width: `${(parsed.breakdown.projects / 20) * 100}%` }}></div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Card 4: Education & Certifications */}
-                                                                                <div className={styles.metricCard}>
-                                                                                    <div className={styles.cardHeader}>
-                                                                                        <span className={styles.cardLabel}>Education & Certifications</span>
-                                                                                        <span className={`${styles.tileFitBadge} ${getRatioBadge(parsed.breakdown.education, 10).class}`}>
-                                                                                            {getRatioBadge(parsed.breakdown.education, 10).text}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className={styles.cardValueRow}>
-                                                                                        <span className={styles.cardBigVal}>{parsed.breakdown.education}</span>
-                                                                                        <span className={styles.cardMaxVal}>/ 10</span>
-                                                                                    </div>
-                                                                                    <div className={styles.meterContainer}>
-                                                                                        <div className={`${styles.meterFill} ${styles.eduMeter}`} style={{ width: `${(parsed.breakdown.education / 10) * 100}%` }}></div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {/* Card 5: Domain Fit */}
-                                                                                <div className={styles.metricCard}>
-                                                                                    <div className={styles.cardHeader}>
-                                                                                        <span className={styles.cardLabel}>Domain Fit</span>
-                                                                                        <span className={`${styles.tileFitBadge} ${getRatioBadge(parsed.breakdown.domain, 5).class}`}>
-                                                                                            {getRatioBadge(parsed.breakdown.domain, 5).text}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className={styles.cardValueRow}>
-                                                                                        <span className={styles.cardBigVal}>{parsed.breakdown.domain}</span>
-                                                                                        <span className={styles.cardMaxVal}>/ 5</span>
-                                                                                    </div>
-                                                                                    <div className={styles.meterContainer}>
-                                                                                        <div className={`${styles.meterFill} ${styles.domMeter}`} style={{ width: `${(parsed.breakdown.domain / 5) * 100}%` }}></div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {/* 🛡️ AI Reliability & Recruitment Guardrails */}
-                                                                        {result.gap_analysis?.reliability_signals && (
-                                                                            <div className={styles.reliabilityPanel} style={{ marginTop: "20px" }}>
-                                                                                <div className={styles.reliabilityMetric}>
-                                                                                    <span className={styles.reliabilityLabel}>🛡️ AI Confidence Score</span>
-                                                                                    <div className={styles.reliabilityValueBadge}>
-                                                                                        <div className={styles.reliabilityProgressBg}>
-                                                                                            <div className={styles.reliabilityProgressFill} style={{ width: `${result.gap_analysis.reliability_signals.ai_confidence_score}%` }}></div>
-                                                                                        </div>
-                                                                                        <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.ai_confidence_score}%</span>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className={styles.reliabilityMetric}>
-                                                                                    <span className={styles.reliabilityLabel}>⚡ Evidence Strength</span>
-                                                                                    <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.evidence_strength}%</span>
-                                                                                </div>
-                                                                                <div className={styles.reliabilityMetric}>
-                                                                                    <span className={styles.reliabilityLabel}>🔍 Parsing Reliability</span>
-                                                                                    <span className={styles.reliabilityScoreText}>{result.gap_analysis.reliability_signals.parsing_reliability}%</span>
-                                                                                </div>
-                                                                                {result.gap_analysis.recruiter_alerts && result.gap_analysis.recruiter_alerts.length > 0 && (
-                                                                                    <div className={styles.alertsListContainer}>
-                                                                                        {result.gap_analysis.recruiter_alerts.map((alert, idx) => (
-                                                                                            <div key={idx} className={styles.recruiterAlertItem}>
-                                                                                                {alert.includes("⚠️") || alert.includes("💡") ? alert : `💡 ${alert}`}
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <div className={styles.legacyReasoning}>
-                                                                        <p className={styles.legacyText}>Advanced intelligence signals are not available for this candidate format.</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                    </div>
-
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </Fragment>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className={styles.scoreCol}>
+                                        <div className={`${styles.scoreBadge} ${scoreClass}`}>
+                                            <span className={styles.scoreValue}>{score}%</span>
+                                        </div>
+                                    </td>
+                                    <td className={styles.recommendationCol}>
+                                        <span className={`${styles.recBadge} ${recInfo.class}`}>
+                                            {recInfo.emoji} {recInfo.text}
+                                        </span>
+                                    </td>
+                                    <td className={styles.stageCol} onClick={(e) => e.stopPropagation()}>
+                                        <select
+                                            value={stages[result.id] || "Applied"}
+                                            onChange={(e) => handleChangeStage(e, result.id, e.target.value)}
+                                            className={`${styles.stageSelect} ${styles[getStageClass(stages[result.id] || "Applied")]}`}
+                                        >
+                                            <option value="Applied">Applied</option>
+                                            <option value="Screened">Screened</option>
+                                            <option value="Shortlisted">Shortlisted</option>
+                                            <option value="Interview Scheduled">Interview Scheduled</option>
+                                            <option value="Interviewed">Interviewed</option>
+                                            <option value="Offer">Offer</option>
+                                            <option value="Rejected">Rejected</option>
+                                        </select>
+                                    </td>
+                                    <td className={styles.actionCol} onClick={(e) => e.stopPropagation()}>
+                                        <div className={styles.actionCellContainer}>
+                                            <button 
+                                                onClick={() => setActiveCandidateId(result.id)}
+                                                className={`${styles.viewDetailsBtn} ${activeCandidateId === result.id ? styles.activeDetailsBtn : ""}`}
+                                            >
+                                                {activeCandidateId === result.id ? "Viewing Profile" : "View Profile"}
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleExportPDF(e, result.id, result.resume_filename)}
+                                                disabled={exportingPdfId === result.id}
+                                                className={styles.pdfActionBtn}
+                                                title="Download Recruiter Intelligence Report"
+                                            >
+                                                {exportingPdfId === result.id ? "..." : "📄 Export"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             );
                         })}
                     </tbody>
                 </table>
             </div>
+
+            {/* Step 4: Selected Candidate Workspace rendered SEQUENTIALLY below the table wrapper */}
+            {(() => {
+                const activeCandidate = results.find(r => r.id === activeCandidateId);
+                if (!activeCandidate) return null;
+
+                const score = activeCandidate.score;
+                const parsed = parseReasoning(activeCandidate.reasoning);
+                const activeTab = activeQuestionTab[activeCandidate.id] || "technical";
+                const isSelected = selectedIds.includes(activeCandidate.id);
+                const recInfo = getHiringRecommendation(score);
+                const isAdvancedOpen = !!advancedInsightsOpen[activeCandidate.id];
+
+                const scoreClass = score >= 80
+                    ? styles.excellent
+                    : score >= 60
+                        ? styles.good
+                        : score >= 40
+                            ? styles.fair
+                            : styles.poor;
+
+                return (
+                    <div className={styles.workspaceProfileContainer}>
+                        <div className={styles.workspaceSectionHeader}>
+                            <div className={styles.stepBadge}>STEP 4</div>
+                            <h3 className={styles.stepTitle}>Selected Candidate Workspace</h3>
+                            <p className={styles.stepSubtitle}>Deep-dive evaluation of suitability parameters, semantic evidence, tailored questions, and intelligence metrics.</p>
+                        </div>
+
+                        <div className={styles.workspaceProfile}>
+                            
+                            {/* Premium Recruiter Loading Modal Overlay */}
+                            {exportingPdfId === activeCandidate.id && (
+                                <div className={styles.premiumModalOverlay}>
+                                    <div className={styles.premiumModalContent}>
+                                        <div className={styles.premiumPulseSpinner}></div>
+                                        <h4 className={styles.premiumModalTitle}>Generating recruiter intelligence report...</h4>
+                                        <p className={styles.premiumModalSubtitle}>Assembling executive summaries, weighted capability mapping, inferred portfolio evidence, and structured diagnostic interviewing toolkits.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* A. HEADER SECTION */}
+                            <div className={styles.profileHeader}>
+                                <div className={styles.headerIdentity}>
+                                    <button
+                                        onClick={(e) => handleToggleShortlist(e, activeCandidate.id)}
+                                        className={`${styles.profileShortlistBtn} ${shortlist[activeCandidate.id] ? styles.shortlisted : ""}`}
+                                        title={shortlist[activeCandidate.id] ? "Remove from Shortlist" : "Add to Shortlist"}
+                                    >
+                                        {shortlist[activeCandidate.id] ? "★ Shortlisted" : "☆ Shortlist"}
+                                    </button>
+                                    <h2 className={styles.profileName}>{getCandidateName(activeCandidate.resume_filename)}</h2>
+                                    <span className={styles.profileFilename}>📄 {activeCandidate.resume_filename}</span>
+                                </div>
+                                
+                                <div className={styles.headerMetrics}>
+                                    <div className={styles.headerMetricItem}>
+                                        <span className={styles.metricLabel}>Match Score</span>
+                                        <span className={`${styles.metricVal} ${scoreClass}`}>{score}%</span>
+                                    </div>
+                                    <div className={styles.headerMetricItem}>
+                                        <span className={styles.metricLabel}>Recommendation</span>
+                                        <span className={`${styles.recBadge} ${recInfo.class}`}>
+                                            {recInfo.emoji} {recInfo.text}
+                                        </span>
+                                    </div>
+                                    <div className={styles.headerMetricItem} onClick={(e) => e.stopPropagation()}>
+                                        <span className={styles.metricLabel}>Current Stage</span>
+                                        <select
+                                            value={stages[activeCandidate.id] || "Applied"}
+                                            onChange={(e) => handleChangeStage(e, activeCandidate.id, e.target.value)}
+                                            className={`${styles.stageSelect} ${styles[getStageClass(stages[activeCandidate.id] || "Applied")]}`}
+                                        >
+                                            <option value="Applied">Applied</option>
+                                            <option value="Screened">Screened</option>
+                                            <option value="Shortlisted">Shortlisted</option>
+                                            <option value="Interview Scheduled">Interview Scheduled</option>
+                                            <option value="Interviewed">Interviewed</option>
+                                            <option value="Offer">Offer</option>
+                                            <option value="Rejected">Rejected</option>
+                                        </select>
+                                    </div>
+                                    <div className={styles.headerMetricItem}>
+                                        <span className={styles.metricLabel}>Screening Date</span>
+                                        <span className={styles.dateVal}>
+                                            {activeSession ? new Date(activeSession.created_at).toLocaleDateString(undefined, {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) : new Date().toLocaleDateString(undefined, {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className={styles.headerActions} onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                        onClick={(e) => handleExportPDF(e, activeCandidate.id, activeCandidate.resume_filename)}
+                                        disabled={exportingPdfId === activeCandidate.id}
+                                        className={styles.headerPdfBtn}
+                                    >
+                                        {exportingPdfId === activeCandidate.id ? "..." : "📄 Export Report"}
+                                    </button>
+                                    <label className={styles.headerCompareLabel}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(activeCandidate.id)}
+                                            disabled={!isSelected && selectedIds.length >= 3}
+                                            className={styles.headerCompareCheckbox}
+                                        />
+                                        <span>Compare</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* B. SECTION 5: CANDIDATE OVERVIEW CARD & AI RECRUITER SUMMARY */}
+                            <div className={styles.overviewSectionContainer}>
+                                <h4 className={styles.sectionHeadingTitle}>📋 Candidate Overview & AI Assessment</h4>
+                                <div className={styles.overviewCardsGrid}>
+                                    {/* 1. Match Score Card */}
+                                    <div className={`${styles.overviewCard} ${styles.matchScoreCard}`}>
+                                        <h5 className={styles.overviewCardTitle}>🎯 Suitability Match</h5>
+                                        <div className={styles.radialMatchProgress}>
+                                            <span className={styles.radialMatchVal}>{score}%</span>
+                                            <span className={styles.radialMatchLabel}>Match Score</span>
+                                        </div>
+                                        <div className={styles.suitabilitySliderContainer}>
+                                            <div className={styles.suitabilitySliderBg}>
+                                                <div className={styles.suitabilitySliderFill} style={{ width: `${score}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 2. Resume Card */}
+                                    <div className={`${styles.overviewCard} ${styles.resumeCard}`}>
+                                        <h5 className={styles.overviewCardTitle}>📄 Candidate File</h5>
+                                        <div className={styles.resumeInfo}>
+                                            <span className={styles.resumeIcon}>📂</span>
+                                            <div className={styles.resumeTextMeta}>
+                                                <span className={styles.resumeNameText} title={activeCandidate.resume_filename}>{activeCandidate.resume_filename}</span>
+                                                <span className={styles.resumeFormat}>Format: PDF Document</span>
+                                            </div>
+                                        </div>
+                                        <a
+                                            href="#"
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleExportPDF(e, activeCandidate.id, activeCandidate.resume_filename); }}
+                                            className={styles.resumeDownloadLink}
+                                        >
+                                            Download Recruiter Dossier ➔
+                                        </a>
+                                    </div>
+
+                                    {/* 3. Recommendation Card */}
+                                    <div className={`${styles.overviewCard} ${styles.recCard}`}>
+                                        <h5 className={styles.overviewCardTitle}>🟢 Recommendation</h5>
+                                        <div className={styles.recValueWrapper}>
+                                            <span className={`${styles.recStatusBadge} ${recInfo.class}`}>
+                                                {recInfo.text}
+                                            </span>
+                                        </div>
+                                        <p className={styles.recSummaryText}>
+                                            Candidate is categorized as <strong>{recInfo.text}</strong> based on screening matching logic.
+                                        </p>
+                                    </div>
+
+                                    {/* 4. Interview Readiness Card */}
+                                    <div className={`${styles.overviewCard} ${styles.readinessCard}`}>
+                                        <h5 className={styles.overviewCardTitle}>⚡ Interview Readiness</h5>
+                                        <div className={styles.readinessValueWrapper}>
+                                            <span className={`${styles.readinessBadge} ${
+                                                score >= 80 ? styles.highlyReady :
+                                                score >= 65 ? styles.ready :
+                                                score >= 50 ? styles.conditionallyReady :
+                                                styles.notReady
+                                            }`}>
+                                                {score >= 80 ? "🔥 HIGHLY READY" :
+                                                 score >= 65 ? "✓ READY" :
+                                                 score >= 50 ? "⚠ NEEDS REVIEW" :
+                                                 "✗ NOT READY"}
+                                            </span>
+                                        </div>
+                                        <p className={styles.readinessDesc}>
+                                            {score >= 80 ? "Demonstrates outstanding alignment with core stack. Clear candidate for interview scheduling." :
+                                             score >= 65 ? "Demonstrates solid matching of must-haves. Recommended for screening call." :
+                                             score >= 50 ? "Has some gaps in requirements. Review missing skills before proceeding." :
+                                             "Substantial missing requirements. Not recommended for interview."}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* AI Recruiter Summary Block */}
+                                {renderAiSummary(activeCandidate, parsed)}
+
+                                {/* Strengths & Missing Skills Pills in Overview */}
+                                {parsed && parsed.type === "structured" && (
+                                    <div className={styles.overviewStrengthsGapsGrid}>
+                                        {parsed.strengths && parsed.strengths.length > 0 && (
+                                            <div className={styles.overviewStrengthBox}>
+                                                <h5 className={styles.overviewPillHeader}>✓ Key Strengths</h5>
+                                                <div className={styles.overviewPillList}>
+                                                    {parsed.strengths.map((str, idx) => (
+                                                        <span key={idx} className={styles.overviewStrengthPill}>
+                                                            ✓ {str}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {parsed.gaps && parsed.gaps.length > 0 && (
+                                            <div className={styles.overviewGapBox}>
+                                                <h5 className={styles.overviewPillHeader}>✗ Missing Requirements</h5>
+                                                <div className={styles.overviewPillList}>
+                                                    {parsed.gaps.map((gap, idx) => (
+                                                        <span key={idx} className={styles.overviewGapPill}>
+                                                            ✗ {gap}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* C. SECTION 6: SKILLS EVALUATION (FULL-WIDTH) */}
+                            <div className={styles.skillsSectionContainer}>
+                                <h4 className={styles.sectionHeadingTitle}>🎯 Skills Alignment Overview</h4>
+                                <div className={styles.skillsStackLayout}>
+                                    {renderSkillsOverviewList(
+                                        "Must-Have Skills Requirements",
+                                        activeCandidate.gap_analysis?.must_have_matched || [],
+                                        activeCandidate.gap_analysis?.must_have_missing || [],
+                                        styles.mustHaveSection
+                                    )}
+                                    
+                                    {renderSkillsOverviewList(
+                                        "Nice-To-Have Skills Requirements",
+                                        activeCandidate.gap_analysis?.good_to_have_matched || [],
+                                        activeCandidate.gap_analysis?.good_to_have_missing || [],
+                                        styles.niceToHaveSection
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* D. SECTION 7: INTERVIEWING TOOLKIT & NOTES (FULL-WIDTH) */}
+                            <div className={styles.interviewSectionContainer}>
+                                <h4 className={styles.sectionHeadingTitle}>💬 Tailored Interview Questions & Decision Commentary</h4>
+                                <div className={styles.toolkitAndNotesStack}>
+                                    
+                                    {/* Interview Toolkit */}
+                                    <div className={styles.toolkitSectionFullWidth}>
+                                        <div className={styles.toolkitHeader}>
+                                            <strong className={styles.subHeading}>Structured Recruiter Interviewing Toolkit</strong>
+                                            <p className={styles.toolkitSubtitle}>Generate candidate-specific behavioral, technical, and concern-probing questions.</p>
+                                        </div>
+
+                                        {candidateQuestions[activeCandidate.id] ? (
+                                            <div className={styles.toolkitContainer}>
+                                                <div className={styles.toolkitTabs}>
+                                                    {["technical", "project_deep_dive", "behavioral", "risk_probing"].map(tab => (
+                                                        <button
+                                                            key={tab}
+                                                            onClick={() => setActiveQuestionTab(prev => ({ ...prev, [activeCandidate.id]: tab }))}
+                                                            className={`${styles.toolkitTabBtn} ${activeTab === tab ? styles.activeToolkitTab : ""}`}
+                                                        >
+                                                            {tab.replace(/_/g, ' ').toUpperCase()}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className={styles.toolkitList}>
+                                                    {(candidateQuestions[activeCandidate.id][activeTab] || []).map((q, idx) => (
+                                                        <div key={idx} className={styles.toolkitQuestionItem}>
+                                                            <p className={styles.toolkitQuestionText}>{q}</p>
+                                                            <button
+                                                                onClick={() => handleCopy(q)}
+                                                                className={`${styles.copyBtn} ${copiedText === q ? styles.copied : ""}`}
+                                                            >
+                                                                {copiedText === q ? "✓ Copied" : "📋 Copy"}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={styles.generatorPromptBox}>
+                                                <p className={styles.generatorPromptText}>Generate candidate-specific behavioral, technical, and concern-probing questions based on detected resume gaps.</p>
+                                                <button
+                                                    onClick={(e) => handleGenerateQuestions(e, activeCandidate.id)}
+                                                    disabled={generatingId === activeCandidate.id}
+                                                    className={styles.generatorTriggerBtn}
+                                                >
+                                                    {generatingId === activeCandidate.id ? "Formulating questions..." : "Generate Interview Toolkit"}
+                                                </button>
+                                                {generationError[activeCandidate.id] && (
+                                                    <span className={styles.genErrorBox}>{generationError[activeCandidate.id]}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Recruiter Decision Commentary */}
+                                    <div className={styles.notesSectionFullWidth}>
+                                        <strong className={styles.subHeading}>Recruiter Decision Commentary</strong>
+                                        <p className={styles.toolkitSubtitle}>Add comments on portfolio evidence, screening performance, or team fit.</p>
+                                        <textarea
+                                            className={styles.notesTextarea}
+                                            placeholder="Add comments on portfolio evidence, screening performance, or team fit..."
+                                            value={notes[activeCandidate.id] || ""}
+                                            onChange={(e) => handleSaveNote(activeCandidate.id, e.target.value)}
+                                        />
+                                        <span className={styles.saveNotesIndicator}>✓ Saved in local workspace</span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {/* E. SECTION 8: COLLAPSIBLE TECHNICAL ADVANCED ANALYSIS (FULL-WIDTH) */}
+                            <div className={styles.advancedInsightsSection}>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleAdvancedOpen(activeCandidate.id); }}
+                                    className={styles.advancedToggleBtn}
+                                >
+                                    <span>{isAdvancedOpen ? "▼ Hide Advanced Suitability Intelligence" : "▶ Show Advanced Suitability Intelligence"}</span>
+                                    <span className={styles.advancedToggleBadge}>⚙️ Intelligence Signals</span>
+                                </button>
+
+                                {isAdvancedOpen && (
+                                    <div className={styles.advancedContentWrapper} onClick={(e) => e.stopPropagation()}>
+                                        <div className={styles.advancedStack}>
+                                            
+                                            {/* 1. Skill Gap Intelligence & Weighted Evaluations */}
+                                            <div className={styles.advancedSectionCard}>
+                                                <h4 className={styles.advancedCardHeading}>🎯 Skill Gap Intelligence & Semantic Evidence</h4>
+                                                {activeCandidate.gap_analysis?.weighted_evaluations && activeCandidate.gap_analysis.weighted_evaluations.length > 0 ? (
+                                                    <div className={styles.weightedEvalsList}>
+                                                        {activeCandidate.gap_analysis.weighted_evaluations.map((ev, i) => {
+                                                            const status = ev.status || "missing";
+                                                            const quality = ev.evidence_quality || 100;
+                                                            let pillClass = styles.missingEvalCard;
+                                                            let statusSymbol = "❌";
+                                                            if (status === "matched") {
+                                                                pillClass = styles.matchedEvalCard;
+                                                                statusSymbol = "✓ Matched";
+                                                            } else if (status === "inferred") {
+                                                                pillClass = styles.inferredEvalCard;
+                                                                statusSymbol = "✓ Inferred";
+                                                            } else if (status === "ambiguous" || status === "partial") {
+                                                                pillClass = styles.ambiguousEvalCard;
+                                                                statusSymbol = "⚠️ Partial";
+                                                            }
+                                                            
+                                                            return (
+                                                                <div key={i} className={`${styles.weightedEvalItem} ${pillClass}`}>
+                                                                    <div className={styles.weightedEvalItemHeader}>
+                                                                        <span className={styles.weightedSkillName}>{ev.name}</span>
+                                                                        <span className={styles.weightedSkillStatus}>{statusSymbol} ({quality}%)</span>
+                                                                    </div>
+                                                                    {ev.evidence && (
+                                                                        <p className={styles.weightedSkillEvidence}><strong>Evidence:</strong> "{ev.evidence}"</p>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <p className={styles.emptyAdvancedText}>No weighted skill evaluations found.</p>
+                                                )}
+                                            </div>
+
+                                            {/* 2. Competency Inference & Projects Mapping */}
+                                            <div className={styles.advancedSectionCard}>
+                                                <h4 className={styles.advancedCardHeading}>📁 Competency Inference & Projects Mapping</h4>
+                                                {activeCandidate.gap_analysis?.project_intelligence && activeCandidate.gap_analysis.project_intelligence.length > 0 ? (
+                                                    <div className={styles.projectIntelList}>
+                                                        {activeCandidate.gap_analysis.project_intelligence.map((proj, pIdx) => (
+                                                            <div key={pIdx} className={styles.projectIntelItem}>
+                                                                <div className={styles.projectIntelItemHeader}>
+                                                                    <strong className={styles.projectIntelName}>📁 {proj.project_name}</strong>
+                                                                    <span className={styles.projectIntelRelevance}>{proj.relevance_score}% Relevance</span>
+                                                                </div>
+                                                                <p className={styles.projectIntelDesc}>{proj.description}</p>
+                                                                {proj.inferred_skills && proj.inferred_skills.length > 0 && (
+                                                                    <div className={styles.projectIntelPills}>
+                                                                        <strong>Capabilities:</strong>
+                                                                        {proj.inferred_skills.map((skill, sIdx) => (
+                                                                            <span key={sIdx} className={styles.inferredSkillPill}>{skill}</span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                {proj.impact_summary && (
+                                                                    <p className={styles.projectIntelImpact}><strong>Impact:</strong> {proj.impact_summary}</p>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className={styles.emptyAdvancedText}>No project competency evidence recorded in profile.</p>
+                                                )}
+                                            </div>
+
+                                            {/* 3. Confidence Metrics & Radar Capabilities */}
+                                            <div className={`${styles.advancedSectionCard} ${styles.doubleColCard}`}>
+                                                <h4 className={styles.advancedCardHeading}>🛡️ Reliability Analytics & Capabilities Breakdown</h4>
+                                                <div className={styles.reliabilityAndRadarLayoutStacked}>
+                                                    
+                                                    {/* Confidence Cards */}
+                                                    <div className={styles.reliabilityMetricsList}>
+                                                        {activeCandidate.gap_analysis?.reliability_signals ? (
+                                                            <>
+                                                                <div className={styles.reliabilityMetricBox}>
+                                                                    <span className={styles.reliabilityBoxLabel}>AI Confidence Score</span>
+                                                                    <span className={styles.reliabilityBoxValue}>{activeCandidate.gap_analysis.reliability_signals.ai_confidence_score}%</span>
+                                                                </div>
+                                                                <div className={styles.reliabilityMetricBox}>
+                                                                    <span className={styles.reliabilityBoxLabel}>Evidence Strength</span>
+                                                                    <span className={styles.reliabilityBoxValue}>{activeCandidate.gap_analysis.reliability_signals.evidence_strength}%</span>
+                                                                </div>
+                                                                <div className={styles.reliabilityMetricBox}>
+                                                                    <span className={styles.reliabilityBoxLabel}>Parsing Reliability</span>
+                                                                    <span className={styles.reliabilityBoxValue}>{activeCandidate.gap_analysis.reliability_signals.parsing_reliability}%</span>
+                                                                </div>
+                                                            </>
+                                                        ) : activeCandidate.gap_analysis?.extraction_confidence ? (
+                                                            <div className={styles.reliabilityMetricBox}>
+                                                                <span className={styles.reliabilityBoxLabel}>Parsing Confidence</span>
+                                                                <span className={styles.reliabilityBoxValue}>{activeCandidate.gap_analysis.extraction_confidence.score}%</span>
+                                                            </div>
+                                                        ) : (
+                                                            <p className={styles.emptyAdvancedText}>No reliability signals recorded.</p>
+                                                        )}
+                                                        
+                                                        {activeCandidate.gap_analysis?.recruiter_alerts && activeCandidate.gap_analysis.recruiter_alerts.length > 0 && (
+                                                            <div className={styles.recruiterAlertsBox}>
+                                                                <strong>Diagnostics & Alerts:</strong>
+                                                                <ul className={styles.recAlertsList}>
+                                                                    {activeCandidate.gap_analysis.recruiter_alerts.map((alert, idx) => (
+                                                                        <li key={idx} className={styles.recAlertsItem}>{alert}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Recharts Radar Chart */}
+                                                    <div className={styles.radarCardWrapperStacked}>
+                                                        <span className={styles.radarCardLabel}>Qualifications Radar Alignment</span>
+                                                        <div className={styles.radarChartContainer}>
+                                                            <ResponsiveContainer width="100%" height={260}>
+                                                                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={getCandidateRadarData(activeCandidate)}>
+                                                                    <PolarGrid stroke="#e2e8f0" />
+                                                                    <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 10 }} />
+                                                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#94a3b8", fontSize: 9 }} />
+                                                                    <Radar name="Candidate" dataKey="score" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.15} />
+                                                                </RadarChart>
+                                                            </ResponsiveContainer>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
+                );
+            })()}
 
             <div className={styles.stats}>
                 <p>
