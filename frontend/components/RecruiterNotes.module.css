@@ -1,0 +1,88 @@
+.container {
+  display: flex;
+  flex-direction: column;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  padding: 1.5rem;
+
+  box-shadow: none;
+  transition: all 0.15s ease;
+}
+
+.container:focus-within {
+  border-color: var(--accent);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 1.1rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.saveBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(240, 253, 244, 0.7);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(187, 247, 208, 0.5);
+}
+
+.subtitle {
+  color: var(--text-secondary);
+}
+
+.textarea {
+  min-height: 120px;
+  max-height: 250px;
+
+  resize: vertical;
+  width: 100%;
+
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+
+  padding: 12px 14px;
+
+  font-family: inherit;
+  font-size: 0.95rem;
+
+  color: var(--text-primary);
+
+  outline: none;
+  transition: all 0.15s ease;
+
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(36, 91, 69, 0.12);
+}
+
+.textarea::placeholder {
+  color: var(--text-secondary);
+}

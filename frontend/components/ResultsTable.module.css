@@ -1771,7 +1771,7 @@
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .rowGapPill {
@@ -1782,7 +1782,7 @@
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 .drawerTabs {
@@ -2057,6 +2057,29 @@
     background: var(--bg-secondary);
     color: var(--text-primary);
     border-color: var(--text-secondary);
+}
+
+/* Phase 6: Secondary export button — reduced visual prominence */
+.pdfActionBtnSecondary {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pdfActionBtnSecondary:hover:not(:disabled) {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+.pdfActionBtnSecondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* Notes Tab styles */

@@ -5,7 +5,7 @@ import FileUpload from "../components/FileUpload";
 import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
-import AnalyticsDashboard from "../components/AnalyticsDashboard";
+import WorkspaceHeader from "../components/WorkspaceHeader";
 import CandidateComparison from "../components/CandidateComparison";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import useStructuredJob from "../hooks/useStructuredJob";
@@ -105,6 +105,94 @@ export default function Home() {
   const [activeSession, setActiveSession] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [inputMode, setInputMode] = useState("paste");
+
+  const [candidateStatuses, setCandidateStatuses] = useState({});
+  const [candidateNotes, setCandidateNotes] = useState({});
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    if (!screeningId) {
+      setCandidateStatuses({});
+      setCandidateNotes({});
+      return;
+    }
+    try {
+      const storedStatuses = localStorage.getItem(`hirelens_statuses_${screeningId}`);
+      const storedNotes = localStorage.getItem(`hirelens_notes_${screeningId}`);
+
+      const parsedStatuses = storedStatuses ? JSON.parse(storedStatuses) : {};
+      const parsedNotes = storedNotes ? JSON.parse(storedNotes) : {};
+
+      // Ensure all candidates in results have at least "New" status if not set
+      const updatedStatuses = { ...parsedStatuses };
+      let updated = false;
+      results.forEach(r => {
+        if (!updatedStatuses[r.id]) {
+          updatedStatuses[r.id] = "New";
+          updated = true;
+        }
+      });
+
+      if (updated) {
+        localStorage.setItem(`hirelens_statuses_${screeningId}`, JSON.stringify(updatedStatuses));
+      }
+
+      setCandidateStatuses(updatedStatuses);
+      setCandidateNotes(parsedNotes);
+    } catch (e) {
+      console.error("Failed to load statuses/notes from localStorage:", e);
+    }
+  }, [screeningId, results]);
+
+  useEffect(() => {
+    const count = Object.values(candidateStatuses).filter(status => status === "Shortlisted").length;
+    setShortlistCount(count);
+  }, [candidateStatuses]);
+
+  const handleStatusChange = (candId, newStatus) => {
+    const updated = {
+      ...candidateStatuses,
+      [candId]: newStatus
+    };
+    setCandidateStatuses(updated);
+    if (screeningId) {
+      localStorage.setItem(`hirelens_statuses_${screeningId}`, JSON.stringify(updated));
+    }
+  };
+
+  const handleNoteChange = (candId, newNote) => {
+    const updated = {
+      ...candidateNotes,
+      [candId]: newNote
+    };
+    setCandidateNotes(updated);
+    if (screeningId) {
+      localStorage.setItem(`hirelens_notes_${screeningId}`, JSON.stringify(updated));
+    }
+  };
+
+  const getWorkspaceCounts = () => {
+    const counts = {
+      total: results.length,
+      shortlisted: 0,
+      interview: 0,
+      reviewLater: 0,
+      rejected: 0,
+      new: 0
+    };
+
+    results.forEach(r => {
+      const status = candidateStatuses[r.id] || "New";
+      if (status === "Shortlisted") counts.shortlisted++;
+      else if (status === "Interview") counts.interview++;
+      else if (status === "Review Later") counts.reviewLater++;
+      else if (status === "Rejected") counts.rejected++;
+      else counts.new++;
+    });
+
+    return counts;
+  };
+
   const {
     structuredJob,
     setStructuredJob,
@@ -128,30 +216,7 @@ export default function Home() {
     }
   }, [screeningId, sessions]);
 
-  useEffect(() => {
-    const updateCount = () => {
-      if (!screeningId) {
-        setShortlistCount(0);
-        return;
-      }
-      try {
-        const stored = localStorage.getItem(`hirelens_shortlist_${screeningId}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const count = Object.values(parsed).filter(Boolean).length;
-          setShortlistCount(count);
-        } else {
-          setShortlistCount(0);
-        }
-      } catch (e) {
-        setShortlistCount(0);
-      }
-    };
-
-    updateCount();
-    window.addEventListener("hirelens_shortlist_update", updateCount);
-    return () => window.removeEventListener("hirelens_shortlist_update", updateCount);
-  }, [screeningId]);
+  // shortlist count is managed by candidateStatuses state sync
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
@@ -351,14 +416,14 @@ export default function Home() {
       {/* 3. MAIN WORKSPACE */}
       <main ref={workspaceRef} className={styles.workspaceSection}>
         <div className={styles.workspaceContainer}>
-          
+
           {/* Horizontal Recruiter Workflow Timeline Navigator */}
           <div className={styles.workflowNav}>
             <div className={`${styles.workflowNavStep} ${(!screeningId && !resumeFiles.length) ? styles.activeNavStep : ""}`}>
               <span className={styles.navStepNum}>01</span>
               <div className={styles.navStepText}>
                 <strong>Job Requirements</strong>
-                <span>Define criteria</span>
+
               </div>
             </div>
             <div className={styles.workflowNavArrow}>→</div>
@@ -366,7 +431,7 @@ export default function Home() {
               <span className={styles.navStepNum}>02</span>
               <div className={styles.navStepText}>
                 <strong>Upload Resumes</strong>
-                <span>Ingest profiles</span>
+
               </div>
             </div>
             <div className={styles.workflowNavArrow}>→</div>
@@ -374,7 +439,7 @@ export default function Home() {
               <span className={styles.navStepNum}>03</span>
               <div className={styles.navStepText}>
                 <strong>Review Candidates</strong>
-                <span>Evaluate list</span>
+
               </div>
             </div>
             <div className={styles.workflowNavArrow}>→</div>
@@ -382,23 +447,29 @@ export default function Home() {
               <span className={styles.navStepNum}>04</span>
               <div className={styles.navStepText}>
                 <strong>Hiring Decision</strong>
-                <span>Finalize choice</span>
+
               </div>
             </div>
           </div>
-          
-          {/* Collapsible Horizontal Screening History Panel */}
+
+          {/* Screening History */}
           <div className={styles.topHistorySection}>
             <button
               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
               className={styles.historyToggleBtn}
-              title={isHistoryOpen ? "Hide Screening History" : "View Screening History"}
             >
-              {isHistoryOpen ? "✕ Hide Screening History" : "🕒 View Previous Screening History"}
+              {isHistoryOpen ? "Hide History" : "Screening History"}
             </button>
-            
+
             {isHistoryOpen && (
-              <div className={styles.topHistoryList}>
+              <div
+                className={styles.topHistoryList}
+                style={{
+                  maxHeight: "280px",
+                  overflowY: "auto",
+                  marginTop: "12px",
+                }}
+              >
                 {sessions.length > 0 ? (
                   sessions.map((s) => {
                     const isActive = screeningId === s.id;
@@ -406,18 +477,26 @@ export default function Home() {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",
-                      minute: "2-digit"
+                      minute: "2-digit",
                     });
+
                     let roleName = "Screening Session";
+
                     if (s.job_description) {
                       const lines = s.job_description.split("\n");
-                      const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
+                      const roleLine = lines.find(
+                        (l) =>
+                          l.toLowerCase().includes("role:") ||
+                          l.toLowerCase().includes("title:")
+                      );
+
                       if (roleLine) {
                         roleName = roleLine.replace(/(role:|title:)/i, "").trim();
                       } else {
                         roleName = lines[0].trim() || s.job_description.slice(0, 30);
                       }
                     }
+
                     if (roleName.length > 30) {
                       roleName = roleName.slice(0, 30) + "...";
                     }
@@ -426,16 +505,26 @@ export default function Home() {
                       <button
                         key={s.id}
                         onClick={() => handleSelectSession(s)}
-                        className={`${styles.topHistoryItem} ${isActive ? styles.activeTopHistoryItem : ""}`}
+                        className={`${styles.topHistoryItem} ${isActive ? styles.activeTopHistoryItem : ""
+                          }`}
                       >
-                        <div className={styles.topHistoryItemMeta}>
-                          <span className={styles.topHistoryItemTitle} title={roleName}>
+                        <div className={styles.topHistoryItemContent}>
+                          <div className={styles.topHistoryItemTitle}>
                             {roleName}
-                          </span>
-                          <span className={styles.topHistoryItemDate}>{dateStr}</span>
+                          </div>
+
+                          <div className={styles.topHistoryItemCount}>
+                            {s.result_count} Candidates
+                          </div>
+
+                          <div className={styles.topHistoryItemDate}>
+                            {dateStr}
+                          </div>
                         </div>
+
                         <span className={styles.topHistoryItemPill}>
-                          {s.result_count} {s.result_count === 1 ? "resume" : "resumes"}
+                          {s.result_count}{" "}
+                          {s.result_count === 1 ? "resume" : "resumes"}
                         </span>
                       </button>
                     );
@@ -448,7 +537,7 @@ export default function Home() {
           </div>
 
           <div className={styles.workflowStack}>
-            
+
             {/* STEP 1: Job Description */}
             <div className={styles.workflowStep}>
               <div className={styles.stepHeader}>
@@ -481,8 +570,14 @@ export default function Home() {
             <div className={styles.workflowStep}>
               <div className={styles.stepHeader}>
                 <span className={styles.stepBadge}>STEP 2</span>
-                <h3 className={styles.stepTitle}>Candidate Resumes Ingestion</h3>
-                <p className={styles.stepDesc}>Upload candidate resume PDFs and trigger the standardized grading rubric</p>
+
+                <h3 className={styles.stepTitle}>
+                  Upload Candidate Resumes
+                </h3>
+
+                <p className={styles.stepDesc}>
+                  Upload resumes and let HireLens identify the strongest candidates for this role.
+                </p>
               </div>
               <div className={styles.workflowCard}>
                 <FileUpload
@@ -517,7 +612,7 @@ export default function Home() {
                       <span>{loadingText}</span>
                     </>
                   ) : (
-                    <span>Initiate Candidate Resume Screenings</span>
+                    <span>Review Candidates</span>
                   )}
                 </button>
               </div>
@@ -530,7 +625,7 @@ export default function Home() {
                 <h3 className={styles.stepTitle}>Hiring Suitability Results</h3>
                 <p className={styles.stepDesc}>Explore screened candidates, match score comparisons, and make final decisions</p>
               </div>
-              
+
               {loading ? (
                 /* Premium Dynamic Loading State */
                 <div className={styles.loadingWrapper}>
@@ -555,25 +650,39 @@ export default function Home() {
                     />
                   ) : (
                     <>
+                      <WorkspaceHeader counts={getWorkspaceCounts()} />
+
                       <FilterControl
                         minScore={minScore}
                         onChange={handleMinScoreChange}
                         isLoading={loading}
                       />
 
-                      {/* Premium ATS Shortlist Status Ribbon */}
-                      <div className={styles.atsRibbon}>
-                        <div className={styles.atsPill}>
-                          <span className={styles.atsPillIcon}>⭐</span>
-                          <span className={styles.atsPillText}>
-                            <strong>{shortlistCount}</strong> Candidate{shortlistCount !== 1 ? "s" : ""} Shortlisted
-                          </span>
+                      {/* Premium Pipeline Filtering Bar */}
+                      <div className={styles.pipelineFilterBar}>
+                        <span className={styles.pipelineFilterLabel}>Pipeline Status:</span>
+                        <div className={styles.pipelineFilterTabs}>
+                          {["All", "New", "Review Later", "Shortlisted", "Interview", "Rejected"].map(filterVal => {
+                            const counts = getWorkspaceCounts();
+                            let displayCount = counts.total;
+                            if (filterVal === "New") displayCount = counts.new;
+                            else if (filterVal === "Review Later") displayCount = counts.reviewLater;
+                            else if (filterVal === "Shortlisted") displayCount = counts.shortlisted;
+                            else if (filterVal === "Interview") displayCount = counts.interview;
+                            else if (filterVal === "Rejected") displayCount = counts.rejected;
+
+                            return (
+                              <button
+                                key={filterVal}
+                                onClick={() => setStatusFilter(filterVal)}
+                                className={`${styles.pipelineFilterBtn} ${statusFilter === filterVal ? styles.activePipelineFilter : ""}`}
+                              >
+                                <span>{filterVal}</span>
+                                <span className={styles.pipelineFilterBadge}>{displayCount}</span>
+                              </button>
+                            );
+                          })}
                         </div>
-                        {shortlistCount > 0 && (
-                          <div className={styles.atsViewPill}>
-                            <span>Sorted at top of hiring pipeline</span>
-                          </div>
-                        )}
                       </div>
 
                       {/* Premium Side-by-Side Compare Action Status Bar */}
@@ -603,14 +712,21 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <AnalyticsDashboard results={filteredResults} isLoading={loading} />
                       <ResultsTable
-                        results={filteredResults}
+                        results={filteredResults.filter(r => {
+                          if (statusFilter === "All") return true;
+                          const status = candidateStatuses[r.id] || "New";
+                          return status === statusFilter;
+                        })}
                         isLoading={loading}
                         selectedIds={selectedCandidateIds}
                         onSelect={handleSelectCandidate}
                         screeningId={screeningId}
                         activeSession={activeSession}
+                        candidateStatuses={candidateStatuses}
+                        onStatusChange={handleStatusChange}
+                        candidateNotes={candidateNotes}
+                        onNoteChange={handleNoteChange}
                       />
                     </>
                   )}
