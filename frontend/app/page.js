@@ -6,7 +6,7 @@ import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
 import WorkspaceHeader from "../components/WorkspaceHeader";
-import CandidateComparison from "../components/CandidateComparison";
+import CandidateWorkspace from "../components/CandidateWorkspace";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import useStructuredJob from "../hooks/useStructuredJob";
 import { buildJdFromStructured } from "../lib/jdBuilders";
@@ -99,9 +99,8 @@ export default function Home() {
   const [loadingText, setLoadingText] = useState("Screening resumes...");
   const [error, setError] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
-  const [showComparison, setShowComparison] = useState(false);
   const [shortlistCount, setShortlistCount] = useState(0);
+  const [activeCandidateId, setActiveCandidateId] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [inputMode, setInputMode] = useState("paste");
@@ -238,8 +237,6 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setMinScore(0);
-    setSelectedCandidateIds([]);
-    setShowComparison(false);
     try {
       setScreeningId(session.id);
       setJobDescription(session.job_description);
@@ -257,25 +254,7 @@ export default function Home() {
     }
   };
 
-  // Dynamic status text cycler for a highly polished SaaS feel
-  useEffect(() => {
-    if (!loading) return;
-    const stages = [
-      "Extracting text content from uploaded PDFs...",
-      "Analyzing candidate profiles against guidelines...",
-      "Running deterministic grading rubric using Llama-3.3...",
-      "Calculating skills match & experience alignment...",
-      "Ranking candidates and compiling detailed evaluation drawers..."
-    ];
-    let idx = 0;
-    setLoadingText(stages[0]);
-    const interval = setInterval(() => {
-      idx = (idx + 1) % stages.length;
-      setLoadingText(stages[idx]);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, [loading]);
-
+  // Dynamic status text cycler removed for simplicity
   const handleFilesSelect = (files) => {
     setResumeFiles(files);
   };
@@ -314,15 +293,6 @@ export default function Home() {
     }
   };
 
-  const handleSelectCandidate = (id) => {
-    setSelectedCandidateIds((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((item) => item !== id);
-      }
-      if (prev.length >= 3) return prev;
-      return [...prev, id];
-    });
-  };
 
   const handleScreening = async () => {
     let targetJD = jobDescription;
@@ -349,8 +319,6 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setMinScore(0);
-    setSelectedCandidateIds([]);
-    setShowComparison(false);
 
     try {
       const response = await screenResumes(targetJD, resumeFiles);
@@ -547,18 +515,8 @@ export default function Home() {
               </div>
               <div className={styles.workflowCard}>
                 <JobDescInput
-                  inputMode={inputMode}
-                  onInputModeChange={setInputMode}
                   freeTextValue={jobDescription}
                   onFreeTextChange={handleJobDescChange}
-                  structuredJob={structuredJob}
-                  updateRoleInfo={updateRoleInfo}
-                  addMustHaveSkill={addMustHaveSkill}
-                  removeMustHaveSkill={removeMustHaveSkill}
-                  addGoodToHaveSkill={addGoodToHaveSkill}
-                  removeGoodToHaveSkill={removeGoodToHaveSkill}
-                  updateTextField={updateTextField}
-                  setStructuredJob={setStructuredJob}
                   isLoading={loading}
                   onUseSample={handleUseSample}
                   onClear={handleClearJD}
@@ -643,13 +601,7 @@ export default function Home() {
               ) : screeningId ? (
                 /* Results Experience */
                 <div className={styles.resultsStack}>
-                  {showComparison ? (
-                    <CandidateComparison
-                      selectedCandidates={filteredResults.filter(r => selectedCandidateIds.includes(r.id))}
-                      onClose={() => setShowComparison(false)}
-                    />
-                  ) : (
-                    <>
+                  <>
                       <WorkspaceHeader counts={getWorkspaceCounts()} />
 
                       <FilterControl
@@ -685,51 +637,51 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* Premium Side-by-Side Compare Action Status Bar */}
-                      <div className={styles.compareBar}>
-                        <div className={styles.compareInfo}>
-                          <span className={styles.compareIcon}>⚖️</span>
-                          <span className={styles.compareText}>
-                            Select candidates to compare side-by-side (max 3): <strong>{selectedCandidateIds.length} selected</strong>
-                          </span>
-                        </div>
-                        <div className={styles.compareActions}>
-                          {selectedCandidateIds.length > 0 && (
-                            <button
-                              onClick={() => setSelectedCandidateIds([])}
-                              className={styles.resetBtn}
-                            >
-                              Reset
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setShowComparison(true)}
-                            disabled={selectedCandidateIds.length < 2}
-                            className={styles.compareBtn}
-                          >
-                            Compare Candidates
-                          </button>
-                        </div>
-                      </div>
 
-                      <ResultsTable
-                        results={filteredResults.filter(r => {
-                          if (statusFilter === "All") return true;
-                          const status = candidateStatuses[r.id] || "New";
-                          return status === statusFilter;
-                        })}
-                        isLoading={loading}
-                        selectedIds={selectedCandidateIds}
-                        onSelect={handleSelectCandidate}
-                        screeningId={screeningId}
-                        activeSession={activeSession}
-                        candidateStatuses={candidateStatuses}
-                        onStatusChange={handleStatusChange}
-                        candidateNotes={candidateNotes}
-                        onNoteChange={handleNoteChange}
-                      />
+                      <div className={styles.resultsGrid}>
+                        <div className={styles.tableColumn}>
+                          <ResultsTable
+                            results={filteredResults.filter(r => {
+                              if (statusFilter === "All") return true;
+                              const status = candidateStatuses[r.id] || "New";
+                              return status === statusFilter;
+                            })}
+                            isLoading={loading}
+                            screeningId={screeningId}
+                            activeSession={activeSession}
+                            candidateStatuses={candidateStatuses}
+                            onStatusChange={handleStatusChange}
+                            candidateNotes={candidateNotes}
+                            onNoteChange={handleNoteChange}
+                            onViewCandidate={setActiveCandidateId}
+                            activeCandidateId={activeCandidateId}
+                          />
+                        </div>
+                        {activeCandidateId && (
+                          <div className={styles.workspaceColumn}>
+                            {(() => {
+                              const activeCandidate = results.find(r => r.id === activeCandidateId);
+                              if (!activeCandidate) return null;
+
+                              const status = candidateStatuses[activeCandidate.id] || "New";
+                              const note = candidateNotes[activeCandidate.id] || "";
+
+                              return (
+                                <CandidateWorkspace
+                                  candidate={activeCandidate}
+                                  status={status}
+                                  onStatusChange={(newStatus) => handleStatusChange(activeCandidate.id, newStatus)}
+                                  note={note}
+                                  onNoteChange={(newNote) => handleNoteChange(activeCandidate.id, newNote)}
+                                  onExportPdf={() => {}}
+                                />
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
                     </>
-                  )}
+
                 </div>
               ) : (
                 /* Elegant simplified recruiter empty state */

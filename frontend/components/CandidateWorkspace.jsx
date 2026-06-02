@@ -3,15 +3,9 @@
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import SkillCoveragePanel from "./SkillCoveragePanel";
-import SkillGapVisualization from "./SkillGapVisualization";
-import WeightedGapAnalysis from "./WeightedGapAnalysis";
-import ProjectAlignmentPanel from "./ProjectAlignmentPanel";
 import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
-
 import { calculateSkillCoverage } from "../lib/SkillCoverageEngine";
-import { calculateWeightedGaps } from "../lib/WeightedGapEngine";
-import { calculateProjectAlignment } from "../lib/ProjectAlignmentEngine";
 
 function getCandidateName(filename) {
   if (!filename) return "Unknown Candidate";
@@ -44,8 +38,6 @@ export default function CandidateWorkspace({
 
   // Process data using the new engines
   const coverageData = calculateSkillCoverage(candidate.gap_analysis);
-  const weightedData = calculateWeightedGaps(candidate.gap_analysis);
-  const projectData = calculateProjectAlignment(candidate, candidate.gap_analysis);
 
   // Quick-decision handler helpers
   const handleQuickStatus = (newStatus) => {
@@ -87,15 +79,6 @@ export default function CandidateWorkspace({
               >
                 Export PDF
               </button>
-              <label className={styles.dossierCompareLabel}>
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => onSelect(candidate.id)}
-                  className={styles.dossierCompareCheckbox}
-                />
-                <span>Compare</span>
-              </label>
             </div>
           </div>
 
@@ -140,14 +123,6 @@ export default function CandidateWorkspace({
           {/* Skill Coverage Intelligence */}
           <SkillCoveragePanel coverageData={coverageData} />
 
-          {/* Skill Gap Visualization */}
-          <SkillGapVisualization coverageData={coverageData} />
-          
-          {/* Weighted Gap Analysis */}
-          <WeightedGapAnalysis weightedData={weightedData} />
-
-          {/* Project Alignment Intelligence */}
-          <ProjectAlignmentPanel projectData={projectData} />
 
           {/* Recruiter Notes */}
           <div className={styles.dossierSectionCard}>

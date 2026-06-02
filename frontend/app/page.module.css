@@ -979,3 +979,28 @@
   background: rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
 }
+.resultsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .resultsGrid {
+    grid-template-columns: 1fr 450px;
+  }
+}
+
+.tableColumn {
+  min-width: 0;
+}
+
+.workspaceColumn {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  padding-left: 24px;
+}
