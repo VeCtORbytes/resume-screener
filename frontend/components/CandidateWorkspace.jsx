@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
-import CandidateOverview from "./CandidateOverview";
-import CoreRequirementAlignment from "./CoreRequirementAlignment";
-import SkillsAlignment from "./SkillsAlignment";
-import InterviewToolkit from "./InterviewToolkit";
-import AdvancedIntelligence from "./AdvancedIntelligence";
+import SkillCoveragePanel from "./SkillCoveragePanel";
+import SkillGapVisualization from "./SkillGapVisualization";
+import WeightedGapAnalysis from "./WeightedGapAnalysis";
+import ProjectAlignmentPanel from "./ProjectAlignmentPanel";
+import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
+
+import { calculateSkillCoverage } from "../lib/SkillCoverageEngine";
+import { calculateWeightedGaps } from "../lib/WeightedGapEngine";
+import { calculateProjectAlignment } from "../lib/ProjectAlignmentEngine";
 
 function getCandidateName(filename) {
   if (!filename) return "Unknown Candidate";
@@ -23,130 +27,6 @@ function getRecommendation(score) {
   return             { text: "Limited Alignment",              color: "#ef4444", class: styles.reject };
 }
 
-// Interview toolkit section uses slightly more contextual language
-function getInterviewRecommendation(score) {
-  if (score >= 80) {
-    return {
-      label: "Recommended for Interview",
-      class: styles.highlyReady,
-      desc: "Strong alignment with role requirements and demonstrated project experience."
-    };
-  }
-  if (score >= 65) {
-    return {
-      label: "Potential Match — Screening Recommended",
-      class: styles.ready,
-      desc: "Solid alignment with core requirements. Recommended for an initial phone screen."
-    };
-  }
-  if (score >= 50) {
-    return {
-      label: "Requires Further Review",
-      class: styles.conditionallyReady,
-      desc: "Some requirement gaps identified. Review experience details before deciding."
-    };
-  }
-  return {
-    label: "Limited Alignment",
-    class: styles.notReady,
-    desc: "Substantial gaps in core requirement matching. Not recommended at this stage."
-  };
-}
-
-// Robust regex-based reasoning text parser (backward compat for old DB records)
-function parseReasoning(reasoning) {
-  if (!reasoning) return null;
-
-  try {
-    const hasBreakdown = reasoning.includes("Breakdown:") || reasoning.includes("Breakdown");
-    const hasStrengths = reasoning.includes("Strengths:") || reasoning.includes("Strengths");
-    const hasGaps = reasoning.includes("Gaps:") || reasoning.includes("Gaps");
-
-    if (!hasBreakdown && !hasStrengths && !hasGaps) {
-      return { type: "raw", text: reasoning };
-    }
-
-    let recommendation = "";
-    const recMatch = reasoning.match(/Recommendation:\s*([^\n\r]+)/i);
-    if (recMatch) recommendation = recMatch[1].trim();
-
-    const breakdown = {
-      skills: 0, maxSkills: 40,
-      experience: 0, maxExperience: 25,
-      projects: 0, maxProjects: 20,
-      education: 0, maxEducation: 10,
-      domain: 0, maxDomain: 5
-    };
-
-    const skillsMatch = reasoning.match(/(?:Skills|Skills Match):\s*(\d+)/i);
-    if (skillsMatch) breakdown.skills = parseInt(skillsMatch[1]);
-
-    const expMatch = reasoning.match(/(?:Experience|Experience Relevance):\s*(\d+)/i);
-    if (expMatch) breakdown.experience = parseInt(expMatch[1]);
-
-    const projMatch = reasoning.match(/(?:Projects|Project Relevance):\s*(\d+)/i);
-    if (projMatch) breakdown.projects = parseInt(projMatch[1]);
-
-    const eduMatch = reasoning.match(/(?:Education|Education & Certifications):\s*(\d+)/i);
-    if (eduMatch) breakdown.education = parseInt(eduMatch[1]);
-
-    const domMatch = reasoning.match(/(?:Domain|Domain & Keyword Fit):\s*(\d+)/i);
-    if (domMatch) breakdown.domain = parseInt(domMatch[1]);
-
-    let strengths = [];
-    const strengthsParts = reasoning.split(/✅ Strengths:|Strengths:/i);
-    if (strengthsParts.length > 1) {
-      const strengthsText = strengthsParts[1].split(/⚠️ Gaps:|Gaps:/i)[0];
-      strengths = strengthsText
-        .split("\n")
-        .map(line => line.replace(/^[-•*✅\s]+/, "").trim())
-        .filter(line => line.length > 3);
-    }
-
-    let gaps = [];
-    const gapsParts = reasoning.split(/⚠️ Gaps:|Gaps:/i);
-    if (gapsParts.length > 1) {
-      gaps = gapsParts[1]
-        .split("\n")
-        .map(line => line.replace(/^[-•*⚠️\s]+/, "").trim())
-        .filter(line => line.length > 3);
-    }
-
-    return { type: "structured", recommendation, breakdown, strengths, gaps };
-  } catch (e) {
-    console.error("Error parsing reasoning text:", e);
-    return { type: "raw", text: reasoning };
-  }
-}
-
-function getBriefingText(result, parsed) {
-  if (!result.reasoning) return "";
-  const rawSummary = result.reasoning
-    .split(/Strengths:|Gaps:/i)[0]
-    .replace(/Recommendation:\s*[^\n\r]+/i, "")
-    .replace(/AI Recruiter Summary/gi, "")
-    .trim();
-
-  let cleanedText = rawSummary
-    .replace(/Llama-3.3/g, "HireLens")
-    .replace(/our AI recruiter/gi, "HireLens")
-    .replace(/the AI evaluation/gi, "our screening")
-    .replace(/standardized mathematical grading rubric/gi, "target criteria")
-    .replace(/AI confidence/gi, "evaluation clarity")
-    .replace(/evidence_strength/gi, "clarity of profile documentation")
-    .replace(/reliability_signals/gi, "profile completeness indicators");
-
-  if (!cleanedText && parsed?.strengths) {
-    cleanedText = parsed.strengths.join(". ") + ".";
-  }
-
-  return cleanedText
-    .replace(/^\d+[\.)] \s*/gm, "")
-    .replace(/^[-•*]\s*/gm, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export default function CandidateWorkspace({
   candidate,
   status = "New",
@@ -157,24 +37,15 @@ export default function CandidateWorkspace({
   isExportingPdf = false,
   isSelected = false,
   onSelect,
-  candidateQuestions,
-  onGenerateQuestions,
-  isGeneratingQuestions = false,
 }) {
   const score = candidate.score || 0;
-  const parsed = parseReasoning(candidate.reasoning);
   const recInfo = getRecommendation(score);
-  const interviewRec = getInterviewRecommendation(score);
-  const briefingText = getBriefingText(candidate, parsed);
   const candidateName = getCandidateName(candidate.resume_filename);
 
-  const scoreClass = score >= 80
-    ? styles.excellent
-    : score >= 60
-      ? styles.good
-      : score >= 40
-        ? styles.fair
-        : styles.poor;
+  // Process data using the new engines
+  const coverageData = calculateSkillCoverage(candidate.gap_analysis);
+  const weightedData = calculateWeightedGaps(candidate.gap_analysis);
+  const projectData = calculateProjectAlignment(candidate, candidate.gap_analysis);
 
   // Quick-decision handler helpers
   const handleQuickStatus = (newStatus) => {
@@ -186,9 +57,9 @@ export default function CandidateWorkspace({
 
       {/* Dossier section label */}
       <div className={styles.workspaceSectionHeader}>
-        <span className={styles.stepBadge}>Candidate Profile</span>
-        <h3 className={styles.stepTitle}>Evaluation & Decision</h3>
-        <p className={styles.stepSubtitle}>Full evaluation and interview preparation for this candidate.</p>
+        <span className={`${styles.stepBadge} hl-badge`}>Candidate Workspace</span>
+        <h3 className={styles.stepTitle}>Evidence-Based Evaluation</h3>
+        <p className={styles.stepSubtitle}>Skill coverage intelligence and validation for this candidate.</p>
       </div>
 
       <div className={styles.dossierBody}>
@@ -203,17 +74,16 @@ export default function CandidateWorkspace({
           </div>
         )}
 
-        {/* SECTION 1: Unified Candidate Header */}
-        <div className={styles.dossierHeaderCard}>
+        {/* SECTION 1: Candidate Overview (Match Score, Rec, Status) */}
+        <div className={`${styles.dossierHeaderCard} hl-card`}>
 
-          {/* Top row: label + secondary actions */}
           <div className={styles.dossierHeaderTopRow}>
-            <span className={styles.dossierFileLabel}>Candidate Profile</span>
+            <span className={styles.dossierFileLabel}>Candidate Overview</span>
             <div className={styles.dossierSecondaryActions}>
               <button
                 onClick={() => onExportPdf(candidate.id, candidate.resume_filename)}
                 disabled={isExportingPdf}
-                className={styles.dossierSecondaryBtn}
+                className={`${styles.dossierSecondaryBtn} hl-btn-secondary`}
               >
                 Export PDF
               </button>
@@ -229,22 +99,16 @@ export default function CandidateWorkspace({
             </div>
           </div>
 
-          {/* Candidate name — primary element */}
           <h2 className={styles.dossierCandidateName}>{candidateName}</h2>
 
-          {/* Recommendation — second most prominent */}
           <div className={styles.dossierRecRow}>
             <span className={`${styles.dossierRecLabel} ${recInfo.class}`}>{recInfo.text}</span>
-            <span className={styles.dossierScoreSupport}>Score: {score}</span>
+            <span className={`${styles.dossierScoreSupport} hl-badge`}>Score: {score}</span>
           </div>
 
-          {/* Recommendation description */}
-          <p className={styles.dossierRecDesc}>{interviewRec.desc}</p>
-
-          {/* Status + quick-decision buttons */}
           <div className={styles.dossierDecisionRow}>
             <div className={styles.dossierStatusControl}>
-              <span className={styles.dossierStatusLabel}>Stage</span>
+              <span className={styles.dossierStatusLabel}>Status</span>
               <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
             </div>
             <div className={styles.dossierQuickActions}>
@@ -273,36 +137,23 @@ export default function CandidateWorkspace({
 
         {/* Dossier Document Sections */}
         <div className={styles.dossierSectionsStack}>
-          {/* SECTION 2: Candidate Overview */}
-          <CandidateOverview
-            summary={briefingText}
-            strengths={parsed?.strengths || []}
-            gaps={parsed?.gaps || []}
-            gapAnalysis={candidate.gap_analysis}
-          />
+          {/* Skill Coverage Intelligence */}
+          <SkillCoveragePanel coverageData={coverageData} />
 
-          {/* SECTION 3: Core Requirement Alignment */}
-          <CoreRequirementAlignment
-            alignments={candidate.gap_analysis?.core_requirement_alignment || []}
-          />
+          {/* Skill Gap Visualization */}
+          <SkillGapVisualization coverageData={coverageData} />
+          
+          {/* Weighted Gap Analysis */}
+          <WeightedGapAnalysis weightedData={weightedData} />
 
-          {/* SECTION 4: Skills Alignment */}
-          <SkillsAlignment gapAnalysis={candidate.gap_analysis} />
+          {/* Project Alignment Intelligence */}
+          <ProjectAlignmentPanel projectData={projectData} />
 
-          {/* SECTION 5: Interview Toolkit */}
-          <InterviewToolkit
-            interviewRec={interviewRec}
-            candidateQuestions={candidateQuestions}
-            onGenerateQuestions={onGenerateQuestions}
-            isGenerating={isGeneratingQuestions}
-            note={note}
-            onNoteChange={onNoteChange}
-            candidateId={candidate.id}
-            interviewFocus={candidate.gap_analysis?.interview_focus || []}
-          />
-
-          {/* SECTION 6: Supporting Details (collapsible) */}
-          <AdvancedIntelligence candidate={candidate} />
+          {/* Recruiter Notes */}
+          <div className={styles.dossierSectionCard}>
+            <h3 className={styles.dossierSectionHeading}>Recruiter Notes & Hiring Decision</h3>
+            <RecruiterNotes note={note} onNoteChange={onNoteChange} />
+          </div>
         </div>
       </div>
     </div>

@@ -242,7 +242,7 @@ export default function ResultsTable({
                         <button
                             onClick={toggleShareDropdown}
                             disabled={exportingGlobal || results.length === 0}
-                            className={styles.shareBtn}
+                            className={`${styles.shareBtn} hl-btn-secondary`}
                             title="Share or export recruiter insights"
                         >
                             <span>📤 Share</span>
@@ -326,8 +326,8 @@ export default function ResultsTable({
                             <th className={styles.selectCol}>Compare</th>
                             <th className={styles.nameCol}>Candidate</th>
                             <th className={styles.scoreCol}>Match Score</th>
-                            <th className={styles.recommendationCol}>Recommendation</th>
-                            <th className={styles.stageCol}>Status</th>
+                            <th className="">Recommendation</th>
+                            <th className="">Status</th>
                             <th className={styles.actionCol}>Actions</th>
                         </tr>
                     </thead>
@@ -388,12 +388,12 @@ export default function ResultsTable({
                                             <span className={styles.scoreValue}>{score}%</span>
                                         </div>
                                     </td>
-                                    <td className={styles.recommendationCol}>
+                                    <td className="">
                                         <span className={`${styles.recBadge} ${recInfo.class}`}>
                                             {recInfo.emoji} {recInfo.text}
                                         </span>
                                     </td>
-                                    <td className={styles.stageCol} onClick={(e) => e.stopPropagation()}>
+                                    <td className="" onClick={(e) => e.stopPropagation()}>
                                         <StatusBadge
                                             status={currentStatus}
                                             onChange={(newStatus) => onStatusChange(result.id, newStatus)}

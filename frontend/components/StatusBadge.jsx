@@ -5,23 +5,23 @@ import styles from "./StatusBadge.module.css";
 const STATUS_CONFIG = {
   "New": {
     label: "New",
-    className: styles.badgeNew
+    className: "hl-badge-neutral"
   },
   "Review Later": {
-    label: "Review Later",
-    className: styles.badgeReviewLater
+    label: "Hold",
+    className: "hl-badge-warning"
   },
   "Shortlisted": {
     label: "Shortlisted",
-    className: styles.badgeShortlisted
+    className: "hl-badge-success"
   },
   "Interview": {
     label: "Interview",
-    className: styles.badgeInterview
+    className: "hl-badge-success"
   },
   "Rejected": {
     label: "Rejected",
-    className: styles.badgeRejected
+    className: "hl-badge-danger"
   }
 };
 
@@ -34,7 +34,7 @@ export default function StatusBadge({ status = "New", onChange, interactive = fa
         <select
           value={status}
           onChange={(e) => onChange(e.target.value)}
-          className={`${styles.select} ${config.className}`}
+          className={`hl-badge ${config.className} ${styles.select}`}
         >
           {Object.keys(STATUS_CONFIG).map((key) => (
             <option key={key} value={key} className={styles.option}>
@@ -48,8 +48,8 @@ export default function StatusBadge({ status = "New", onChange, interactive = fa
   }
 
   return (
-    <span className={`${styles.badge} ${config.className}`}>
-      <span className={styles.label}>{config.label}</span>
+    <span className={`hl-badge ${config.className}`}>
+      <span>{config.label}</span>
     </span>
   );
 }

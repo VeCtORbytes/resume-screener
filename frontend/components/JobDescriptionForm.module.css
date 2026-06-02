@@ -1,7 +1,7 @@
 .container {
     background: var(--surface);
     padding: 32px;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     box-shadow: none;
 }
@@ -48,7 +48,7 @@
     font-size: 12px;
     font-weight: 600;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.15s ease-in-out;
 }
@@ -65,14 +65,14 @@
     font-size: 12px;
     font-weight: 600;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.15s ease-in-out;
 }
 
 .clearBtn:hover:not(:disabled) {
     background: #fef2f2;
-    border-color: #fecaca;
+    border-color: var(--color-danger-border);
 }
 
 .utilityBtn:disabled, .clearBtn:disabled {
@@ -85,7 +85,7 @@
     display: flex;
     background: var(--bg-secondary);
     padding: 4px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     margin-bottom: 28px;
     gap: 2px;
     border: 1px solid var(--border);
@@ -100,7 +100,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     display: flex;
@@ -132,7 +132,7 @@
     min-height: 240px;
     padding: 16px;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-family: inherit;
     font-size: 13px;
     line-height: 1.6;
@@ -257,7 +257,7 @@
     width: 100%;
     padding: 10px 14px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     color: var(--text-primary);
     background: var(--surface);
@@ -295,7 +295,7 @@
     flex: 1;
     padding: 10px 14px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     color: var(--text-primary);
     background: var(--surface);
@@ -315,7 +315,7 @@
     padding: 10px 20px;
     font-size: 12.5px;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.15s ease;
 }
@@ -340,7 +340,7 @@
     padding: 12px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     align-items: center;
 }
 
@@ -349,7 +349,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 12.5px;
     font-weight: 600;
     transition: all 0.15s ease;
@@ -407,7 +407,7 @@
     min-height: 120px;
     padding: 14px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 13px;
     line-height: 1.6;
@@ -443,7 +443,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     padding: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }

@@ -421,7 +421,7 @@ export default function Home() {
           <div className={styles.workflowNav}>
             <div className={`${styles.workflowNavStep} ${(!screeningId && !resumeFiles.length) ? styles.activeNavStep : ""}`}>
               <span className={styles.navStepNum}>01</span>
-              <div className={styles.navStepText}>
+              <div className="">
                 <strong>Job Requirements</strong>
 
               </div>
@@ -429,7 +429,7 @@ export default function Home() {
             <div className={styles.workflowNavArrow}>→</div>
             <div className={`${styles.workflowNavStep} ${(resumeFiles.length > 0 && !screeningId) ? styles.activeNavStep : ""}`}>
               <span className={styles.navStepNum}>02</span>
-              <div className={styles.navStepText}>
+              <div className="">
                 <strong>Upload Resumes</strong>
 
               </div>
@@ -437,7 +437,7 @@ export default function Home() {
             <div className={styles.workflowNavArrow}>→</div>
             <div className={`${styles.workflowNavStep} ${(screeningId && !activeSession) ? styles.activeNavStep : ""}`}>
               <span className={styles.navStepNum}>03</span>
-              <div className={styles.navStepText}>
+              <div className="">
                 <strong>Review Candidates</strong>
 
               </div>
@@ -445,7 +445,7 @@ export default function Home() {
             <div className={styles.workflowNavArrow}>→</div>
             <div className={`${styles.workflowNavStep} ${(activeSession) ? styles.activeNavStep : ""}`}>
               <span className={styles.navStepNum}>04</span>
-              <div className={styles.navStepText}>
+              <div className="">
                 <strong>Hiring Decision</strong>
 
               </div>
@@ -522,7 +522,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        <span className={styles.topHistoryItemPill}>
+                        <span className="">
                           {s.result_count}{" "}
                           {s.result_count === 1 ? "resume" : "resumes"}
                         </span>
@@ -541,7 +541,7 @@ export default function Home() {
             {/* STEP 1: Job Description */}
             <div className={styles.workflowStep}>
               <div className={styles.stepHeader}>
-                <span className={styles.stepBadge}>STEP 1</span>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 1</span>
                 <h3 className={styles.stepTitle}>Job Description & Mandates</h3>
                 <p className={styles.stepDesc}>Define the target role description, key skills, and mandatory requirements</p>
               </div>
@@ -569,7 +569,7 @@ export default function Home() {
             {/* STEP 2: Resume Upload & Screening Ingestion */}
             <div className={styles.workflowStep}>
               <div className={styles.stepHeader}>
-                <span className={styles.stepBadge}>STEP 2</span>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 2</span>
 
                 <h3 className={styles.stepTitle}>
                   Upload Candidate Resumes
@@ -621,7 +621,7 @@ export default function Home() {
             {/* STEP 3: Candidate Results */}
             <div className={styles.workflowStep}>
               <div className={styles.stepHeader}>
-                <span className={styles.stepBadge}>STEP 3</span>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 3</span>
                 <h3 className={styles.stepTitle}>Hiring Suitability Results</h3>
                 <p className={styles.stepDesc}>Explore screened candidates, match score comparisons, and make final decisions</p>
               </div>

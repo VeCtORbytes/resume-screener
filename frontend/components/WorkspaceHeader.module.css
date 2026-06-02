@@ -4,7 +4,7 @@
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
 }
@@ -48,8 +48,8 @@
 /* Card base styling */
 .card {
   padding: 1.25rem;
-  border-radius: 12px;
-  background: #ffffff;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   border: 1px solid rgba(226, 232, 240, 0.7);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);

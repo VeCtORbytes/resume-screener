@@ -3,7 +3,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -14,12 +14,7 @@
   white-space: nowrap;
 }
 
-.icon {
-  font-size: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .label {
   display: inline-block;
@@ -66,7 +61,7 @@
 .select {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   padding: 6px 32px 6px 12px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -107,7 +102,7 @@
   text-transform: none;
   letter-spacing: normal;
   font-weight: 500;
-  background: #ffffff;
+  background: var(--color-surface);
   color: #1e293b;
   padding: 8px;
 }

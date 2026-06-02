@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -180,7 +180,7 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
 
   const avgMustHavePct = divisor > 0 ? Math.round(mustHavePctSum / finalDiv) : 75;
   const avgOptionalPct = divisor > 0 ? Math.round(optionalPctSum / finalDiv) : 40;
-  
+
   // --- 1c. Upgraded Project Intelligence KPI Calculations ---
   let projectRelevanceSum = 0;
   let projectRelevanceCount = 0;
@@ -230,7 +230,7 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
   const avgEvidenceStrengthScore = parsedCount > 0 ? Math.round(totalEvidenceStrength / parsedCount) : 88;
 
   const skillAlignmentScore = Math.max(0, Math.min(100, divisor > 0 ? Math.round(
-    (totalMatched / (totalMatched + totalMissing || 1)) * 70 + 
+    (totalMatched / (totalMatched + totalMissing || 1)) * 70 +
     (totalOptional / (totalOptional + (totalOptional + (results.map(r => r.gap_analysis?.good_to_have_missing || []).flat().length)) || 1)) * 30
   ) : avgScore));
 
@@ -277,7 +277,7 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
       }
     });
   });
-  
+
   // Backfill if empty using the standard parsed sets
   if (Object.keys(jdSkillsMap).length === 0) {
     uniqueMatchedMustHaves.forEach(s => {
@@ -463,9 +463,9 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           <h3 className={styles.dashboardTitle}>Hiring Decision Workspace</h3>
           <p className={styles.dashboardSubtitle}>High-level performance summary of your current candidate batch</p>
         </div>
-        
+
         {/* Toggle Button for Recruiter Progressive Disclosure */}
-        <button 
+        <button
           onClick={() => setIsAdvancedOpen(prev => !prev)}
           className={styles.advancedToggleBtn}
         >
@@ -519,19 +519,19 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           {/* Tabbed view selector inside advanced view */}
           <div className={styles.tabsHeaderRow} style={{ marginTop: '20px', marginBottom: '20px' }}>
             <div className={styles.tabs}>
-              <button 
+              <button
                 onClick={() => setActiveTab("overview")}
                 className={`${styles.tabBtn} ${activeTab === "overview" ? styles.activeTab : ""}`}
               >
                 JD Gap Intelligence
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("comparison")}
                 className={`${styles.tabBtn} ${activeTab === "comparison" ? styles.activeTab : ""}`}
               >
                 Candidate Radar
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("weighted")}
                 className={`${styles.tabBtn} ${activeTab === "weighted" ? styles.activeTab : ""}`}
               >
@@ -541,599 +541,599 @@ export default function AnalyticsDashboard({ results = [], isLoading }) {
           </div>
 
           {/* --- Upgraded Critical Gap KPI Cards --- */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.secDividerLabel}>Job Requirement Gap Insights</span>
-      </div>
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average Critical Gaps</span>
-            <span className={styles.kpiIcon} style={{ color: "#ef4444" }}>⚠️</span>
+          <div className={styles.sectionDivider}>
+            <span className={styles.secDividerLabel}>Job Requirement Gap Insights</span>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#ef4444" }}>{avgCritical}</h2>
-          <p className={styles.kpiFooter}>Critical missing skills in batch</p>
-        </div>
+          <div className={styles.kpiGrid}>
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Average Critical Gaps</span>
+                <span className={styles.kpiIcon} style={{ color: "#ef4444" }}>⚠️</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#ef4444" }}>{avgCritical}</h2>
+              <p className={styles.kpiFooter}>Critical missing skills in batch</p>
+            </div>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Must-Have Coverage</span>
-            <span className={styles.kpiIcon} style={{ color: "#10b981" }}>🎯</span>
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Must-Have Coverage</span>
+                <span className={styles.kpiIcon} style={{ color: "#10b981" }}>🎯</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#10b981" }}>{avgMustHavePct}%</h2>
+              <p className={styles.kpiFooter}>Mandatory skills covered</p>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Optional Coverage</span>
+                <span className={styles.kpiIcon} style={{ color: "#3b82f6" }}>🌟</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#3b82f6" }}>{avgOptionalPct}%</h2>
+              <p className={styles.kpiFooter}>Preferred skills covered</p>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Skill Alignment Score</span>
+                <span className={styles.kpiIcon} style={{ color: "#f59e0b" }}>⚡</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#f59e0b" }}>{skillAlignmentScore}<span className={styles.percentSymbol}>/100</span></h2>
+              <p className={styles.kpiFooter}>Aggregate job description fit</p>
+            </div>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#10b981" }}>{avgMustHavePct}%</h2>
-          <p className={styles.kpiFooter}>Mandatory skills covered</p>
-        </div>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Optional Coverage</span>
-            <span className={styles.kpiIcon} style={{ color: "#3b82f6" }}>🌟</span>
+          {/* --- Upgraded Project Intelligence KPI Cards --- */}
+          <div className={styles.sectionDivider}>
+            <span className={styles.secDividerLabel}>Project Intelligence Insights</span>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#3b82f6" }}>{avgOptionalPct}%</h2>
-          <p className={styles.kpiFooter}>Preferred skills covered</p>
-        </div>
+          <div className={styles.kpiGrid}>
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Average Project Relevance</span>
+                <span className={styles.kpiIcon} style={{ color: "#8b5cf6" }}>📁</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#8b5cf6" }}>{avgProjectRelevance}%</h2>
+              <p className={styles.kpiFooter}>Project stack relevance score</p>
+            </div>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Skill Alignment Score</span>
-            <span className={styles.kpiIcon} style={{ color: "#f59e0b" }}>⚡</span>
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Project Evidence Strength</span>
+                <span className={styles.kpiIcon} style={{ color: "#ec4899" }}>💪</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#ec4899" }}>{projectEvidenceStrength}%</h2>
+              <p className={styles.kpiFooter}>Inferred capability match rate</p>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Total Projects Inferred</span>
+                <span className={styles.kpiIcon} style={{ color: "#14b8a6" }}>🧠</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#14b8a6" }}>{totalProjectsInferred}</h2>
+              <p className={styles.kpiFooter}>Programmatically analyzed projects</p>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Candidate Project Fit</span>
+                <span className={styles.kpiIcon} style={{ color: "#f97316" }}>⚖️</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#f97316" }}>{Math.round((avgProjectRelevance * 0.7) + (projectEvidenceStrength * 0.3))}%</h2>
+              <p className={styles.kpiFooter}>Weighted project evaluation fit</p>
+            </div>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#f59e0b" }}>{skillAlignmentScore}<span className={styles.percentSymbol}>/100</span></h2>
-          <p className={styles.kpiFooter}>Aggregate job description fit</p>
-        </div>
-      </div>
 
-      {/* --- Upgraded Project Intelligence KPI Cards --- */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.secDividerLabel}>Project Intelligence Insights</span>
-      </div>
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average Project Relevance</span>
-            <span className={styles.kpiIcon} style={{ color: "#8b5cf6" }}>📁</span>
+          {/* --- Upgraded AI Trustworthiness & Reliability Insights --- */}
+          <div className={styles.sectionDivider}>
+            <span className={styles.secDividerLabel}>🛡️ AI Trustworthiness & Reliability Insights</span>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#8b5cf6" }}>{avgProjectRelevance}%</h2>
-          <p className={styles.kpiFooter}>Project stack relevance score</p>
-        </div>
+          <div className={styles.kpiGrid}>
+            <div className={`${styles.kpiCard} ${avgConfidenceScore < 80 ? styles.kpiWarningCard : ""}`}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Average AI Confidence</span>
+                <span className={styles.kpiIcon} style={{ color: avgConfidenceScore < 80 ? "#eab308" : "#6366f1" }}>🛡️</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: avgConfidenceScore < 80 ? "#d97706" : "#4f46e5" }}>
+                {avgConfidenceScore}%
+              </h2>
+              <p className={styles.kpiFooter}>
+                {avgConfidenceScore < 80 ? "⚠️ High uncertainty in candidate evidence" : "Direct & indirect evidence clarity is strong"}
+              </p>
+            </div>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Project Evidence Strength</span>
-            <span className={styles.kpiIcon} style={{ color: "#ec4899" }}>💪</span>
+            <div className={`${styles.kpiCard} ${avgParsingScore < 80 ? styles.kpiWarningCard : ""}`}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Average Parsing Reliability</span>
+                <span className={styles.kpiIcon} style={{ color: avgParsingScore < 80 ? "#ef4444" : "#10b981" }}>🔍</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: avgParsingScore < 80 ? "#dc2626" : "#059669" }}>
+                {avgParsingScore}%
+              </h2>
+              <p className={styles.kpiFooter}>
+                {avgParsingScore < 80 ? "⚠️ Degradation flagged on OCR or text density" : "High-fidelity extraction validated"}
+              </p>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiMeta}>
+                <span className={styles.kpiLabel}>Average Evidence Strength</span>
+                <span className={styles.kpiIcon} style={{ color: "#a855f7" }}>⚡</span>
+              </div>
+              <h2 className={styles.kpiValue} style={{ color: "#9333ea" }}>{avgEvidenceStrengthScore}%</h2>
+              <p className={styles.kpiFooter}>Degree of explicit skill documentation</p>
+            </div>
           </div>
-          <h2 className={styles.kpiValue} style={{ color: "#ec4899" }}>{projectEvidenceStrength}%</h2>
-          <p className={styles.kpiFooter}>Inferred capability match rate</p>
-        </div>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Total Projects Inferred</span>
-            <span className={styles.kpiIcon} style={{ color: "#14b8a6" }}>🧠</span>
-          </div>
-          <h2 className={styles.kpiValue} style={{ color: "#14b8a6" }}>{totalProjectsInferred}</h2>
-          <p className={styles.kpiFooter}>Programmatically analyzed projects</p>
-        </div>
+          {activeTab === "overview" && (
+            <>
+              {/* --- EXPLICIT SKILL GAP AUDIT PANELS --- */}
+              <div className={styles.explicitGapPanelSection}>
+                <h4 className={styles.panelSectionTitle}>Target Job Description Skill Gap Audit</h4>
+                <p className={styles.panelSectionSubtitle}>Factual breakdown of mandatory and optional requirements detected in this candidate batch</p>
 
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Candidate Project Fit</span>
-            <span className={styles.kpiIcon} style={{ color: "#f97316" }}>⚖️</span>
-          </div>
-          <h2 className={styles.kpiValue} style={{ color: "#f97316" }}>{Math.round((avgProjectRelevance * 0.7) + (projectEvidenceStrength * 0.3))}%</h2>
-          <p className={styles.kpiFooter}>Weighted project evaluation fit</p>
-        </div>
-      </div>
+                <div className={styles.skillGapPanelsGrid}>
 
-      {/* --- Upgraded AI Trustworthiness & Reliability Insights --- */}
-      <div className={styles.sectionDivider}>
-        <span className={styles.secDividerLabel}>🛡️ AI Trustworthiness & Reliability Insights</span>
-      </div>
-      <div className={styles.kpiGrid}>
-        <div className={`${styles.kpiCard} ${avgConfidenceScore < 80 ? styles.kpiWarningCard : ""}`}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average AI Confidence</span>
-            <span className={styles.kpiIcon} style={{ color: avgConfidenceScore < 80 ? "#eab308" : "#6366f1" }}>🛡️</span>
-          </div>
-          <h2 className={styles.kpiValue} style={{ color: avgConfidenceScore < 80 ? "#d97706" : "#4f46e5" }}>
-            {avgConfidenceScore}%
-          </h2>
-          <p className={styles.kpiFooter}>
-            {avgConfidenceScore < 80 ? "⚠️ High uncertainty in candidate evidence" : "Direct & indirect evidence clarity is strong"}
-          </p>
-        </div>
-
-        <div className={`${styles.kpiCard} ${avgParsingScore < 80 ? styles.kpiWarningCard : ""}`}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average Parsing Reliability</span>
-            <span className={styles.kpiIcon} style={{ color: avgParsingScore < 80 ? "#ef4444" : "#10b981" }}>🔍</span>
-          </div>
-          <h2 className={styles.kpiValue} style={{ color: avgParsingScore < 80 ? "#dc2626" : "#059669" }}>
-            {avgParsingScore}%
-          </h2>
-          <p className={styles.kpiFooter}>
-            {avgParsingScore < 80 ? "⚠️ Degradation flagged on OCR or text density" : "High-fidelity extraction validated"}
-          </p>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiMeta}>
-            <span className={styles.kpiLabel}>Average Evidence Strength</span>
-            <span className={styles.kpiIcon} style={{ color: "#a855f7" }}>⚡</span>
-          </div>
-          <h2 className={styles.kpiValue} style={{ color: "#9333ea" }}>{avgEvidenceStrengthScore}%</h2>
-          <p className={styles.kpiFooter}>Degree of explicit skill documentation</p>
-        </div>
-      </div>
-
-      {activeTab === "overview" && (
-        <>
-          {/* --- EXPLICIT SKILL GAP AUDIT PANELS --- */}
-          <div className={styles.explicitGapPanelSection}>
-            <h4 className={styles.panelSectionTitle}>Target Job Description Skill Gap Audit</h4>
-            <p className={styles.panelSectionSubtitle}>Factual breakdown of mandatory and optional requirements detected in this candidate batch</p>
-            
-            <div className={styles.skillGapPanelsGrid}>
-              
-              {/* Panel 1: Missing Must-Haves */}
-              <div className={`${styles.skillPanelCard} ${styles.missingMustPanel}`}>
-                <div className={styles.panelHeader}>
-                  <span className={styles.panelIcon}>❌</span>
-                  <h5 className={styles.panelTitle}>Missing Must-Have Skills</h5>
-                </div>
-                <div className={styles.panelList}>
-                  {uniqueMissingMustHaves.length > 0 ? (
-                    uniqueMissingMustHaves.map((skill, sIdx) => (
-                      <div key={sIdx} className={styles.panelItem}>
-                        <span className={styles.skillCross}>❌</span>
-                        <span className={styles.panelSkillName}>{skill}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={styles.panelItemEmptyGreen}>
-                      <span className={styles.panelCheck}>✅</span>
-                      <span className={styles.panelEmptyText}>All mandatory skills covered in this batch!</span>
+                  {/* Panel 1: Missing Must-Haves */}
+                  <div className={`${styles.skillPanelCard} ${styles.missingMustPanel}`}>
+                    <div className={styles.panelHeader}>
+                      <span className={styles.panelIcon}>❌</span>
+                      <h5 className={styles.panelTitle}>Missing Must-Have Skills</h5>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Panel 2: Missing Good-to-Haves */}
-              <div className={`${styles.skillPanelCard} ${styles.missingGoodPanel}`}>
-                <div className={styles.panelHeader}>
-                  <span className={styles.panelIcon}>⚠️</span>
-                  <h5 className={styles.panelTitle}>Missing Good-to-Have Skills</h5>
-                </div>
-                <div className={styles.panelList}>
-                  {uniqueMissingGoodToHaves.length > 0 ? (
-                    uniqueMissingGoodToHaves.map((skill, sIdx) => (
-                      <div key={sIdx} className={styles.panelItem}>
-                        <span className={styles.skillWarning}>⚠️</span>
-                        <span className={styles.panelSkillName}>{skill}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={styles.panelItemEmptyGreen}>
-                      <span className={styles.panelCheck}>✅</span>
-                      <span className={styles.panelEmptyText}>All preferred skills covered in this batch!</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Panel 3: Matched Must-Haves */}
-              <div className={`${styles.skillPanelCard} ${styles.matchedPanel}`}>
-                <div className={styles.panelHeader}>
-                  <span className={styles.panelIcon}>✅</span>
-                  <h5 className={styles.panelTitle}>Matched Must-Haves</h5>
-                </div>
-                <div className={styles.panelList}>
-                  {uniqueMatchedMustHaves.length > 0 ? (
-                    uniqueMatchedMustHaves.map((skill, sIdx) => (
-                      <div key={sIdx} className={styles.panelItem}>
-                        <span className={styles.skillCheck}>✅</span>
-                        <span className={styles.panelSkillName}>{skill}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <span className={styles.panelEmptyText}>No matched mandatory skills identified.</span>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div className={styles.chartsGrid}>
-          {/* --- UPGRADED JD SKILL GAP BAR CHART --- */}
-          <div className={`${styles.chartCard} ${styles.barCard}`}>
-            <h4 className={styles.chartTitle}>JD Skill Alignment Breakdown</h4>
-            <p className={styles.chartSubtitle}>Average requirement coverage counts across candidates</p>
-            <div className={styles.chartContainer}>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={jdSkillGapData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={{ stroke: "#e2e8f0" }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    domain={[0, 'auto']} 
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={{ stroke: "#e2e8f0" }}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: "#ffffff", 
-                      border: "1px solid #e2e8f0", 
-                      borderRadius: "8px", 
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
-                    }}
-                    labelStyle={{ fontWeight: 600, color: "#0f172a", fontSize: 12 }}
-                    itemStyle={{ fontSize: 12 }}
-                    formatter={(value) => [`${value} Skill(s)`, "Average Count"]}
-                  />
-                  <Bar 
-                    dataKey="Count" 
-                    fill="#4f46e5" 
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={45}
-                  >
-                    {jdSkillGapData.map((entry, idx) => (
-                      <Cell key={`cell-${idx}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* --- UPGRADED MUST-HAVE COVERAGE DONUT / Circular Indicators --- */}
-          <div className={`${styles.chartCard} ${styles.pieCard}`}>
-            <h4 className={styles.chartTitle}>JD Coverage Analytics</h4>
-            <p className={styles.chartSubtitle}>Proportion of mandatory and optional requirements covered</p>
-            <div className={styles.donutContent}>
-              <div className={styles.coverageRingsContainer}>
-                <div className={styles.coverageRingCard}>
-                  <div className={styles.coverageProgress}>
-                    <svg className={styles.circularSvg} viewBox="0 0 36 36">
-                      <path
-                        className={styles.circularBg}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                      <path
-                        className={styles.circularBar}
-                        stroke="#10b981"
-                        strokeDasharray={`${avgMustHavePct}, 100`}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    <div className={styles.coverageTextGroup}>
-                      <span className={styles.coveragePct} style={{ color: "#10b981" }}>{avgMustHavePct}%</span>
-                      <span className={styles.coverageLabel}>Must-Have</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.coverageRingCard}>
-                  <div className={styles.coverageProgress}>
-                    <svg className={styles.circularSvg} viewBox="0 0 36 36">
-                      <path
-                        className={styles.circularBg}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                      <path
-                        className={styles.circularBar}
-                        stroke="#3b82f6"
-                        strokeDasharray={`${avgOptionalPct}, 100`}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      />
-                    </svg>
-                    <div className={styles.coverageTextGroup}>
-                      <span className={styles.coveragePct} style={{ color: "#3b82f6" }}>{avgOptionalPct}%</span>
-                      <span className={styles.coverageLabel}>Optional</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={styles.pieLegend} style={{ marginTop: '16px' }}>
-                <div className={styles.legendItem}>
-                  <span className={styles.legendColorDot} style={{ backgroundColor: "#10b981" }}></span>
-                  <span className={styles.legendLabel}>Must-Have Coverage</span>
-                  <span className={styles.legendVal}>{avgMustHavePct}%</span>
-                </div>
-                <div className={styles.legendItem}>
-                  <span className={styles.legendColorDot} style={{ backgroundColor: "#3b82f6" }}></span>
-                  <span className={styles.legendLabel}>Optional Coverage</span>
-                  <span className={styles.legendVal}>{avgOptionalPct}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-      )}
-
-      {activeTab === "comparison" && (
-        /* --- RADAR CHART (TOP 3 CANDIDATE COMPARISON) --- */
-        <div className={`${styles.chartCard} ${styles.radarCard}`}>
-          <h4 className={styles.chartTitle}>Top Candidates Comparison</h4>
-          <p className={styles.chartSubtitle}>Visual overlay of the top 3 highest scoring candidate matches</p>
-          {topCandidates.length > 0 ? (
-            <div className={styles.radarLayout}>
-              <div className={styles.radarContainer}>
-                <ResponsiveContainer width="100%" height={320}>
-                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarChartData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis 
-                      dataKey="subject" 
-                      tick={{ fill: "#475569", fontSize: 11, fontWeight: 500 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={30} 
-                      domain={[0, 100]} 
-                      tick={{ fill: "#94a3b8", fontSize: 9 }}
-                      axisLine={false}
-                    />
-                    {topCandidates.map((cand, idx) => (
-                      <Radar
-                        key={idx}
-                        name={cand.name}
-                        dataKey={`cand_${idx}`}
-                        stroke={radarColors[idx]}
-                        fill={radarColors[idx]}
-                        fillOpacity={0.15}
-                      />
-                    ))}
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36} 
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: "11px", color: "#475569", paddingTop: "15px" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        background: "#ffffff", 
-                        border: "1px solid #e2e8f0", 
-                        borderRadius: "8px", 
-                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
-                      }}
-                      itemStyle={{ fontSize: 12 }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className={styles.radarDetails}>
-                <h5 className={styles.radarDetailsHeading}>Competency Map Insights</h5>
-                <div className={styles.radarCandList}>
-                  {topCandidates.map((cand, idx) => (
-                    <div key={idx} className={styles.radarCandItem}>
-                      <div className={styles.radarItemHeader}>
-                        <span className={styles.candBadgeDot} style={{ backgroundColor: radarColors[idx] }}></span>
-                        <span className={styles.candBadgeName} title={cand.name}>{cand.name}</span>
-                        <span className={styles.candBadgeScore}>{cand["Overall Score"]} pts</span>
-                      </div>
-                      <div className={styles.radarItemMiniGrid}>
-                        <div className={styles.miniGridCell}>
-                          <span className={styles.cellLabel}>Tech Fit</span>
-                          <span className={styles.cellVal}>{cand["Technical Fit"]}%</span>
-                        </div>
-                        <div className={styles.miniGridCell}>
-                          <span className={styles.cellLabel}>Experience</span>
-                          <span className={styles.cellVal}>{cand["Experience"]}%</span>
-                        </div>
-                        <div className={styles.miniGridCell}>
-                          <span className={styles.cellLabel}>Projects</span>
-                          <span className={styles.cellVal}>{cand["Project Relevance"]}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className={styles.noRadarData}>Insufficient data to render radar overlay.</p>
-          )}
-        </div>
-      )}
-
-      {/* --- WEIGHTED JD GAP INTELLIGENCE TAB --- */}
-      {activeTab === "weighted" && (
-        <div className={styles.weightedTabWorkspace}>
-          
-          {/* Top Selection & Risk Header Row */}
-          <div className={styles.weightedDashboardGrid}>
-            
-            {/* 1. Evaluation Context Selector Card */}
-            <div className={styles.weightedSelectorCard}>
-              <div className={styles.cardHeaderGroup}>
-                <span className={styles.cardIcon}>🔍</span>
-                <h4 className={styles.cardHeading}>Evaluation Context</h4>
-                <p className={styles.cardDescription}>Switch between collective batch view or individual candidate profiles</p>
-              </div>
-              <div className={styles.selectorInputWrapper}>
-                <select 
-                  value={selectedCandidateId}
-                  onChange={(e) => setSelectedCandidateId(e.target.value)}
-                  className={styles.contextSelectDropdown}
-                >
-                  <option value="all">All Candidates (Aggregated Batch View)</option>
-                  {results.map((r) => {
-                    const filename = r.resume_filename || "Candidate";
-                    const displayName = filename.replace(/\.[^/.]+$/, "");
-                    return (
-                      <option key={r.id} value={r.id}>
-                        {displayName} (Score: {r.score}/100)
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-              <div className={styles.selectorFooter}>
-                <p className={styles.selectorFooterText}>
-                  {selectedCandidateId === "all" 
-                    ? "Currently viewing batch average matching distributions." 
-                    : `Currently auditing specific candidate requirement weights.`}
-                </p>
-              </div>
-            </div>
-
-            {/* 2. Premium Risk Assessment Card */}
-            <div className={styles.weightedRiskCard}>
-              <div className={styles.cardHeaderGroup}>
-                <span className={styles.cardIcon} style={{ color: riskColor }}>🛡️</span>
-                <h4 className={styles.cardHeading}>Weighted Risk Assessment</h4>
-                <p className={styles.cardDescription}>Dynamic calculated hiring risk factor based on requirement priority</p>
-              </div>
-              <div className={styles.riskCardBody}>
-                <div className={styles.riskGaugeProgress}>
-                  <svg className={styles.riskCircularSvg} viewBox="0 0 36 36">
-                    <path
-                      className={styles.circularBg}
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={styles.circularBar}
-                      stroke={riskColor}
-                      strokeDasharray={`${calculatedRiskScore}, 100`}
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className={styles.riskProgressValueText}>
-                    <span className={styles.riskScoreVal} style={{ color: riskColor }}>{calculatedRiskScore}%</span>
-                    <span className={styles.riskScoreLabel}>Risk Score</span>
-                  </div>
-                </div>
-                <div className={styles.riskCardDetails}>
-                  <div 
-                    className={styles.riskLevelBadge}
-                    style={{ backgroundColor: riskColor + "15", color: riskColor, borderColor: riskColor + "30" }}
-                  >
-                    {riskClassification}
-                  </div>
-                  <p className={styles.riskDescriptionParagraph}>{riskDescription}</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* 3. Recharts Overlapping Skill Contribution Chart */}
-          <div className={styles.weightedChartContainerCard}>
-            <div className={styles.cardHeaderGroup}>
-              <h4 className={styles.cardHeading}>Weighted Skill Contribution Overlay</h4>
-              <p className={styles.cardDescription}>Comparing job description requirement importance against actual candidate fit</p>
-            </div>
-            
-            <div className={styles.rechartsChartWrapper}>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart 
-                  data={activeWeightedEvaluations.map(ev => ({
-                    name: ev.name,
-                    "Required JD Importance": ev.importance,
-                    "Candidate Match": ev.weighted_contribution
-                  }))} 
-                  margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={{ stroke: "#e2e8f0" }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    domain={[0, 100]} 
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={{ stroke: "#e2e8f0" }}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: "#ffffff", 
-                      border: "1px solid #e2e8f0", 
-                      borderRadius: "8px", 
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
-                    }}
-                    labelStyle={{ fontWeight: 600, color: "#0f172a", fontSize: 12 }}
-                    itemStyle={{ fontSize: 12 }}
-                  />
-                  <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="Required JD Importance" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                  <Bar dataKey="Candidate Match" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* 4. JD Skill Weight Heatmap Section */}
-          <div className={styles.weightedHeatmapSectionCard}>
-            <div className={styles.cardHeaderGroup} style={{ marginBottom: "20px" }}>
-              <h4 className={styles.cardHeading}>JD Skill Weight Heatmap</h4>
-              <p className={styles.cardDescription}>Factual row-by-row match status and direct semantic evidence listed across priority weights</p>
-            </div>
-            
-            <div className={styles.heatmapTableContainer}>
-              <table className={styles.heatmapTable}>
-                <thead>
-                  <tr>
-                    <th>Skill Requirement</th>
-                    <th>Importance Weight</th>
-                    <th>Category</th>
-                    <th>Match Status</th>
-                    <th>Semantic Evidence & Phrasing Context</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeWeightedEvaluations.map((ev, idx) => {
-                    const isMatched = ev.status === "Matched" || ev.status === "Fully Covered" || ev.status === "Partially Matched";
-                    return (
-                      <tr key={idx} className={styles.heatmapRow}>
-                        <td className={styles.heatmapSkillNameCell}>{ev.name}</td>
-                        <td className={styles.heatmapImportanceCell}>
-                          <div className={styles.progressBarWrapper}>
-                            <div className={styles.progressBarBg}>
-                              <div className={styles.progressBarFill} style={{ width: `${ev.importance}%` }}></div>
-                            </div>
-                            <span className={styles.importancePercentLabel}>{ev.importance}/100</span>
+                    <div className={styles.panelList}>
+                      {uniqueMissingMustHaves.length > 0 ? (
+                        uniqueMissingMustHaves.map((skill, sIdx) => (
+                          <div key={sIdx} className={styles.panelItem}>
+                            <span className={styles.skillCross}>❌</span>
+                            <span className={styles.panelSkillName}>{skill}</span>
                           </div>
-                        </td>
-                        <td className={styles.heatmapCategoryCell}>
-                          <span className={`${styles.categoryPill} ${ev.category === "must_have" ? styles.mustHavePill : styles.goodToHavePill}`}>
-                            {ev.category === "must_have" ? "Must-Have" : "Good-to-Have"}
-                          </span>
-                        </td>
-                        <td className={styles.heatmapStatusCell}>
-                          <span 
-                            className={styles.statusTextBadge}
-                            style={{
-                              backgroundColor: isMatched ? "#e6fbf1" : "#fef2f2",
-                              color: isMatched ? "#10b981" : "#ef4444"
-                            }}
-                          >
-                            {isMatched ? "✅ Matched" : "❌ Missing"}
-                          </span>
-                        </td>
-                        <td className={styles.heatmapEvidenceCell} title={ev.evidence}>
-                          {ev.evidence}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        ))
+                      ) : (
+                        <div className={styles.panelItemEmptyGreen}>
+                          <span className="">✅</span>
+                          <span className={styles.panelEmptyText}>All mandatory skills covered in this batch!</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-        </div>
-      )}
-      
-      </>)}
+                  {/* Panel 2: Missing Good-to-Haves */}
+                  <div className={`${styles.skillPanelCard} ${styles.missingGoodPanel}`}>
+                    <div className={styles.panelHeader}>
+                      <span className={styles.panelIcon}>⚠️</span>
+                      <h5 className={styles.panelTitle}>Missing Good-to-Have Skills</h5>
+                    </div>
+                    <div className={styles.panelList}>
+                      {uniqueMissingGoodToHaves.length > 0 ? (
+                        uniqueMissingGoodToHaves.map((skill, sIdx) => (
+                          <div key={sIdx} className={styles.panelItem}>
+                            <span className={styles.skillWarning}>⚠️</span>
+                            <span className={styles.panelSkillName}>{skill}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={styles.panelItemEmptyGreen}>
+                          <span className="">✅</span>
+                          <span className={styles.panelEmptyText}>All preferred skills covered in this batch!</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Panel 3: Matched Must-Haves */}
+                  <div className={`${styles.skillPanelCard} ${styles.matchedPanel}`}>
+                    <div className={styles.panelHeader}>
+                      <span className={styles.panelIcon}>✅</span>
+                      <h5 className={styles.panelTitle}>Matched Must-Haves</h5>
+                    </div>
+                    <div className={styles.panelList}>
+                      {uniqueMatchedMustHaves.length > 0 ? (
+                        uniqueMatchedMustHaves.map((skill, sIdx) => (
+                          <div key={sIdx} className={styles.panelItem}>
+                            <span className={styles.skillCheck}>✅</span>
+                            <span className={styles.panelSkillName}>{skill}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className={styles.panelEmptyText}>No matched mandatory skills identified.</span>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className={styles.chartsGrid}>
+                {/* --- UPGRADED JD SKILL GAP BAR CHART --- */}
+                <div className={`${styles.chartCard} `}>
+                  <h4 className={styles.chartTitle}>JD Skill Alignment Breakdown</h4>
+                  <p className={styles.chartSubtitle}>Average requirement coverage counts across candidates</p>
+                  <div className={styles.chartContainer}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={jdSkillGapData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          axisLine={{ stroke: "#e2e8f0" }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 'auto']}
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          axisLine={{ stroke: "#e2e8f0" }}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
+                          }}
+                          labelStyle={{ fontWeight: 600, color: "#0f172a", fontSize: 12 }}
+                          itemStyle={{ fontSize: 12 }}
+                          formatter={(value) => [`${value} Skill(s)`, "Average Count"]}
+                        />
+                        <Bar
+                          dataKey="Count"
+                          fill="#4f46e5"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={45}
+                        >
+                          {jdSkillGapData.map((entry, idx) => (
+                            <Cell key={`cell-${idx}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* --- UPGRADED MUST-HAVE COVERAGE DONUT / Circular Indicators --- */}
+                <div className={`${styles.chartCard} `}>
+                  <h4 className={styles.chartTitle}>JD Coverage Analytics</h4>
+                  <p className={styles.chartSubtitle}>Proportion of mandatory and optional requirements covered</p>
+                  <div className={styles.donutContent}>
+                    <div className={styles.coverageRingsContainer}>
+                      <div className={styles.coverageRingCard}>
+                        <div className={styles.coverageProgress}>
+                          <svg className={styles.circularSvg} viewBox="0 0 36 36">
+                            <path
+                              className={styles.circularBg}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path
+                              className={styles.circularBar}
+                              stroke="#10b981"
+                              strokeDasharray={`${avgMustHavePct}, 100`}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                          </svg>
+                          <div className={styles.coverageTextGroup}>
+                            <span className={styles.coveragePct} style={{ color: "#10b981" }}>{avgMustHavePct}%</span>
+                            <span className={styles.coverageLabel}>Must-Have</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.coverageRingCard}>
+                        <div className={styles.coverageProgress}>
+                          <svg className={styles.circularSvg} viewBox="0 0 36 36">
+                            <path
+                              className={styles.circularBg}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path
+                              className={styles.circularBar}
+                              stroke="#3b82f6"
+                              strokeDasharray={`${avgOptionalPct}, 100`}
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                          </svg>
+                          <div className={styles.coverageTextGroup}>
+                            <span className={styles.coveragePct} style={{ color: "#3b82f6" }}>{avgOptionalPct}%</span>
+                            <span className={styles.coverageLabel}>Optional</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.pieLegend} style={{ marginTop: '16px' }}>
+                      <div className={styles.legendItem}>
+                        <span className={styles.legendColorDot} style={{ backgroundColor: "#10b981" }}></span>
+                        <span className={styles.legendLabel}>Must-Have Coverage</span>
+                        <span className={styles.legendVal}>{avgMustHavePct}%</span>
+                      </div>
+                      <div className={styles.legendItem}>
+                        <span className={styles.legendColorDot} style={{ backgroundColor: "#3b82f6" }}></span>
+                        <span className={styles.legendLabel}>Optional Coverage</span>
+                        <span className={styles.legendVal}>{avgOptionalPct}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "comparison" && (
+            /* --- RADAR CHART (TOP 3 CANDIDATE COMPARISON) --- */
+            <div className={`${styles.chartCard} `}>
+              <h4 className={styles.chartTitle}>Top Candidates Comparison</h4>
+              <p className={styles.chartSubtitle}>Visual overlay of the top 3 highest scoring candidate matches</p>
+              {topCandidates.length > 0 ? (
+                <div className={styles.radarLayout}>
+                  <div className={styles.radarContainer}>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarChartData}>
+                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: "#475569", fontSize: 11, fontWeight: 500 }}
+                        />
+                        <PolarRadiusAxis
+                          angle={30}
+                          domain={[0, 100]}
+                          tick={{ fill: "#94a3b8", fontSize: 9 }}
+                          axisLine={false}
+                        />
+                        {topCandidates.map((cand, idx) => (
+                          <Radar
+                            key={idx}
+                            name={cand.name}
+                            dataKey={`cand_${idx}`}
+                            stroke={radarColors[idx]}
+                            fill={radarColors[idx]}
+                            fillOpacity={0.15}
+                          />
+                        ))}
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
+                          iconType="circle"
+                          iconSize={8}
+                          wrapperStyle={{ fontSize: "11px", color: "#475569", paddingTop: "15px" }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
+                          }}
+                          itemStyle={{ fontSize: 12 }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className={styles.radarDetails}>
+                    <h5 className={styles.radarDetailsHeading}>Competency Map Insights</h5>
+                    <div className={styles.radarCandList}>
+                      {topCandidates.map((cand, idx) => (
+                        <div key={idx} className={styles.radarCandItem}>
+                          <div className={styles.radarItemHeader}>
+                            <span className={styles.candBadgeDot} style={{ backgroundColor: radarColors[idx] }}></span>
+                            <span className={styles.candBadgeName} title={cand.name}>{cand.name}</span>
+                            <span className={styles.candBadgeScore}>{cand["Overall Score"]} pts</span>
+                          </div>
+                          <div className={styles.radarItemMiniGrid}>
+                            <div className={styles.miniGridCell}>
+                              <span className={styles.cellLabel}>Tech Fit</span>
+                              <span className={styles.cellVal}>{cand["Technical Fit"]}%</span>
+                            </div>
+                            <div className={styles.miniGridCell}>
+                              <span className={styles.cellLabel}>Experience</span>
+                              <span className={styles.cellVal}>{cand["Experience"]}%</span>
+                            </div>
+                            <div className={styles.miniGridCell}>
+                              <span className={styles.cellLabel}>Projects</span>
+                              <span className={styles.cellVal}>{cand["Project Relevance"]}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className={styles.noRadarData}>Insufficient data to render radar overlay.</p>
+              )}
+            </div>
+          )}
+
+          {/* --- WEIGHTED JD GAP INTELLIGENCE TAB --- */}
+          {activeTab === "weighted" && (
+            <div className={styles.weightedTabWorkspace}>
+
+              {/* Top Selection & Risk Header Row */}
+              <div className={styles.weightedDashboardGrid}>
+
+                {/* 1. Evaluation Context Selector Card */}
+                <div className={styles.weightedSelectorCard}>
+                  <div className={styles.cardHeaderGroup}>
+                    <span className={styles.cardIcon}>🔍</span>
+                    <h4 className={styles.cardHeading}>Evaluation Context</h4>
+                    <p className={styles.cardDescription}>Switch between collective batch view or individual candidate profiles</p>
+                  </div>
+                  <div className={styles.selectorInputWrapper}>
+                    <select
+                      value={selectedCandidateId}
+                      onChange={(e) => setSelectedCandidateId(e.target.value)}
+                      className={styles.contextSelectDropdown}
+                    >
+                      <option value="all">All Candidates (Aggregated Batch View)</option>
+                      {results.map((r) => {
+                        const filename = r.resume_filename || "Candidate";
+                        const displayName = filename.replace(/\.[^/.]+$/, "");
+                        return (
+                          <option key={r.id} value={r.id}>
+                            {displayName} (Score: {r.score}/100)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <p>
+                      {selectedCandidateId === "all"
+                        ? "Currently viewing batch average matching distributions."
+                        : `Currently auditing specific candidate requirement weights.`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. Premium Risk Assessment Card */}
+                <div className={styles.weightedRiskCard}>
+                  <div className={styles.cardHeaderGroup}>
+                    <span className={styles.cardIcon} style={{ color: riskColor }}>🛡️</span>
+                    <h4 className={styles.cardHeading}>Weighted Risk Assessment</h4>
+                    <p className={styles.cardDescription}>Dynamic calculated hiring risk factor based on requirement priority</p>
+                  </div>
+                  <div className={styles.riskCardBody}>
+                    <div className={styles.riskGaugeProgress}>
+                      <svg className={styles.riskCircularSvg} viewBox="0 0 36 36">
+                        <path
+                          className={styles.circularBg}
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className={styles.circularBar}
+                          stroke={riskColor}
+                          strokeDasharray={`${calculatedRiskScore}, 100`}
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <div className={styles.riskProgressValueText}>
+                        <span className={styles.riskScoreVal} style={{ color: riskColor }}>{calculatedRiskScore}%</span>
+                        <span className={styles.riskScoreLabel}>Risk Score</span>
+                      </div>
+                    </div>
+                    <div className={styles.riskCardDetails}>
+                      <div
+                        className={styles.riskLevelBadge}
+                        style={{ backgroundColor: riskColor + "15", color: riskColor, borderColor: riskColor + "30" }}
+                      >
+                        {riskClassification}
+                      </div>
+                      <p className={styles.riskDescriptionParagraph}>{riskDescription}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 3. Recharts Overlapping Skill Contribution Chart */}
+              <div className={styles.weightedChartContainerCard}>
+                <div className={styles.cardHeaderGroup}>
+                  <h4 className={styles.cardHeading}>Weighted Skill Contribution Overlay</h4>
+                  <p className={styles.cardDescription}>Comparing job description requirement importance against actual candidate fit</p>
+                </div>
+
+                <div className={styles.rechartsChartWrapper}>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart
+                      data={activeWeightedEvaluations.map(ev => ({
+                        name: ev.name,
+                        "Required JD Importance": ev.importance,
+                        "Candidate Match": ev.weighted_contribution
+                      }))}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={{ stroke: "#e2e8f0" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={{ stroke: "#e2e8f0" }}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
+                        }}
+                        labelStyle={{ fontWeight: 600, color: "#0f172a", fontSize: 12 }}
+                        itemStyle={{ fontSize: 12 }}
+                      />
+                      <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Required JD Importance" fill="#cbd5e1" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                      <Bar dataKey="Candidate Match" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 4. JD Skill Weight Heatmap Section */}
+              <div className={styles.weightedHeatmapSectionCard}>
+                <div className={styles.cardHeaderGroup} style={{ marginBottom: "20px" }}>
+                  <h4 className={styles.cardHeading}>JD Skill Weight Heatmap</h4>
+                  <p className={styles.cardDescription}>Factual row-by-row match status and direct semantic evidence listed across priority weights</p>
+                </div>
+
+                <div className={styles.heatmapTableContainer}>
+                  <table className={styles.heatmapTable}>
+                    <thead>
+                      <tr>
+                        <th>Skill Requirement</th>
+                        <th>Importance Weight</th>
+                        <th>Category</th>
+                        <th>Match Status</th>
+                        <th>Semantic Evidence & Phrasing Context</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeWeightedEvaluations.map((ev, idx) => {
+                        const isMatched = ev.status === "Matched" || ev.status === "Fully Covered" || ev.status === "Partially Matched";
+                        return (
+                          <tr key={idx} className={styles.heatmapRow}>
+                            <td className={styles.heatmapSkillNameCell}>{ev.name}</td>
+                            <td className={styles.heatmapImportanceCell}>
+                              <div className={styles.progressBarWrapper}>
+                                <div className={styles.progressBarBg}>
+                                  <div className={styles.progressBarFill} style={{ width: `${ev.importance}%` }}></div>
+                                </div>
+                                <span className={styles.importancePercentLabel}>{ev.importance}/100</span>
+                              </div>
+                            </td>
+                            <td className={styles.heatmapCategoryCell}>
+                              <span className={`${styles.categoryPill} ${ev.category === "must_have" ? styles.mustHavePill : styles.goodToHavePill}`}>
+                                {ev.category === "must_have" ? "Must-Have" : "Good-to-Have"}
+                              </span>
+                            </td>
+                            <td className={styles.heatmapStatusCell}>
+                              <span
+                                className={styles.statusTextBadge}
+                                style={{
+                                  backgroundColor: isMatched ? "#e6fbf1" : "#fef2f2",
+                                  color: isMatched ? "#10b981" : "#ef4444"
+                                }}
+                              >
+                                {isMatched ? "✅ Matched" : "❌ Missing"}
+                              </span>
+                            </td>
+                            <td className={styles.heatmapEvidenceCell} title={ev.evidence}>
+                              {ev.evidence}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </>)}
     </div>
   );
 }

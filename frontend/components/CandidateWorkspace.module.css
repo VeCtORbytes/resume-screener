@@ -23,7 +23,7 @@
   color: #4f46e5;
   font-size: 0.75rem;
   font-weight: 700;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.50rem;
@@ -52,10 +52,10 @@
 
 /* SECTION 1: Unified Candidate Header Card */
 .dossierHeaderCard {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-left: 5px solid #6366f1;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -92,7 +92,7 @@
   color: #64748b;
   border: 1px solid rgba(226, 232, 240, 0.8);
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -100,7 +100,7 @@
 }
 
 .dossierSecondaryBtn:hover {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
   color: #1e293b;
   border-color: #cbd5e1;
 }
@@ -117,7 +117,7 @@
 }
 
 .dossierCompareLabel:hover {
-  color: #475569;
+  color: var(--color-neutral-text);
 }
 
 .dossierCompareCheckbox {
@@ -156,18 +156,13 @@
   font-size: 0.78rem;
   font-weight: 500;
   color: #94a3b8;
-  background: #f1f5f9;
+  background: var(--color-neutral-bg);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 /* Recommendation description — muted prose */
-.dossierRecDesc {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.5;
-}
+
 
 /* Status + quick-decision row */
 .dossierDecisionRow {
@@ -203,7 +198,7 @@
 
 .quickActionBtn {
   padding: 7px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -212,9 +207,9 @@
 }
 
 .quickShortlist {
-  background: #ecfdf5;
-  color: #065f46;
-  border-color: #a7f3d0;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-color: var(--color-success-border);
 }
 
 .quickShortlist:hover {
@@ -222,9 +217,9 @@
 }
 
 .quickReview {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fde68a;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border-color: var(--color-warning-border);
 }
 
 .quickReview:hover {
@@ -232,9 +227,9 @@
 }
 
 .quickReject {
-  background: #fee2e2;
-  color: #991b1b;
-  border-color: #fecaca;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-color: var(--color-danger-border);
 }
 
 .quickReject:hover {
@@ -257,9 +252,9 @@
 }
 
 .dossierSectionCard {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
 }
@@ -274,728 +269,150 @@
   letter-spacing: -0.02em;
 }
 
-.dossierSubheading {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.75rem 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+
 
 /* SECTION 2: Candidate Overview Block Layout */
-.briefingContainer {
-  margin-bottom: 1.75rem;
-}
-
-.briefingText {
-  font-size: 0.925rem;
-  line-height: 1.65;
-  color: #334155;
-  margin: 0;
-}
-
-.overviewObservationsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2.5rem;
-}
-
-@media (max-width: 768px) {
-  .overviewObservationsGrid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-}
-
-.observationBlock {
-  display: flex;
-  flex-direction: column;
-}
-
-.observationList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.strengthObservationItem, .gapObservationItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #334155;
-}
-
-.observationBullet {
-  font-size: 1.1rem;
-  font-weight: bold;
-  line-height: 1;
-}
-
-.strengthObservationItem .observationBullet { color: #10b981; }
-.gapObservationItem .observationBullet { color: #f59e0b; }
-
-.emptyObservationText {
-  font-size: 0.825rem;
-  color: #94a3b8;
-  margin: 0;
-  font-style: italic;
-}
 
 /* Core Requirement Alignment Section */
-.coreAlignmentIntro {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: -0.5rem 0 1.5rem 0;
-  line-height: 1.5;
-}
 
-.coreAlignmentList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-}
 
-.coreAlignmentRow {
-  padding: 1rem 1.25rem;
-  border-radius: 10px;
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  border-left: 4px solid transparent;
-  background: #f8fafc;
-  transition: background 0.15s ease;
-}
 
-.coreAlignmentRow:hover {
-  background: #f1f5f9;
-}
 
-.coreAlignmentHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
-}
 
-.coreAlignmentReqName {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #0f172a;
-}
 
-.coreEvidenceBadge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
 
-.coreAlignmentReasoning {
-  font-size: 0.855rem;
-  line-height: 1.6;
-  color: #475569;
-  margin: 0;
-}
+
+
+
+
+
+
+
+
 
 /* Evidence strength — row left-border accent */
-.evidenceStrongRow   { border-left-color: #10b981; }
-.evidenceModerateRow { border-left-color: #f59e0b; }
-.evidenceLimitedRow  { border-left-color: #f97316; }
-.evidenceNoneRow     { border-left-color: #ef4444; }
+
+
+
+
 
 /* Evidence strength — badge colors */
-.evidenceStrongBadge   { background: #d1fae5; color: #065f46; }
-.evidenceModerateBadge { background: #fef3c7; color: #92400e; }
-.evidenceLimitedBadge  { background: #ffedd5; color: #9a3412; }
-.evidenceNoneBadge     { background: #fee2e2; color: #991b1b; }
+
+
+
+
 
 /* SECTION 3: Skills Alignment Block Layout */
 
-.skillsAlignmentLayout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2.5rem;
-}
 
-@media (max-width: 768px) {
-  .skillsAlignmentLayout {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-}
 
-.skillsDossierGroup {
-  display: flex;
-  flex-direction: column;
-}
 
-.skillsDossierHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
 
-.skillsDossierPct {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #64748b;
-}
 
-.skillsDossierProgressBg {
-  height: 6px;
-  background: #f1f5f9;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 1.25rem;
-}
 
-.skillsDossierProgressFill {
-  height: 100%;
-  border-radius: 3px;
-}
 
-.skillsDossierList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 
-.skillsDossierRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: #334155;
-  transition: background 0.15s ease;
-}
 
-.skillsDossierRow:hover {
-  background: #f1f5f9;
-}
 
-.skillDossierBulletMatched { color: #10b981; font-weight: 700; }
-.skillDossierBulletMissing { color: #ef4444; font-weight: 700; }
 
-.skillDossierName {
-  flex-grow: 1;
-  font-weight: 500;
-}
 
-.skillDossierBadgeMatched {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #15803d;
-  background: #e6fced;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
 
-.skillDossierBadgeMissing {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #b91c1c;
-  background: #fde8e8;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
 
-.emptySkillsText {
-  font-size: 0.825rem;
-  color: #94a3b8;
-  margin: 0;
-  font-style: italic;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* SECTION 4: Consolidated Interview Toolkit Block Layout */
-.toolkitRecCard {
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 2rem;
-  border-left: 4px solid transparent;
-}
 
-.toolkitRecTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.5rem 0;
-}
 
-.toolkitRecContent {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
 
-@media (max-width: 640px) {
-  .toolkitRecContent {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
 
-.toolkitRecLabel {
-  font-size: 1.1rem;
-  font-weight: 800;
-}
 
-.toolkitRecDesc {
-  font-size: 0.85rem;
-  color: #475569;
-  margin: 0;
-  line-height: 1.4;
-}
 
-.toolkitGrid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 2.5rem;
-}
 
-@media (max-width: 1024px) {
-  .toolkitGrid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
 
-.probingQuestionsArea {
-  display: flex;
-  flex-direction: column;
-}
 
-.toolkitInstructions {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 0 0 1.25rem 0;
-  line-height: 1.4;
-}
 
-.toolkitTabbedGroup {
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f8fafc;
-}
 
-.dossierTabHeaders {
-  display: flex;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  background: #ffffff;
-  padding: 4px 4px 0 4px;
-  gap: 4px;
-}
 
-.dossierTabBtn {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 10px 14px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #64748b;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 0.2s ease;
-  border-radius: 6px 6px 0 0;
-}
 
-.dossierTabBtn:hover {
-  background: #f8fafc;
-  color: #1e293b;
-}
 
-.activeDossierTab {
-  border-bottom-color: #6366f1;
-  color: #6366f1 !important;
-  background: #f8fafc;
-}
 
-.dossierTabPane {
-  padding: 1rem;
-}
 
-.suggestedQuestionsList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
-.suggestedQuestionRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  padding: 10px 14px;
-  border-radius: 8px;
-  gap: 1.5rem;
-}
 
-.suggestedQuestionText {
-  font-size: 0.85rem;
-  color: #334155;
-  margin: 0;
-  line-height: 1.45;
-}
 
-.questionCopyBtn {
-  background: rgba(241, 245, 249, 0.8);
-  color: #475569;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
 
-.questionCopyBtn:hover {
-  background: #cbd5e1;
-  color: #0f172a;
-}
 
-.questionCopied {
-  background: #d1fae5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
 
-.emptyToolkitBriefing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 2rem;
-  background: #ffffff;
-  border: 1px dashed rgba(203, 213, 225, 0.8);
-  border-radius: 10px;
-}
 
-.dossierActionBtn {
-  background: #6366f1;
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 0.825rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
-.dossierActionBtn:hover {
-  background: #4f46e5;
-  transform: translateY(-1px);
-}
 
-.commentaryArea {
-  display: flex;
-  flex-direction: column;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Interview Focus List (pre-generated LLM focus areas in toolkit) */
-.interviewFocusList {
-  width: 100%;
-  text-align: left;
-  margin-bottom: 1.25rem;
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-}
 
-.interviewFocusItems {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
 
-.interviewFocusItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 0.855rem;
-  color: #334155;
-  line-height: 1.5;
-}
 
-.interviewFocusBullet {
-  color: #6366f1;
-  font-weight: 700;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
+
+
+
+
 
 /* SECTION 5: Collapsible Advanced Intelligence Accordion */
-.advancedInsightsSection {
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
-}
 
-.advancedToggleBtn {
-  width: 100%;
-  background: #ffffff;
-  border: none;
-  padding: 1.25rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  outline: none;
-  transition: background 0.15s ease;
-}
 
-.advancedToggleBtn:hover {
-  background: #f8fafc;
-}
 
-.advancedToggleTitle {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #475569;
-}
 
-.advancedToggleBadge {
-  background: #f1f5f9;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
 
-.advancedContentWrapper {
-  padding: 2rem;
-  border-top: 1px solid rgba(226, 232, 240, 0.9);
-  background: #f8fafc;
-  animation: dossierSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
+
+
+
+
+
+
 
 @keyframes dossierSlideDown {
   from { transform: translateY(-8px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
-}
-
-.advancedStack {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-  .advancedStack {
-    grid-template-columns: 1fr;
-  }
-}
-
-.advancedSectionCard {
-  background: #ffffff;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 10px;
-  padding: 1.25rem;
-}
-
-.doubleColCard {
-  grid-column: 1 / -1;
-}
-
-.advancedCardHeading {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 1rem 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.weightedEvalsList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-.weightedEvalItem {
-  padding: 10px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-left: 4px solid transparent;
-}
-
-.weightedEvalItemHeader {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.weightedSkillName {
-  color: #1e293b;
-}
-
-.weightedSkillStatus {
-  font-size: 0.75rem;
-}
-
-.weightedSkillEvidence {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin: 0;
-}
-
-.matchedEvalCard { border-left-color: #10b981; }
-.matchedEvalCard .weightedSkillStatus { color: #15803d; }
-.inferredEvalCard { border-left-color: #3b82f6; }
-.inferredEvalCard .weightedSkillStatus { color: #1d4ed8; }
-.ambiguousEvalCard { border-left-color: #f59e0b; }
-.ambiguousEvalCard .weightedSkillStatus { color: #b45309; }
-.missingEvalCard { border-left-color: #ef4444; }
-.missingEvalCard .weightedSkillStatus { color: #b91c1c; }
-
-.emptyAdvancedText {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  text-align: center;
-  padding: 1.5rem 0;
-}
-
-.projectIntelList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-.projectIntelItem {
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.projectIntelItemHeader {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  margin-bottom: 6px;
-}
-
-.projectIntelName {
-  color: #0f172a;
-}
-
-.projectIntelRelevance {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6366f1;
-}
-
-.projectIntelDesc {
-  font-size: 0.75rem;
-  color: #475569;
-  margin: 0 0 6px 0;
-}
-
-.projectIntelPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-  margin-bottom: 6px;
-  font-size: 0.7rem;
-  color: #64748b;
-}
-
-.inferredSkillPill {
-  background: #ffffff;
-  color: #475569;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-}
-
-.projectIntelImpact {
-  font-size: 0.7rem;
-  color: #64748b;
-  margin: 0;
-  font-style: italic;
-}
-
-.reliabilityAndRadarLayoutStacked {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.reliabilityMetricsList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.reliabilityMetricBox {
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.reliabilityBoxLabel {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.reliabilityBoxValue {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.recruiterAlertsBox {
-  background: rgba(254, 242, 242, 0.4);
-  border: 1px solid rgba(254, 202, 202, 0.5);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 0.75rem;
 }
 
 .recruiterAlertsBox strong {
@@ -1004,85 +421,38 @@
   margin-bottom: 4px;
 }
 
-.recAlertsList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
-.recAlertsItem {
-  color: #7f1d1d;
-  line-height: 1.35;
-}
 
-.radarCardWrapperStacked {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
-.radarCardLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.75rem;
-}
 
-.radarChartContainer {
-  width: 100%;
-}
+
+
+
+
+
 
 /* Premium Recommendation Badges */
-.btnShortlist {}
-.btnReviewLater {}
-.btnInterview {}
-.btnReject {}
-.activeDecisionBtn {}
+
+
+
+
+
 
 /* Match Score Color Bands */
-.excellent { color: #10b981; }
-.good { color: #3b82f6; }
-.fair { color: #f59e0b; }
-.poor { color: #ef4444; }
+
+
+
+
 
 /* Dynamic Left borders & Backgrounds for Recommendation classes */
-.highlyReady {
-  background: #f0fdf4;
-  color: #166534;
-  border-color: #bbf7d0;
-}
-.highlyReady .toolkitRecTitle { color: #15803d; }
-.ready {
-  background: #f0fdf4;
-  color: #166534;
-  border-color: #bbf7d0;
-}
-.ready .toolkitRecTitle { color: #15803d; }
-.conditionallyReady {
-  background: #fffbeb;
-  color: #92400e;
-  border-color: #fde68a;
-}
-.conditionallyReady .toolkitRecTitle { color: #b45309; }
-.notReady {
-  background: #fef2f2;
-  color: #991b1b;
-  border-color: #fecaca;
-}
-.notReady .toolkitRecTitle { color: #b91c1c; }
 
 .strongHire {
-  background: #ecfdf5;
+  background: var(--color-success-bg);
   color: #047857;
   border: 1px solid #a7f3d0;
 }
 .hire {
-  background: #ecfdf5;
+  background: var(--color-success-bg);
   color: #047857;
   border: 1px solid #a7f3d0;
 }
@@ -1156,3 +526,57 @@
 .commentaryArea :global(.RecruiterNotes_textarea__1N2G9) {
   min-height: 180px !important;
 }
+
+/* ==========================================================================
+   V2.6 EVIDENCE-BASED PANELS
+   ========================================================================== */
+
+/* Skill Coverage Panel */
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Skill Gap Visualization */
+
+
+
+
+
+
+
+/* Weighted Gap Analysis */
+
+
+
+
+
+
+
+
+
+
+/* Project Alignment */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

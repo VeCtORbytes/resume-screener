@@ -96,7 +96,7 @@ export default function JobDescriptionForm({
                         type="button"
                         onClick={handleUseSampleMode}
                         disabled={isLoading}
-                        className={styles.utilityBtn}
+                        className={`${styles.utilityBtn} hl-btn-secondary`}
                         title="Load premium sample requirements data"
                     >
                         Use Sample Requirements
@@ -105,7 +105,7 @@ export default function JobDescriptionForm({
                         type="button"
                         onClick={handleClearMode}
                         disabled={isLoading}
-                        className={styles.clearBtn}
+                        className={`${styles.clearBtn} hl-btn-secondary`}
                         title="Reset all input fields"
                     >
                         Clear

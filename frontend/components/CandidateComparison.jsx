@@ -460,7 +460,7 @@ export default function CandidateComparison({ selectedCandidates = [], onClose }
                   <tr key={sIdx}>
                     <td className={styles.skillNameCell}>
                       {skill.name}
-                      <span className={styles.importanceBadgeLabel} style={{ fontSize: "10px", color: "#64748b", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", marginLeft: "8px", fontWeight: "700" }}>
+                      <span className="" style={{ fontSize: "10px", color: "#64748b", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", marginLeft: "8px", fontWeight: "700" }}>
                         w: {skill.importance}
                       </span>
                     </td>
