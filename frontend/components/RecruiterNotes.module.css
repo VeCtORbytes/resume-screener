@@ -54,13 +54,13 @@
 }
 
 .textarea {
-  min-height: 120px;
+  min-height: 100px;
   max-height: 250px;
 
   resize: vertical;
   width: 100%;
 
-  background: var(--bg-primary);
+  background: #f8fafc;
   border: 1px solid var(--border);
 
   border-radius: var(--radius-md);

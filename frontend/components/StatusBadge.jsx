@@ -7,8 +7,8 @@ const STATUS_CONFIG = {
     label: "New",
     className: "hl-badge-neutral"
   },
-  "Review Later": {
-    label: "Hold",
+  "Reviewing": {
+    label: "Reviewing",
     className: "hl-badge-warning"
   },
   "Shortlisted": {
@@ -22,6 +22,10 @@ const STATUS_CONFIG = {
   "Rejected": {
     label: "Rejected",
     className: "hl-badge-danger"
+  },
+  "Hired": {
+    label: "Hired",
+    className: "hl-badge-success"
   }
 };
 

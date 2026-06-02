@@ -988,7 +988,7 @@
 
 @media (min-width: 1024px) {
   .resultsGrid {
-    grid-template-columns: 1fr 450px;
+    grid-template-columns: 450px 1fr;
   }
 }
 
@@ -1001,6 +1001,4 @@
   top: 80px;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  border-left: 1px solid var(--border);
-  padding-left: 24px;
 }

@@ -2,23 +2,23 @@
 
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
-import SkillCoveragePanel from "./SkillCoveragePanel";
 import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
 import { calculateSkillCoverage } from "../lib/SkillCoverageEngine";
 
 function getCandidateName(filename) {
   if (!filename) return "Unknown Candidate";
-  return filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  let name = filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ');
+  name = name.replace(/\b(resume|cv|pdf|docx)\b/gi, '').trim();
+  return name.replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Phase 3: recruiter-assistance language — no directive hiring terms
 function getRecommendation(score) {
-  if (score >= 90) return { text: "Recommended for Interview", color: "#10b981", class: styles.strongHire };
-  if (score >= 80) return { text: "Potential Match",           color: "#10b981", class: styles.hire };
-  if (score >= 65) return { text: "Requires Further Review",   color: "#f59e0b", class: styles.needsInterview };
-  if (score >= 50) return { text: "Requires Further Review",   color: "#f97316", class: styles.needsReview };
-  return             { text: "Limited Alignment",              color: "#ef4444", class: styles.reject };
+  if (score >= 90) return { text: "Recommended for Interview", class: styles.recBadge };
+  if (score >= 80) return { text: "Potential Match",           class: styles.recBadge };
+  if (score >= 65) return { text: "Requires Further Review",   class: styles.statusBadge };
+  if (score >= 50) return { text: "Requires Further Review",   class: styles.statusBadge };
+  return             { text: "Limited Alignment",              class: styles.scoreBadge };
 }
 
 export default function CandidateWorkspace({
@@ -29,107 +29,180 @@ export default function CandidateWorkspace({
   onNoteChange,
   onExportPdf,
   isExportingPdf = false,
-  isSelected = false,
-  onSelect,
 }) {
   const score = candidate.score || 0;
   const recInfo = getRecommendation(score);
   const candidateName = getCandidateName(candidate.resume_filename);
 
-  // Process data using the new engines
-  const coverageData = calculateSkillCoverage(candidate.gap_analysis);
+  // Data processing
+  const gapData = candidate.gap_analysis || {};
+  const coverageData = calculateSkillCoverage(gapData);
+  const { covered, partial, missing } = coverageData;
+  const recruiterSummary = gapData.candidate_summary || "No summary available.";
+  const projects = gapData.project_alignment || [];
+  const interviewFocus = gapData.interview_focus || gapData.areas_to_validate || [];
 
-  // Quick-decision handler helpers
   const handleQuickStatus = (newStatus) => {
     if (onStatusChange) onStatusChange(newStatus);
   };
 
   return (
     <div className={styles.dossierContainer}>
-
-      {/* Dossier section label */}
-      <div className={styles.workspaceSectionHeader}>
-        <span className={`${styles.stepBadge} hl-badge`}>Candidate Workspace</span>
-        <h3 className={styles.stepTitle}>Evidence-Based Evaluation</h3>
-        <p className={styles.stepSubtitle}>Skill coverage intelligence and validation for this candidate.</p>
-      </div>
-
       <div className={styles.dossierBody}>
-        {/* Loading Overlay */}
-        {isExportingPdf && (
-          <div className={styles.premiumModalOverlay}>
-            <div className={styles.premiumModalContent}>
-              <div className={styles.premiumPulseSpinner}></div>
-              <h4 className={styles.premiumModalTitle}>Preparing export…</h4>
-              <p className={styles.premiumModalSubtitle}>Compiling candidate evaluation data into a PDF report.</p>
+        
+        {/* 1. CANDIDATE HEADER */}
+        <section className={styles.headerSection}>
+          <div className={styles.headerTopRow}>
+            <div>
+              <h2 className={styles.candidateName}>{candidateName}</h2>
+              {/* Optional Location/Role could go here if extracted */}
+              {/* <p className={styles.candidateLocation}>Software Engineer • San Francisco, CA</p> */}
             </div>
+            <button
+              onClick={() => onExportPdf(candidate.id, candidate.resume_filename)}
+              disabled={isExportingPdf}
+              className={styles.exportBtn}
+            >
+              {isExportingPdf ? "Exporting..." : "Export PDF"}
+            </button>
           </div>
+
+          <div className={styles.metricsRow}>
+            <span className={`${styles.metricBadge} ${styles.scoreBadge}`}>
+              Match Score: {score}
+            </span>
+            <span className={`${styles.metricBadge} ${recInfo.class}`}>
+              {recInfo.text}
+            </span>
+            <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
+          </div>
+
+          <p className={styles.recruiterSummary}>"{recruiterSummary}"</p>
+        </section>
+
+        {/* 2. SKILL COVERAGE */}
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Skill Coverage</h3>
+          
+          {(covered.length === 0 && partial.length === 0 && missing.length === 0) ? (
+            <p className={styles.projectDetailText}>No skill coverage data available.</p>
+          ) : (
+            <>
+              {covered.length > 0 && (
+                <div className={styles.skillCategory}>
+                  <h4 className={styles.skillCategoryTitle}>Covered Skills</h4>
+                  <div className={styles.chipList}>
+                    {covered.map((skill, i) => (
+                      <span key={i} className={`${styles.chip} ${styles.chipCovered}`}>✓ {skill.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {partial.length > 0 && (
+                <div className={styles.skillCategory}>
+                  <h4 className={styles.skillCategoryTitle}>Partial Experience</h4>
+                  <div className={styles.chipList}>
+                    {partial.map((skill, i) => (
+                      <span key={i} className={`${styles.chip} ${styles.chipPartial}`}>⚠ {skill.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {missing.length > 0 && (
+                <div className={styles.skillCategory}>
+                  <h4 className={styles.skillCategoryTitle}>Missing Skills</h4>
+                  <div className={styles.chipList}>
+                    {missing.map((skill, i) => (
+                      <span key={i} className={`${styles.chip} ${styles.chipMissing}`}>✕ {skill.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* 3. PROJECT VALIDATION */}
+        {projects.length > 0 && (
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Project Validation</h3>
+            <div className={styles.projectList}>
+              {projects.map((proj, idx) => {
+                const isConfirmed = proj.alignment_score >= 50;
+                return (
+                  <div key={idx} className={styles.projectCard}>
+                    <div className={styles.projectHeader}>
+                      <h4 className={styles.projectName}>{proj.project_name}</h4>
+                      <span className={`${styles.projectStatus} ${isConfirmed ? styles.statusConfirmed : styles.statusPartial}`}>
+                        {isConfirmed ? "Confirmed" : "Partial"}
+                      </span>
+                    </div>
+                    {proj.matched_skills && proj.matched_skills.length > 0 && (
+                      <div className={styles.projectDetail}>
+                        <span className={styles.projectDetailLabel}>Validated Technologies</span>
+                        <div className={styles.techList}>
+                          {proj.matched_skills.map((tech, i) => (
+                            <span key={i} className={styles.techChip}>{tech}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
-        {/* SECTION 1: Candidate Overview (Match Score, Rec, Status) */}
-        <div className={`${styles.dossierHeaderCard} hl-card`}>
+        {/* 4. INTERVIEW FOCUS */}
+        {interviewFocus.length > 0 && (
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Interview Focus</h3>
+            <ul className={styles.focusList}>
+              {interviewFocus.map((focus, idx) => (
+                <li key={idx} className={styles.focusItem}>{focus}</li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-          <div className={styles.dossierHeaderTopRow}>
-            <span className={styles.dossierFileLabel}>Candidate Overview</span>
-            <div className={styles.dossierSecondaryActions}>
-              <button
-                onClick={() => onExportPdf(candidate.id, candidate.resume_filename)}
-                disabled={isExportingPdf}
-                className={`${styles.dossierSecondaryBtn} hl-btn-secondary`}
-              >
-                Export PDF
-              </button>
-            </div>
+        {/* 5. RECRUITER NOTES */}
+        <section className={styles.section}>
+          <h3 className={styles.sectionTitle}>Recruiter Notes</h3>
+          <RecruiterNotes note={note} onNoteChange={onNoteChange} />
+        </section>
+
+        {/* 6. DECISION PANEL */}
+        <section className={styles.decisionPanel}>
+          <h3 className={styles.decisionPanelTitle}>Hiring Decision</h3>
+          <div className={styles.decisionActions}>
+            <button
+              onClick={() => handleQuickStatus("Shortlisted")}
+              className={`${styles.decisionBtn} ${styles.btnShortlist} ${status === "Shortlisted" ? styles.btnActive : ""}`}
+            >
+              Shortlist
+            </button>
+            <button
+              onClick={() => handleQuickStatus("Reviewing")}
+              className={`${styles.decisionBtn} ${styles.btnReviewing} ${status === "Reviewing" ? styles.btnActive : ""}`}
+            >
+              Reviewing
+            </button>
+            <button
+              onClick={() => handleQuickStatus("Interview")}
+              className={`${styles.decisionBtn} ${styles.btnShortlist} ${status === "Interview" ? styles.btnActive : ""}`}
+            >
+              Move to Interview
+            </button>
+            <button
+              onClick={() => handleQuickStatus("Rejected")}
+              className={`${styles.decisionBtn} ${styles.btnReject} ${status === "Rejected" ? styles.btnActive : ""}`}
+            >
+              Reject
+            </button>
           </div>
+        </section>
 
-          <h2 className={styles.dossierCandidateName}>{candidateName}</h2>
-
-          <div className={styles.dossierRecRow}>
-            <span className={`${styles.dossierRecLabel} ${recInfo.class}`}>{recInfo.text}</span>
-            <span className={`${styles.dossierScoreSupport} hl-badge`}>Score: {score}</span>
-          </div>
-
-          <div className={styles.dossierDecisionRow}>
-            <div className={styles.dossierStatusControl}>
-              <span className={styles.dossierStatusLabel}>Status</span>
-              <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
-            </div>
-            <div className={styles.dossierQuickActions}>
-              <button
-                onClick={() => handleQuickStatus("Shortlisted")}
-                className={`${styles.quickActionBtn} ${styles.quickShortlist} ${status === "Shortlisted" ? styles.quickActive : ""}`}
-              >
-                Shortlist
-              </button>
-              <button
-                onClick={() => handleQuickStatus("Review Later")}
-                className={`${styles.quickActionBtn} ${styles.quickReview} ${status === "Review Later" ? styles.quickActive : ""}`}
-              >
-                Review Later
-              </button>
-              <button
-                onClick={() => handleQuickStatus("Rejected")}
-                className={`${styles.quickActionBtn} ${styles.quickReject} ${status === "Rejected" ? styles.quickActive : ""}`}
-              >
-                Reject
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Dossier Document Sections */}
-        <div className={styles.dossierSectionsStack}>
-          {/* Skill Coverage Intelligence */}
-          <SkillCoveragePanel coverageData={coverageData} />
-
-
-          {/* Recruiter Notes */}
-          <div className={styles.dossierSectionCard}>
-            <h3 className={styles.dossierSectionHeading}>Recruiter Notes & Hiring Decision</h3>
-            <RecruiterNotes note={note} onNoteChange={onNoteChange} />
-          </div>
-        </div>
       </div>
     </div>
   );

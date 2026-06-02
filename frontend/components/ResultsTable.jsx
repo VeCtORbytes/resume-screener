@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./ResultsTable.module.css";
 import { getScoreBadge } from "../lib/constants";
-import { generateInterviewQuestions, exportPDF, exportCSV, exportComparison } from "../lib/api";
+import { exportCSV } from "../lib/api";
 import StatusBadge from "./StatusBadge";
+import CandidateWorkspace from "./CandidateWorkspace";
 
 function getCandidateName(filename) {
     if (!filename) return "Unknown Candidate";
-    return filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    let name = filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ');
+    name = name.replace(/\b(resume|cv|pdf|docx)\b/gi, '').trim();
+    return name.replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function getHiringRecommendation(score) {
@@ -36,28 +39,6 @@ export default function ResultsTable({
     activeCandidateId
 }) {
     const [exportingPdfId, setExportingPdfId] = useState(null);
-    const [exportPdfError, setExportPdfError] = useState({});
-
-    const handleExportPDF = async (resultId, filename) => {
-        setExportingPdfId(resultId);
-        setExportPdfError((prev) => ({ ...prev, [resultId]: null }));
-        try {
-            const candidateName = filename.split('.')[0].replace(/[_]/g, ' ');
-            const candNotes = candidateNotes[resultId] || "";
-            const candStatus = candidateStatuses[resultId] || "New";
-            
-            await exportPDF(resultId, candidateName, candNotes, candStatus, []);
-        } catch (err) {
-            setExportPdfError((prev) => ({
-                ...prev,
-                [resultId]: "Failed to generate recruiter intelligence report: " + err.message
-            }));
-        } finally {
-            setExportingPdfId(null);
-        }
-    };
-
-
     if (isLoading) {
         return (
             <div className={styles.loading}>
@@ -103,7 +84,6 @@ export default function ResultsTable({
                             <th className={styles.scoreCol}>Match Score</th>
                             <th className="">Recommendation</th>
                             <th className="">Status</th>
-                            <th className={styles.actionCol}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -123,20 +103,18 @@ export default function ResultsTable({
                             const currentStatus = candidateStatuses[result.id] || "New";
 
                             return (
+                                <React.Fragment key={result.id}>
                                 <tr
-                                    key={result.id}
                                     className={`${styles.row} ${activeCandidateId === result.id ? styles.activeCandidateRow : ""}`}
-                                    onClick={() => onViewCandidate(result.id)}
+                                    onClick={() => onViewCandidate(result.id === activeCandidateId ? null : result.id)}
                                 >
-                                    <td className={styles.nameCol}>
+                                    <td className={styles.nameCol} style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         <div className={styles.nameWrapper}>
                                             <div className={styles.fileNameRow} onClick={(e) => e.stopPropagation()}>
-                                                <span className={styles.fileName} onClick={() => onViewCandidate(result.id)} style={{ cursor: "pointer" }}>
+                                                <span className={styles.fileName} onClick={() => onViewCandidate(result.id)} style={{ cursor: "pointer", display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {getCandidateName(result.resume_filename)}
                                                 </span>
                                             </div>
-                                            
-
                                         </div>
                                     </td>
                                     <td className={styles.scoreCol}>
@@ -156,48 +134,26 @@ export default function ResultsTable({
                                             interactive={true}
                                         />
                                     </td>
-                                    <td className={styles.actionCol} onClick={(e) => e.stopPropagation()}>
-                                        <div className={styles.actionCellContainer}>
-                                            <button 
-                                                onClick={() => onViewCandidate(result.id)}
-                                                className={`${styles.viewDetailsBtn} ${activeCandidateId === result.id ? styles.activeDetailsBtn : ""}`}
-                                            >
-                                                {activeCandidateId === result.id ? "Viewing Profile" : "View Profile"}
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleExportPDF(result.id, result.resume_filename);
-                                                }}
-                                                disabled={exportingPdfId === result.id}
-                                                className={styles.pdfActionBtnSecondary}
-                                                title="Export candidate report as PDF"
-                                            >
-                                                {exportingPdfId === result.id ? "…" : "Export"}
-                                            </button>
-                                        </div>
-                                    </td>
                                 </tr>
+                                {activeCandidateId === result.id && (
+                                    <tr key={`${result.id}-workspace`} className={styles.workspaceRow}>
+                                        <td colSpan="4" className={styles.workspaceCell}>
+                                            <CandidateWorkspace
+                                                candidate={result}
+                                                status={currentStatus}
+                                                onStatusChange={(newStatus) => onStatusChange(result.id, newStatus)}
+                                                note={candidateNotes[result.id] || ""}
+                                                onNoteChange={(newNote) => onNoteChange(result.id, newNote)}
+                                                onExportPdf={() => {}}
+                                            />
+                                        </td>
+                                    </tr>
+                                )}
+                                </React.Fragment>
                             );
                         })}
                     </tbody>
                 </table>
-            </div>
-
-
-            <div className={styles.stats}>
-                <p>
-                    Average Score:{" "}
-                    <strong>
-                        {(
-                            results.reduce((sum, r) => sum + r.score, 0) / results.length
-                        ).toFixed(1)}
-                    </strong>
-                </p>
-                <p>
-                    Highest Score:{" "}
-                    <strong>{Math.max(...results.map((r) => r.score))}</strong>
-                </p>
             </div>
         </div>
     );

@@ -175,8 +175,9 @@ export default function Home() {
       total: results.length,
       shortlisted: 0,
       interview: 0,
-      reviewLater: 0,
+      reviewing: 0,
       rejected: 0,
+      hired: 0,
       new: 0
     };
 
@@ -184,8 +185,9 @@ export default function Home() {
       const status = candidateStatuses[r.id] || "New";
       if (status === "Shortlisted") counts.shortlisted++;
       else if (status === "Interview") counts.interview++;
-      else if (status === "Review Later") counts.reviewLater++;
+      else if (status === "Reviewing") counts.reviewing++;
       else if (status === "Rejected") counts.rejected++;
+      else if (status === "Hired") counts.hired++;
       else counts.new++;
     });
 
@@ -614,14 +616,15 @@ export default function Home() {
                       <div className={styles.pipelineFilterBar}>
                         <span className={styles.pipelineFilterLabel}>Pipeline Status:</span>
                         <div className={styles.pipelineFilterTabs}>
-                          {["All", "New", "Review Later", "Shortlisted", "Interview", "Rejected"].map(filterVal => {
+                          {["All", "New", "Reviewing", "Shortlisted", "Interview", "Rejected", "Hired"].map(filterVal => {
                             const counts = getWorkspaceCounts();
                             let displayCount = counts.total;
                             if (filterVal === "New") displayCount = counts.new;
-                            else if (filterVal === "Review Later") displayCount = counts.reviewLater;
+                            else if (filterVal === "Reviewing") displayCount = counts.reviewing;
                             else if (filterVal === "Shortlisted") displayCount = counts.shortlisted;
                             else if (filterVal === "Interview") displayCount = counts.interview;
                             else if (filterVal === "Rejected") displayCount = counts.rejected;
+                            else if (filterVal === "Hired") displayCount = counts.hired;
 
                             return (
                               <button
@@ -638,47 +641,23 @@ export default function Home() {
                       </div>
 
 
-                      <div className={styles.resultsGrid}>
-                        <div className={styles.tableColumn}>
-                          <ResultsTable
-                            results={filteredResults.filter(r => {
-                              if (statusFilter === "All") return true;
-                              const status = candidateStatuses[r.id] || "New";
-                              return status === statusFilter;
-                            })}
-                            isLoading={loading}
-                            screeningId={screeningId}
-                            activeSession={activeSession}
-                            candidateStatuses={candidateStatuses}
-                            onStatusChange={handleStatusChange}
-                            candidateNotes={candidateNotes}
-                            onNoteChange={handleNoteChange}
-                            onViewCandidate={setActiveCandidateId}
-                            activeCandidateId={activeCandidateId}
-                          />
-                        </div>
-                        {activeCandidateId && (
-                          <div className={styles.workspaceColumn}>
-                            {(() => {
-                              const activeCandidate = results.find(r => r.id === activeCandidateId);
-                              if (!activeCandidate) return null;
-
-                              const status = candidateStatuses[activeCandidate.id] || "New";
-                              const note = candidateNotes[activeCandidate.id] || "";
-
-                              return (
-                                <CandidateWorkspace
-                                  candidate={activeCandidate}
-                                  status={status}
-                                  onStatusChange={(newStatus) => handleStatusChange(activeCandidate.id, newStatus)}
-                                  note={note}
-                                  onNoteChange={(newNote) => handleNoteChange(activeCandidate.id, newNote)}
-                                  onExportPdf={() => {}}
-                                />
-                              );
-                            })()}
-                          </div>
-                        )}
+                      <div className={styles.tableColumn}>
+                        <ResultsTable
+                          results={filteredResults.filter(r => {
+                            if (statusFilter === "All") return true;
+                            const status = candidateStatuses[r.id] || "New";
+                            return status === statusFilter;
+                          })}
+                          isLoading={loading}
+                          screeningId={screeningId}
+                          activeSession={activeSession}
+                          candidateStatuses={candidateStatuses}
+                          onStatusChange={handleStatusChange}
+                          candidateNotes={candidateNotes}
+                          onNoteChange={handleNoteChange}
+                          onViewCandidate={setActiveCandidateId}
+                          activeCandidateId={activeCandidateId}
+                        />
                       </div>
                     </>
 

@@ -1,582 +1,364 @@
 /* ==========================================================================
-   HIRELENS DOSSIER — RECRUITER Briefing REPORT LAYOUT
+   HIRELENS DOSSIER — V3 UI REBUILD
    ========================================================================== */
 
 .dossierContainer {
-  margin-top: 2rem;
-  animation: dossierFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-sans), -apple-system, sans-serif;
+  color: #1e293b;
+  animation: dossierFadeIn 0.3s ease-out;
+  padding: 1rem 0;
 }
 
 @keyframes dossierFadeIn {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.workspaceSectionHeader {
-  margin-bottom: 2rem;
-}
-
-.stepBadge {
-  display: inline-block;
-  padding: 6px 12px;
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: var(--radius-md);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.50rem;
-}
-
-.stepTitle {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.03em;
-  text-transform: capitalize;
-}
-
-.stepSubtitle {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin: 0;
 }
 
 .dossierBody {
   display: flex;
   flex-direction: column;
-  position: relative;
+  gap: 2.5rem;
+  max-width: 1000px;
 }
 
-/* SECTION 1: Unified Candidate Header Card */
-.dossierHeaderCard {
-  background: var(--color-surface);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-left: 5px solid #6366f1;
-  border-radius: var(--radius-lg);
-  padding: 2rem;
+/* ==========================================================================
+   CANDIDATE HEADER
+   ========================================================================== */
+
+.headerSection {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-/* Top row: "Candidate Profile" label + secondary actions flush right */
-.dossierHeaderTopRow {
+.headerTopRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
+  align-items: flex-start;
 }
 
-.dossierFileLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #6366f1;
-  letter-spacing: 0.06em;
-}
-
-/* Secondary actions: ghost buttons, low prominence */
-.dossierSecondaryActions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.dossierSecondaryBtn {
-  background: transparent;
-  color: #64748b;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.dossierSecondaryBtn:hover {
-  background: var(--color-surface-hover);
-  color: #1e293b;
-  border-color: #cbd5e1;
-}
-
-.dossierCompareLabel {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.dossierCompareLabel:hover {
-  color: var(--color-neutral-text);
-}
-
-.dossierCompareCheckbox {
-  accent-color: #6366f1;
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
-}
-
-/* Candidate name — primary, largest element */
-.dossierCandidateName {
-  font-size: 2rem;
+.candidateName {
+  font-size: 2.5rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   line-height: 1.1;
 }
 
-/* Recommendation row: text label + supporting score */
-.dossierRecRow {
+.candidateLocation {
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+}
+
+.exportBtn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.metricsRow {
   display: flex;
+  gap: 1.5rem;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.metricBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.scoreBadge {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.recBadge {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.statusBadge {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.recruiterSummary {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #334155;
+  font-style: italic;
+  background: #fafafa;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #cbd5e1;
+  border-radius: 4px;
+  margin: 0;
+}
+
+
+/* ==========================================================================
+   SECTIONS (Skill Coverage, Project Validation)
+   ========================================================================== */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* SKILL CHIPS */
+
+.skillCategory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skillCategoryTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.chipCovered {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.chipPartial {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.chipMissing {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* PROJECT VALIDATION */
+
+.projectList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.projectCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.projectHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.projectName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.projectStatus {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.statusConfirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusPartial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.projectDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.projectDetailLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.projectDetailText {
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.techList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.techChip {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* INTERVIEW FOCUS */
+
+.focusList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.focusItem {
+  font-size: 1rem;
+  color: #334155;
+  line-height: 1.5;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.focusItem::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #6366f1;
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   DECISION PANEL
+   ========================================================================== */
+
+.decisionPanel {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.decisionPanelTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.decisionActions {
+  display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-/* Phase 3: recommendation text (not a badge — just styled text) */
-.dossierRecLabel {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-/* Phase 5: score de-emphasized — small, muted, supporting role */
-.dossierScoreSupport {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #94a3b8;
-  background: var(--color-neutral-bg);
-  padding: 3px 8px;
-  border-radius: var(--radius-md);
-}
-
-/* Recommendation description — muted prose */
-
-
-/* Status + quick-decision row */
-.dossierDecisionRow {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f1f5f9;
-  margin-top: 0.25rem;
-}
-
-.dossierStatusControl {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.dossierStatusLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #94a3b8;
-}
-
-/* Phase 6: quick-decision buttons — primary decisions */
-.dossierQuickActions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.quickActionBtn {
-  padding: 7px 16px;
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
+.decisionBtn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s ease;
 }
 
-.quickShortlist {
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-  border-color: var(--color-success-border);
+.btnShortlist {
+  background: #10b981;
+  color: white;
 }
+.btnShortlist:hover { background: #059669; }
 
-.quickShortlist:hover {
-  background: #d1fae5;
+.btnReviewing {
+  background: #f59e0b;
+  color: white;
 }
+.btnReviewing:hover { background: #d97706; }
 
-.quickReview {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
-  border-color: var(--color-warning-border);
+.btnReject {
+  background: #ef4444;
+  color: white;
 }
+.btnReject:hover { background: #dc2626; }
 
-.quickReview:hover {
-  background: #fde68a;
+.btnActive {
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
+  transform: translateY(1px);
 }
-
-.quickReject {
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
-  border-color: var(--color-danger-border);
-}
-
-.quickReject:hover {
-  background: #fecaca;
-}
-
-/* Active state for quick buttons */
-.quickActive {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
-  font-weight: 700;
-}
-
-/* Recommendation color variants (used by dossierRecLabel) */
-
-/* SECTION 2-4: Spacious Report-Like Content Blocks */
-.dossierSectionsStack {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem; /* Wide dossier vertical margins */
-}
-
-.dossierSectionCard {
-  background: var(--color-surface);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: var(--radius-xl);
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
-}
-
-.dossierSectionHeading {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 1.5rem 0;
-  border-bottom: 2px solid #f1f5f9;
-  padding-bottom: 0.875rem;
-  letter-spacing: -0.02em;
-}
-
-
-
-/* SECTION 2: Candidate Overview Block Layout */
-
-/* Core Requirement Alignment Section */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Evidence strength — row left-border accent */
-
-
-
-
-
-/* Evidence strength — badge colors */
-
-
-
-
-
-/* SECTION 3: Skills Alignment Block Layout */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* SECTION 4: Consolidated Interview Toolkit Block Layout */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Interview Focus List (pre-generated LLM focus areas in toolkit) */
-
-
-
-
-
-
-
-
-/* SECTION 5: Collapsible Advanced Intelligence Accordion */
-
-
-
-
-
-
-
-
-
-
-
-
-@keyframes dossierSlideDown {
-  from { transform: translateY(-8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.recruiterAlertsBox strong {
-  color: #b91c1c;
-  display: block;
-  margin-bottom: 4px;
-}
-
-
-
-
-
-
-
-
-
-
-
-/* Premium Recommendation Badges */
-
-
-
-
-
-
-/* Match Score Color Bands */
-
-
-
-
-
-/* Dynamic Left borders & Backgrounds for Recommendation classes */
-
-.strongHire {
-  background: var(--color-success-bg);
-  color: #047857;
-  border: 1px solid #a7f3d0;
-}
-.hire {
-  background: var(--color-success-bg);
-  color: #047857;
-  border: 1px solid #a7f3d0;
-}
-.needsInterview {
-  background: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
-}
-.needsReview {
-  background: #fff7ed;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
-}
-.reject {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-/* Premium Modal exports styles */
-.premiumModalOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.premiumModalContent {
-  text-align: center;
-  max-width: 450px;
-  padding: 2.5rem;
-}
-
-.premiumPulseSpinner {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  animation: pulse 1.6s infinite ease-in-out;
-  margin: 0 auto 1.5rem auto;
-}
-
-.premiumModalTitle {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.01em;
-}
-
-.premiumModalSubtitle {
-  font-size: 0.85rem;
-  color: #64748b;
-  line-height: 1.5;
-}
-
-/* Inline notes adjustments for same-block styling */
-.commentaryArea :global(.RecruiterNotes_container__r0v_z) {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-}
-.commentaryArea :global(.RecruiterNotes_textarea__1N2G9) {
-  min-height: 180px !important;
-}
-
-/* ==========================================================================
-   V2.6 EVIDENCE-BASED PANELS
-   ========================================================================== */
-
-/* Skill Coverage Panel */
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Skill Gap Visualization */
-
-
-
-
-
-
-
-/* Weighted Gap Analysis */
-
-
-
-
-
-
-
-
-
-
-/* Project Alignment */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

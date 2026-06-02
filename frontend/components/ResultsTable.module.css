@@ -178,6 +178,15 @@
     width: 60px;
 }
 
+.workspaceRow {
+    background: #fafafa;
+    border-bottom: 1px solid var(--border);
+}
+
+.workspaceCell {
+    padding: 24px 32px;
+}
+
 /* Detailed Drawer Table Row */
 
 
