@@ -114,6 +114,7 @@
 .cardTotal::before {
   background: linear-gradient(180deg, #3b82f6, #1d4ed8);
 }
+
 .cardTotal .cardValue {
   color: #1d4ed8;
 }
@@ -121,6 +122,7 @@
 .cardShortlisted::before {
   background: linear-gradient(180deg, #10b981, #15803d);
 }
+
 .cardShortlisted .cardValue {
   color: #15803d;
 }
@@ -128,6 +130,7 @@
 .cardInterview::before {
   background: linear-gradient(180deg, #a855f7, #6d28d9);
 }
+
 .cardInterview .cardValue {
   color: #6d28d9;
 }
@@ -135,6 +138,7 @@
 .cardReviewLater::before {
   background: linear-gradient(180deg, #f59e0b, #b45309);
 }
+
 .cardReviewLater .cardValue {
   color: #b45309;
 }
@@ -142,6 +146,7 @@
 .cardRejected::before {
   background: linear-gradient(180deg, #ef4444, #b91c1c);
 }
+
 .cardRejected .cardValue {
   color: #b91c1c;
 }
