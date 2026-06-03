@@ -4,7 +4,7 @@ import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
-import { calculateSkillCoverage } from "../lib/SkillCoverageEngine";
+import SkillCoveragePanel from "./SkillCoveragePanel";
 
 export default function CandidateWorkspace({
   candidate,
@@ -20,7 +20,6 @@ export default function CandidateWorkspace({
   const candidateName = candidate.name;
 
   // Consume normalized structures directly from the ViewModel
-  const { covered, partial, missing } = candidate.skillCoverage || { covered: [], partial: [], missing: [] };
   const recruiterSummary = candidate.summary;
   const projects = candidate.projectValidation?.allProjects || [];
   const interviewFocus = candidate.interviewFocus || [];
@@ -64,46 +63,7 @@ export default function CandidateWorkspace({
         </section>
 
         {/* 2. SKILL COVERAGE */}
-        <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Skill Coverage</h3>
-          
-          {(covered.length === 0 && partial.length === 0 && missing.length === 0) ? (
-            <p className={styles.projectDetailText}>No skill coverage data available.</p>
-          ) : (
-            <>
-              {covered.length > 0 && (
-                <div className={styles.skillCategory}>
-                  <h4 className={styles.skillCategoryTitle}>Covered Skills</h4>
-                  <div className={styles.chipList}>
-                    {covered.map((skill, i) => (
-                      <span key={i} className={`${styles.chip} ${styles.chipCovered}`}>✓ {skill.name}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {partial.length > 0 && (
-                <div className={styles.skillCategory}>
-                  <h4 className={styles.skillCategoryTitle}>Partial Experience</h4>
-                  <div className={styles.chipList}>
-                    {partial.map((skill, i) => (
-                      <span key={i} className={`${styles.chip} ${styles.chipPartial}`}>⚠ {skill.name}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {missing.length > 0 && (
-                <div className={styles.skillCategory}>
-                  <h4 className={styles.skillCategoryTitle}>Missing Skills</h4>
-                  <div className={styles.chipList}>
-                    {missing.map((skill, i) => (
-                      <span key={i} className={`${styles.chip} ${styles.chipMissing}`}>✕ {skill.name}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </section>
+        <SkillCoveragePanel coverageData={candidate.skillCoverage || { covered: [], partial: [], missing: [], critical: [] }} />
 
         {/* 3. PROJECT VALIDATION */}
         {projects.length > 0 && (
