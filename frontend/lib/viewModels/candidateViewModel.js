@@ -19,8 +19,8 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
   // Use the new Phase 4 adapter to generate the normalized skill coverage arrays
   const skillCoverage = normalizeSkillProficiency(gapData.skill_proficiency);
   
-  // Project Validation
-  const projectValidation = normalizeProjectAlignment(gapData.project_alignment);
+  // Project Validation (passes V2 and V1 payloads for fallback support)
+  const projectValidation = normalizeProjectAlignment(gapData.project_validation, gapData.project_alignment);
   
   // Requirement Alignment
   const requirementAlignment = normalizeRequirementAlignment(gapData.core_requirement_alignment);

@@ -5,6 +5,7 @@ import StatusBadge from "./StatusBadge";
 import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
 import SkillCoveragePanel from "./SkillCoveragePanel";
+import ProjectValidationPanel from "./ProjectValidationPanel";
 
 export default function CandidateWorkspace({
   candidate,
@@ -21,7 +22,6 @@ export default function CandidateWorkspace({
 
   // Consume normalized structures directly from the ViewModel
   const recruiterSummary = candidate.summary;
-  const projects = candidate.projectValidation?.allProjects || [];
   const interviewFocus = candidate.interviewFocus || [];
 
   const handleQuickStatus = (newStatus) => {
@@ -66,36 +66,7 @@ export default function CandidateWorkspace({
         <SkillCoveragePanel coverageData={candidate.skillCoverage || { covered: [], partial: [], missing: [], critical: [] }} />
 
         {/* 3. PROJECT VALIDATION */}
-        {projects.length > 0 && (
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Project Validation</h3>
-            <div className={styles.projectList}>
-              {projects.map((proj, idx) => {
-                const isConfirmed = proj.isConfirmed;
-                return (
-                  <div key={idx} className={styles.projectCard}>
-                    <div className={styles.projectHeader}>
-                      <h4 className={styles.projectName}>{proj.name}</h4>
-                      <span className={`${styles.projectStatus} ${isConfirmed ? styles.statusConfirmed : styles.statusPartial}`}>
-                        {isConfirmed ? "Confirmed" : "Partial"}
-                      </span>
-                    </div>
-                    {proj.matchedSkills && proj.matchedSkills.length > 0 && (
-                      <div className={styles.projectDetail}>
-                        <span className={styles.projectDetailLabel}>Validated Technologies</span>
-                        <div className={styles.techList}>
-                          {proj.matchedSkills.map((tech, i) => (
-                            <span key={i} className={styles.techChip}>{tech}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        <ProjectValidationPanel projectValidationData={candidate.projectValidation} />
 
         {/* 4. INTERVIEW FOCUS */}
         {interviewFocus.length > 0 && (
