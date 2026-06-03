@@ -6,6 +6,8 @@ import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
 import SkillCoveragePanel from "./SkillCoveragePanel";
 import ProjectValidationPanel from "./ProjectValidationPanel";
+import HiringReadinessPanel from "./HiringReadinessPanel";
+import DecisionCenter from "./DecisionCenter";
 
 export default function CandidateWorkspace({
   candidate,
@@ -68,7 +70,10 @@ export default function CandidateWorkspace({
         {/* 3. PROJECT VALIDATION */}
         <ProjectValidationPanel projectValidationData={candidate.projectValidation} />
 
-        {/* 4. INTERVIEW FOCUS */}
+        {/* 4. HIRING READINESS */}
+        <HiringReadinessPanel counts={candidate.counts} hiringReadiness={candidate.hiringReadiness} />
+
+        {/* 5. INTERVIEW FOCUS */}
         {interviewFocus.length > 0 && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Interview Focus</h3>
@@ -80,42 +85,14 @@ export default function CandidateWorkspace({
           </section>
         )}
 
-        {/* 5. RECRUITER NOTES */}
+        {/* 6. RECRUITER NOTES */}
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>Recruiter Notes</h3>
           <RecruiterNotes note={note} onNoteChange={onNoteChange} />
         </section>
 
-        {/* 6. DECISION PANEL */}
-        <section className={styles.decisionPanel}>
-          <h3 className={styles.decisionPanelTitle}>Hiring Decision</h3>
-          <div className={styles.decisionActions}>
-            <button
-              onClick={() => handleQuickStatus("Shortlisted")}
-              className={`${styles.decisionBtn} ${styles.btnShortlist} ${status === "Shortlisted" ? styles.btnActive : ""}`}
-            >
-              Shortlist
-            </button>
-            <button
-              onClick={() => handleQuickStatus("Reviewing")}
-              className={`${styles.decisionBtn} ${styles.btnReviewing} ${status === "Reviewing" ? styles.btnActive : ""}`}
-            >
-              Reviewing
-            </button>
-            <button
-              onClick={() => handleQuickStatus("Interview")}
-              className={`${styles.decisionBtn} ${styles.btnShortlist} ${status === "Interview" ? styles.btnActive : ""}`}
-            >
-              Move to Interview
-            </button>
-            <button
-              onClick={() => handleQuickStatus("Rejected")}
-              className={`${styles.decisionBtn} ${styles.btnReject} ${status === "Rejected" ? styles.btnActive : ""}`}
-            >
-              Reject
-            </button>
-          </div>
-        </section>
+        {/* 7. DECISION CENTER */}
+        <DecisionCenter candidateId={candidate.id} />
 
       </div>
     </div>

@@ -7,7 +7,7 @@ import { parseCandidateName, parseHiringRecommendation } from "../adapters/candi
 import { normalizeSkillProficiency } from "../adapters/skillCoverageAdapter";
 import { normalizeProjectAlignment } from "../adapters/projectAlignmentAdapter";
 import { normalizeRequirementAlignment } from "../adapters/requirementAlignmentAdapter";
-import { calculateSkillCoverage } from "../SkillCoverageEngine";
+import { calculateHiringReadiness } from "../adapters/readinessAdapter";
 
 export function buildCandidateViewModel(candidate, status = "New", recruiterNote = "") {
   const score = typeof candidate.score === 'number' ? candidate.score : 0;
@@ -25,6 +25,19 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
   // Requirement Alignment
   const requirementAlignment = normalizeRequirementAlignment(gapData.core_requirement_alignment);
 
+  // Phase 6 Counts & Readiness
+  const counts = {
+    criticalGapsCount: skillCoverage.critical?.length || 0,
+    coveredSkillsCount: skillCoverage.covered?.length || 0,
+    partialSkillsCount: skillCoverage.partial?.length || 0,
+    missingSkillsCount: skillCoverage.missing?.length || 0,
+    validatedRequirementsCount: projectValidation.validated?.length || projectValidation.confirmedProjects?.length || 0,
+    mentionedOnlyCount: projectValidation.mentionedOnly?.length || 0,
+    missingValidationCount: projectValidation.missing?.length || 0
+  };
+
+  const hiringReadiness = calculateHiringReadiness(counts);
+
   return {
     id: candidate.id,
     originalFilename: candidate.resume_filename,
@@ -38,6 +51,8 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
     skillCoverage,
     projectValidation,
     requirementAlignment,
+    counts,
+    hiringReadiness,
     
     // Pass along raw result for any deeply nested historical data needed in the future,
     // but UI should prefer the mapped properties above.
