@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import FileUpload from "../components/FileUpload";
 import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
@@ -9,8 +9,13 @@ import WorkspaceHeader from "../components/WorkspaceHeader";
 import CandidateWorkspace from "../components/CandidateWorkspace";
 import { screenResumes, getResults, getSessions } from "../lib/api";
 import useStructuredJob from "../hooks/useStructuredJob";
+import useScreeningResults from "../hooks/useScreeningResults";
+import useCandidateSelection from "../hooks/useCandidateSelection";
+import usePipelineStatus from "../hooks/usePipelineStatus";
+import useRecruiterNotes from "../hooks/useRecruiterNotes";
 import { buildJdFromStructured } from "../lib/jdBuilders";
 import styles from "./page.module.css";
+import { ALL_FILTER_STATUSES } from "../constants/statuses";
 
 const SAMPLE_JD = `Job Description — Full Stack Developer (MERN + AI Integrations)
 
@@ -91,108 +96,8 @@ Internship experience in full-stack development`;
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
   const [resumeFiles, setResumeFiles] = useState([]);
-  const [screeningId, setScreeningId] = useState(null);
-  const [results, setResults] = useState([]);
-  const [minScore, setMinScore] = useState(0);
-  const [filteredResults, setFilteredResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("Screening resumes...");
-  const [error, setError] = useState(null);
-  const [sessions, setSessions] = useState([]);
-  const [shortlistCount, setShortlistCount] = useState(0);
-  const [activeCandidateId, setActiveCandidateId] = useState(null);
-  const [activeSession, setActiveSession] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [inputMode, setInputMode] = useState("paste");
-
-  const [candidateStatuses, setCandidateStatuses] = useState({});
-  const [candidateNotes, setCandidateNotes] = useState({});
-  const [statusFilter, setStatusFilter] = useState("All");
-
-  useEffect(() => {
-    if (!screeningId) {
-      setCandidateStatuses({});
-      setCandidateNotes({});
-      return;
-    }
-    try {
-      const storedStatuses = localStorage.getItem(`hirelens_statuses_${screeningId}`);
-      const storedNotes = localStorage.getItem(`hirelens_notes_${screeningId}`);
-
-      const parsedStatuses = storedStatuses ? JSON.parse(storedStatuses) : {};
-      const parsedNotes = storedNotes ? JSON.parse(storedNotes) : {};
-
-      // Ensure all candidates in results have at least "New" status if not set
-      const updatedStatuses = { ...parsedStatuses };
-      let updated = false;
-      results.forEach(r => {
-        if (!updatedStatuses[r.id]) {
-          updatedStatuses[r.id] = "New";
-          updated = true;
-        }
-      });
-
-      if (updated) {
-        localStorage.setItem(`hirelens_statuses_${screeningId}`, JSON.stringify(updatedStatuses));
-      }
-
-      setCandidateStatuses(updatedStatuses);
-      setCandidateNotes(parsedNotes);
-    } catch (e) {
-      console.error("Failed to load statuses/notes from localStorage:", e);
-    }
-  }, [screeningId, results]);
-
-  useEffect(() => {
-    const count = Object.values(candidateStatuses).filter(status => status === "Shortlisted").length;
-    setShortlistCount(count);
-  }, [candidateStatuses]);
-
-  const handleStatusChange = (candId, newStatus) => {
-    const updated = {
-      ...candidateStatuses,
-      [candId]: newStatus
-    };
-    setCandidateStatuses(updated);
-    if (screeningId) {
-      localStorage.setItem(`hirelens_statuses_${screeningId}`, JSON.stringify(updated));
-    }
-  };
-
-  const handleNoteChange = (candId, newNote) => {
-    const updated = {
-      ...candidateNotes,
-      [candId]: newNote
-    };
-    setCandidateNotes(updated);
-    if (screeningId) {
-      localStorage.setItem(`hirelens_notes_${screeningId}`, JSON.stringify(updated));
-    }
-  };
-
-  const getWorkspaceCounts = () => {
-    const counts = {
-      total: results.length,
-      shortlisted: 0,
-      interview: 0,
-      reviewing: 0,
-      rejected: 0,
-      hired: 0,
-      new: 0
-    };
-
-    results.forEach(r => {
-      const status = candidateStatuses[r.id] || "New";
-      if (status === "Shortlisted") counts.shortlisted++;
-      else if (status === "Interview") counts.interview++;
-      else if (status === "Reviewing") counts.reviewing++;
-      else if (status === "Rejected") counts.rejected++;
-      else if (status === "Hired") counts.hired++;
-      else counts.new++;
-    });
-
-    return counts;
-  };
 
   const {
     structuredJob,
@@ -206,54 +111,52 @@ export default function Home() {
     resetJob
   } = useStructuredJob();
 
-  useEffect(() => {
-    if (screeningId && sessions.length > 0) {
-      const found = sessions.find(s => s.id === screeningId);
-      if (found) {
-        setActiveSession(found);
-      }
-    } else if (!screeningId) {
-      setActiveSession(null);
-    }
-  }, [screeningId, sessions]);
+  const {
+    sessions,
+    activeSession,
+    screeningId,
+    setScreeningId,
+    results: rawResults,
+    filteredResults: rawFilteredResults,
+    minScore,
+    loading,
+    loadingText,
+    error,
+    setError,
+    loadSessionResults,
+    updateMinScore,
+    performScreening
+  } = useScreeningResults();
 
-  // shortlist count is managed by candidateStatuses state sync
+  const { activeCandidateId, setActiveCandidateId } = useCandidateSelection();
+
+  // 1. Build ViewModels from raw data
+  const { buildCandidateViewModel } = require("../lib/viewModels/candidateViewModel");
+  const results = useMemo(() => rawResults.map(r => buildCandidateViewModel(r)), [rawResults]);
+  const filteredResults = useMemo(() => rawFilteredResults.map(r => buildCandidateViewModel(r)), [rawFilteredResults]);
+
+  const {
+    candidateStatuses,
+    statusFilter,
+    setStatusFilter,
+    shortlistCount,
+    handleStatusChange,
+    getWorkspaceCounts
+  } = usePipelineStatus(screeningId, results);
+
+  const {
+    candidateNotes,
+    handleNoteChange
+  } = useRecruiterNotes(screeningId);
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
-    try {
-      const sessionsData = await getSessions();
-      setSessions(sessionsData);
-    } catch (err) {
-      console.error("Failed to load screening history:", err);
-    }
-  };
-
   const handleSelectSession = async (session) => {
-    setLoading(true);
-    setError(null);
-    setMinScore(0);
-    try {
-      setScreeningId(session.id);
-      setJobDescription(session.job_description);
-      setInputMode("paste"); // Force history sessions to Pasteur mode
-
-      const resultsData = await getResults(session.id, 0);
-      setResults(resultsData.results);
-      setFilteredResults(resultsData.results);
-
-      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
-    } catch (err) {
-      setError("Failed to load results for this session: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+    setJobDescription(session.job_description);
+    setInputMode("paste");
+    await loadSessionResults(session);
+    workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   // Dynamic status text cycler removed for simplicity
@@ -283,18 +186,8 @@ export default function Home() {
   };
 
   const handleMinScoreChange = async (score) => {
-    setMinScore(score);
-
-    if (screeningId) {
-      try {
-        const data = await getResults(screeningId, score);
-        setFilteredResults(data.results);
-      } catch (err) {
-        setError(err.message);
-      }
-    }
+    await updateMinScore(score);
   };
-
 
   const handleScreening = async () => {
     let targetJD = jobDescription;
@@ -318,24 +211,9 @@ export default function Home() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setMinScore(0);
-
-    try {
-      const response = await screenResumes(targetJD, resumeFiles);
-      setScreeningId(response.screening_id);
-
-      const resultsData = await getResults(response.screening_id, 0);
-      setResults(resultsData.results);
-      setFilteredResults(resultsData.results);
-
-      // Reload history sidebar
-      fetchSessions();
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred during resume screening. Please check file validity.");
-    } finally {
-      setLoading(false);
+    const success = await performScreening(targetJD, resumeFiles);
+    if (success) {
+      // Reload history sidebar is handled inside performScreening (it calls fetchSessions)
     }
   };
 

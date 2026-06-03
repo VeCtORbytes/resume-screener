@@ -1,33 +1,7 @@
 "use client";
 
 import styles from "./StatusBadge.module.css";
-
-const STATUS_CONFIG = {
-  "New": {
-    label: "New",
-    className: "hl-badge-neutral"
-  },
-  "Reviewing": {
-    label: "Reviewing",
-    className: "hl-badge-warning"
-  },
-  "Shortlisted": {
-    label: "Shortlisted",
-    className: "hl-badge-success"
-  },
-  "Interview": {
-    label: "Interview",
-    className: "hl-badge-success"
-  },
-  "Rejected": {
-    label: "Rejected",
-    className: "hl-badge-danger"
-  },
-  "Hired": {
-    label: "Hired",
-    className: "hl-badge-success"
-  }
-};
+import { STATUS_CONFIG } from "../constants/statuses";
 
 export default function StatusBadge({ status = "New", onChange, interactive = false }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG["New"];

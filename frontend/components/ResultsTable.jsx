@@ -7,23 +7,7 @@ import { exportCSV } from "../lib/api";
 import StatusBadge from "./StatusBadge";
 import CandidateWorkspace from "./CandidateWorkspace";
 
-function getCandidateName(filename) {
-    if (!filename) return "Unknown Candidate";
-    let name = filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ');
-    name = name.replace(/\b(resume|cv|pdf|docx)\b/gi, '').trim();
-    return name.replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function getHiringRecommendation(score) {
-    if (score >= 90) return { text: "Recommended for Interview", emoji: "", color: "#10b981", class: styles.strongHire };
-    if (score >= 80) return { text: "Potential Match",           emoji: "", color: "#10b981", class: styles.hire };
-    if (score >= 65) return { text: "Requires Further Review",   emoji: "", color: "#f59e0b", class: styles.needsInterview };
-    if (score >= 50) return { text: "Requires Further Review",   emoji: "", color: "#f97316", class: styles.needsReview };
-    return             { text: "Limited Alignment",              emoji: "", color: "#ef4444", class: styles.reject };
-}
-
-
-
+// Removed legacy functions; now consuming CandidateViewModel properties.
 export default function ResultsTable({
     results = [],
     isLoading,
@@ -99,7 +83,7 @@ export default function ResultsTable({
                                         : styles.poor;
 
                             const isSelected = selectedIds.includes(result.id);
-                            const recInfo = getHiringRecommendation(score);
+                            const recInfo = result.recommendation;
                             const currentStatus = candidateStatuses[result.id] || "New";
 
                             return (
@@ -112,7 +96,7 @@ export default function ResultsTable({
                                         <div className={styles.nameWrapper}>
                                             <div className={styles.fileNameRow} onClick={(e) => e.stopPropagation()}>
                                                 <span className={styles.fileName} onClick={() => onViewCandidate(result.id)} style={{ cursor: "pointer", display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {getCandidateName(result.resume_filename)}
+                                                    {result.name}
                                                 </span>
                                             </div>
                                         </div>
@@ -123,8 +107,8 @@ export default function ResultsTable({
                                         </div>
                                     </td>
                                     <td className="">
-                                        <span className={`${styles.recBadge} ${recInfo.class}`}>
-                                            {recInfo.emoji} {recInfo.text}
+                                        <span className={`${styles.recBadge} ${styles[recInfo?.styleClass] || styles.reject}`}>
+                                            {recInfo?.text}
                                         </span>
                                     </td>
                                     <td className="" onClick={(e) => e.stopPropagation()}>

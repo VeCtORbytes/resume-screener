@@ -6,21 +6,6 @@ import RecruiterNotes from "./RecruiterNotes";
 import styles from "./CandidateWorkspace.module.css";
 import { calculateSkillCoverage } from "../lib/SkillCoverageEngine";
 
-function getCandidateName(filename) {
-  if (!filename) return "Unknown Candidate";
-  let name = filename.split('.')[0].replace(/[_]/g, ' ').replace(/[-]/g, ' ');
-  name = name.replace(/\b(resume|cv|pdf|docx)\b/gi, '').trim();
-  return name.replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function getRecommendation(score) {
-  if (score >= 90) return { text: "Recommended for Interview", class: styles.recBadge };
-  if (score >= 80) return { text: "Potential Match",           class: styles.recBadge };
-  if (score >= 65) return { text: "Requires Further Review",   class: styles.statusBadge };
-  if (score >= 50) return { text: "Requires Further Review",   class: styles.statusBadge };
-  return             { text: "Limited Alignment",              class: styles.scoreBadge };
-}
-
 export default function CandidateWorkspace({
   candidate,
   status = "New",
@@ -31,16 +16,14 @@ export default function CandidateWorkspace({
   isExportingPdf = false,
 }) {
   const score = candidate.score || 0;
-  const recInfo = getRecommendation(score);
-  const candidateName = getCandidateName(candidate.resume_filename);
+  const recInfo = candidate.recommendation;
+  const candidateName = candidate.name;
 
-  // Data processing
-  const gapData = candidate.gap_analysis || {};
-  const coverageData = calculateSkillCoverage(gapData);
-  const { covered, partial, missing } = coverageData;
-  const recruiterSummary = gapData.candidate_summary || "No summary available.";
-  const projects = gapData.project_alignment || [];
-  const interviewFocus = gapData.interview_focus || gapData.areas_to_validate || [];
+  // Consume normalized structures directly from the ViewModel
+  const { covered, partial, missing } = candidate.skillCoverage || { covered: [], partial: [], missing: [] };
+  const recruiterSummary = candidate.summary;
+  const projects = candidate.projectValidation?.allProjects || [];
+  const interviewFocus = candidate.interviewFocus || [];
 
   const handleQuickStatus = (newStatus) => {
     if (onStatusChange) onStatusChange(newStatus);
@@ -59,7 +42,7 @@ export default function CandidateWorkspace({
               {/* <p className={styles.candidateLocation}>Software Engineer • San Francisco, CA</p> */}
             </div>
             <button
-              onClick={() => onExportPdf(candidate.id, candidate.resume_filename)}
+              onClick={() => onExportPdf(candidate.id, candidate.originalFilename)}
               disabled={isExportingPdf}
               className={styles.exportBtn}
             >
@@ -71,8 +54,8 @@ export default function CandidateWorkspace({
             <span className={`${styles.metricBadge} ${styles.scoreBadge}`}>
               Match Score: {score}
             </span>
-            <span className={`${styles.metricBadge} ${recInfo.class}`}>
-              {recInfo.text}
+            <span className={`${styles.metricBadge} ${styles[recInfo?.styleClass] || styles.statusBadge}`}>
+              {recInfo?.text}
             </span>
             <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
           </div>
@@ -128,20 +111,20 @@ export default function CandidateWorkspace({
             <h3 className={styles.sectionTitle}>Project Validation</h3>
             <div className={styles.projectList}>
               {projects.map((proj, idx) => {
-                const isConfirmed = proj.alignment_score >= 50;
+                const isConfirmed = proj.isConfirmed;
                 return (
                   <div key={idx} className={styles.projectCard}>
                     <div className={styles.projectHeader}>
-                      <h4 className={styles.projectName}>{proj.project_name}</h4>
+                      <h4 className={styles.projectName}>{proj.name}</h4>
                       <span className={`${styles.projectStatus} ${isConfirmed ? styles.statusConfirmed : styles.statusPartial}`}>
                         {isConfirmed ? "Confirmed" : "Partial"}
                       </span>
                     </div>
-                    {proj.matched_skills && proj.matched_skills.length > 0 && (
+                    {proj.matchedSkills && proj.matchedSkills.length > 0 && (
                       <div className={styles.projectDetail}>
                         <span className={styles.projectDetailLabel}>Validated Technologies</span>
                         <div className={styles.techList}>
-                          {proj.matched_skills.map((tech, i) => (
+                          {proj.matchedSkills.map((tech, i) => (
                             <span key={i} className={styles.techChip}>{tech}</span>
                           ))}
                         </div>

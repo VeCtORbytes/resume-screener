@@ -102,6 +102,36 @@
   border: 1px solid #bbf7d0;
 }
 
+.strongHire {
+  background: var(--color-success-bg, #f0fdf4);
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.hire {
+  background: var(--color-success-bg, #f0fdf4);
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.needsInterview {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.needsReview {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.reject {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
 .statusBadge {
   background: #eff6ff;
   color: #1e40af;
