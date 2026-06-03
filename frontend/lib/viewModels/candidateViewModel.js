@@ -7,7 +7,7 @@ import { parseCandidateName, parseHiringRecommendation } from "../adapters/candi
 import { normalizeSkillProficiency } from "../adapters/skillCoverageAdapter";
 import { normalizeProjectAlignment } from "../adapters/projectAlignmentAdapter";
 import { normalizeRequirementAlignment } from "../adapters/requirementAlignmentAdapter";
-import { calculateSkillCoverage } from "../SkillCoverageEngine";
+import { calculateHiringReadiness } from "../adapters/readinessAdapter";
 
 export function buildCandidateViewModel(candidate, status = "New", recruiterNote = "") {
   const score = typeof candidate.score === 'number' ? candidate.score : 0;
@@ -19,11 +19,24 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
   // Use the new Phase 4 adapter to generate the normalized skill coverage arrays
   const skillCoverage = normalizeSkillProficiency(gapData.skill_proficiency);
   
-  // Project Validation
-  const projectValidation = normalizeProjectAlignment(gapData.project_alignment);
+  // Project Validation (passes V2 and V1 payloads for fallback support)
+  const projectValidation = normalizeProjectAlignment(gapData.project_validation, gapData.project_alignment);
   
   // Requirement Alignment
   const requirementAlignment = normalizeRequirementAlignment(gapData.core_requirement_alignment);
+
+  // Phase 6 Counts & Readiness
+  const counts = {
+    criticalGapsCount: skillCoverage.critical?.length || 0,
+    coveredSkillsCount: skillCoverage.covered?.length || 0,
+    partialSkillsCount: skillCoverage.partial?.length || 0,
+    missingSkillsCount: skillCoverage.missing?.length || 0,
+    validatedRequirementsCount: projectValidation.validated?.length || projectValidation.confirmedProjects?.length || 0,
+    mentionedOnlyCount: projectValidation.mentionedOnly?.length || 0,
+    missingValidationCount: projectValidation.missing?.length || 0
+  };
+
+  const hiringReadiness = calculateHiringReadiness(counts);
 
   return {
     id: candidate.id,
@@ -38,6 +51,8 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
     skillCoverage,
     projectValidation,
     requirementAlignment,
+    counts,
+    hiringReadiness,
     
     // Pass along raw result for any deeply nested historical data needed in the future,
     // but UI should prefer the mapped properties above.

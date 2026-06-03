@@ -58,7 +58,14 @@ Evaluate the JD to assign a "required_score" (10-100 based on importance), then 
 Determine "evidence_quality": "strong" (project/work usage), "moderate" (some context), "weak" (just mentioned).
 Extract the actual "evidence" as a list of exact quotes or factual usages from the resume. NEVER invent evidence. If there is no evidence, the array MUST be empty.
 
-STEP 4 — Generate Recruiter-Readable Output
+STEP 4 — Project Validation Engine
+For EVERY job requirement, evaluate whether it was ACTUALLY USED in a project. Never treat a skill mention in the 'Skills' section as project validation.
+Determine "validation_status": "validated" (used in project), "mentioned_only" (listed but not used), "partial" (indirectly demonstrated), "missing" (no evidence).
+Determine "evidence_source": "project" > "experience" > "achievement" > "skills_section". Always pick the highest priority source where evidence was found.
+Determine "confidence": "high", "medium", "low".
+Return the associated "project_name" if applicable, otherwise return null.
+
+STEP 5 — Generate Recruiter-Readable Output
 Return ONLY a single valid JSON object with NO markdown fences, NO trailing text. Use this exact schema:
 {
   "score": <integer 0-100, holistic fit score derived from your evidence assessment>,
@@ -81,14 +88,17 @@ Return ONLY a single valid JSON object with NO markdown fences, NO trailing text
         ]
       }
     ],
-    "project_alignment": [
+    "project_validation": [
       {
-        "project_name": "<string, name of the project>",
-        "alignment_score": <integer 0-100>,
-        "matched_skills": ["<skill>"],
-        "missing_skills": ["<skill>"]
+        "requirement": "<string, skill name from JD>",
+        "project_name": "<string or null>",
+        "validation_status": "<'validated' | 'mentioned_only' | 'partial' | 'missing'>",
+        "evidence": "<factual quote or reasoning>",
+        "confidence": "<'high' | 'medium' | 'low'>",
+        "evidence_source": "<'project' | 'experience' | 'achievement' | 'skills_section'>"
       }
-    ]
+    ],
+    "project_alignment": []
   }
 }
 
@@ -153,7 +163,7 @@ Respond ONLY with the requested JSON object."""
             gap_analysis = result.get("gap_analysis", {})
             
             # ── Safe defaults for gap_analysis lists ─────────────────────────
-            for key in ["skill_proficiency", "project_alignment"]:
+            for key in ["skill_proficiency", "project_alignment", "project_validation"]:
                 if key not in gap_analysis:
                     gap_analysis[key] = []
             
