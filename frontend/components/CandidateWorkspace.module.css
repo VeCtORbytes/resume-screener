@@ -1,0 +1,394 @@
+/* ==========================================================================
+   HIRELENS DOSSIER — V3 UI REBUILD
+   ========================================================================== */
+
+.dossierContainer {
+  font-family: var(--font-sans), -apple-system, sans-serif;
+  color: #1e293b;
+  animation: dossierFadeIn 0.3s ease-out;
+  padding: 1rem 0;
+}
+
+@keyframes dossierFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dossierBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 1000px;
+}
+
+/* ==========================================================================
+   CANDIDATE HEADER
+   ========================================================================== */
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.headerTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.candidateName {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.1;
+}
+
+.candidateLocation {
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+}
+
+.exportBtn {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.metricsRow {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.metricBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.scoreBadge {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.recBadge {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.strongHire {
+  background: var(--color-success-bg, #f0fdf4);
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.hire {
+  background: var(--color-success-bg, #f0fdf4);
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.needsInterview {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.needsReview {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.reject {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.statusBadge {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.recruiterSummary {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #334155;
+  font-style: italic;
+  background: #fafafa;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #cbd5e1;
+  border-radius: 4px;
+  margin: 0;
+}
+
+
+/* ==========================================================================
+   SECTIONS (Skill Coverage, Project Validation)
+   ========================================================================== */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* SKILL CHIPS */
+
+.skillCategory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skillCategoryTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.chipCovered {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.chipPartial {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.chipMissing {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* PROJECT VALIDATION */
+
+.projectList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.projectCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.projectHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.projectName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.projectStatus {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.statusConfirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusPartial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.projectDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.projectDetailLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.projectDetailText {
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.techList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.techChip {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* INTERVIEW FOCUS */
+
+.focusList {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.focusItem {
+  font-size: 1rem;
+  color: #334155;
+  line-height: 1.5;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.focusItem::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #6366f1;
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   DECISION PANEL
+   ========================================================================== */
+
+.decisionPanel {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.decisionPanelTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.decisionActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.decisionBtn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.btnShortlist {
+  background: #10b981;
+  color: white;
+}
+.btnShortlist:hover { background: #059669; }
+
+.btnReviewing {
+  background: #f59e0b;
+  color: white;
+}
+.btnReviewing:hover { background: #d97706; }
+
+.btnReject {
+  background: #ef4444;
+  color: white;
+}
+.btnReject:hover { background: #dc2626; }
+
+.btnActive {
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
+  transform: translateY(1px);
+}

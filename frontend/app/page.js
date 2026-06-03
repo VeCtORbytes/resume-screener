@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import FileUpload from "../components/FileUpload";
 import JobDescInput from "../components/JobDescInput";
 import ResultsTable from "../components/ResultsTable";
 import FilterControl from "../components/FilterControl";
-import AnalyticsDashboard from "../components/AnalyticsDashboard";
-import CandidateComparison from "../components/CandidateComparison";
+import WorkspaceHeader from "../components/WorkspaceHeader";
+import CandidateWorkspace from "../components/CandidateWorkspace";
 import { screenResumes, getResults, getSessions } from "../lib/api";
+import useStructuredJob from "../hooks/useStructuredJob";
+import useScreeningResults from "../hooks/useScreeningResults";
+import useCandidateSelection from "../hooks/useCandidateSelection";
+import usePipelineStatus from "../hooks/usePipelineStatus";
+import useRecruiterNotes from "../hooks/useRecruiterNotes";
+import { buildJdFromStructured } from "../lib/jdBuilders";
 import styles from "./page.module.css";
+import { ALL_FILTER_STATUSES } from "../constants/statuses";
 
 const SAMPLE_JD = `Job Description — Full Stack Developer (MERN + AI Integrations)
 
@@ -89,100 +96,70 @@ Internship experience in full-stack development`;
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
   const [resumeFiles, setResumeFiles] = useState([]);
-  const [screeningId, setScreeningId] = useState(null);
-  const [results, setResults] = useState([]);
-  const [minScore, setMinScore] = useState(0);
-  const [filteredResults, setFilteredResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("Screening resumes...");
-  const [error, setError] = useState(null);
-  const [sessions, setSessions] = useState([]);
-  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
-  const [showComparison, setShowComparison] = useState(false);
-  const [shortlistCount, setShortlistCount] = useState(0);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [inputMode, setInputMode] = useState("paste");
 
-  useEffect(() => {
-    const updateCount = () => {
-      if (!screeningId) {
-        setShortlistCount(0);
-        return;
-      }
-      try {
-        const stored = localStorage.getItem(`hirelens_shortlist_${screeningId}`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const count = Object.values(parsed).filter(Boolean).length;
-          setShortlistCount(count);
-        } else {
-          setShortlistCount(0);
-        }
-      } catch (e) {
-        setShortlistCount(0);
-      }
-    };
+  const {
+    structuredJob,
+    setStructuredJob,
+    updateRoleInfo,
+    addMustHaveSkill,
+    removeMustHaveSkill,
+    addGoodToHaveSkill,
+    removeGoodToHaveSkill,
+    updateTextField,
+    resetJob
+  } = useStructuredJob();
 
-    updateCount();
-    window.addEventListener("hirelens_shortlist_update", updateCount);
-    return () => window.removeEventListener("hirelens_shortlist_update", updateCount);
-  }, [screeningId]);
+  const {
+    sessions,
+    activeSession,
+    screeningId,
+    setScreeningId,
+    results: rawResults,
+    filteredResults: rawFilteredResults,
+    minScore,
+    loading,
+    loadingText,
+    error,
+    setError,
+    loadSessionResults,
+    updateMinScore,
+    performScreening
+  } = useScreeningResults();
+
+  const { activeCandidateId, setActiveCandidateId } = useCandidateSelection();
+
+  // 1. Build ViewModels from raw data
+  const { buildCandidateViewModel } = require("../lib/viewModels/candidateViewModel");
+  const results = useMemo(() => rawResults.map(r => buildCandidateViewModel(r)), [rawResults]);
+  const filteredResults = useMemo(() => rawFilteredResults.map(r => buildCandidateViewModel(r)), [rawFilteredResults]);
+
+  const {
+    candidateStatuses,
+    statusFilter,
+    setStatusFilter,
+    shortlistCount,
+    handleStatusChange,
+    getWorkspaceCounts
+  } = usePipelineStatus(screeningId, results);
+
+  const {
+    candidateNotes,
+    handleNoteChange
+  } = useRecruiterNotes(screeningId);
 
   const workspaceRef = useRef(null);
   const howItWorksRef = useRef(null);
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
-    try {
-      const sessionsData = await getSessions();
-      setSessions(sessionsData);
-    } catch (err) {
-      console.error("Failed to load screening history:", err);
-    }
-  };
-
   const handleSelectSession = async (session) => {
-    setLoading(true);
-    setError(null);
-    setMinScore(0);
-    setSelectedCandidateIds([]);
-    setShowComparison(false);
-    try {
-      setScreeningId(session.id);
-      setJobDescription(session.job_description);
-
-      const resultsData = await getResults(session.id, 0);
-      setResults(resultsData.results);
-      setFilteredResults(resultsData.results);
-
-      workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
-    } catch (err) {
-      setError("Failed to load results for this session: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+    setJobDescription(session.job_description);
+    setInputMode("paste");
+    await loadSessionResults(session);
+    workspaceRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Dynamic status text cycler for a highly polished SaaS feel
-  useEffect(() => {
-    if (!loading) return;
-    const stages = [
-      "Extracting text content from uploaded PDFs...",
-      "Analyzing candidate profiles against guidelines...",
-      "Running deterministic grading rubric using Llama-3.3...",
-      "Calculating skills match & experience alignment...",
-      "Ranking candidates and compiling detailed evaluation drawers..."
-    ];
-    let idx = 0;
-    setLoadingText(stages[0]);
-    const interval = setInterval(() => {
-      idx = (idx + 1) % stages.length;
-      setLoadingText(stages[idx]);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, [loading]);
-
+  // Dynamic status text cycler removed for simplicity
   const handleFilesSelect = (files) => {
     setResumeFiles(files);
   };
@@ -197,6 +174,7 @@ export default function Home() {
 
   const handleClearJD = () => {
     setJobDescription("");
+    resetJob();
   };
 
   const scrollToWorkspace = () => {
@@ -208,32 +186,24 @@ export default function Home() {
   };
 
   const handleMinScoreChange = async (score) => {
-    setMinScore(score);
-
-    if (screeningId) {
-      try {
-        const data = await getResults(screeningId, score);
-        setFilteredResults(data.results);
-      } catch (err) {
-        setError(err.message);
-      }
-    }
-  };
-
-  const handleSelectCandidate = (id) => {
-    setSelectedCandidateIds((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((item) => item !== id);
-      }
-      if (prev.length >= 3) return prev;
-      return [...prev, id];
-    });
+    await updateMinScore(score);
   };
 
   const handleScreening = async () => {
-    if (!jobDescription.trim() || jobDescription.trim().length < 10) {
-      setError("Job description is too short. Minimum 10 characters required.");
-      return;
+    let targetJD = jobDescription;
+
+    if (inputMode === "build") {
+      if (!structuredJob.roleInfo.title || !structuredJob.roleInfo.title.trim()) {
+        setError("Job Title is required in structured requirements builder mode.");
+        return;
+      }
+      targetJD = buildJdFromStructured(structuredJob);
+      setJobDescription(targetJD);
+    } else {
+      if (!jobDescription.trim() || jobDescription.trim().length < 10) {
+        setError("Job description is too short. Minimum 10 characters required.");
+        return;
+      }
     }
 
     if (resumeFiles.length === 0) {
@@ -241,26 +211,9 @@ export default function Home() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setMinScore(0);
-    setSelectedCandidateIds([]);
-    setShowComparison(false);
-
-    try {
-      const response = await screenResumes(jobDescription, resumeFiles);
-      setScreeningId(response.screening_id);
-
-      const resultsData = await getResults(response.screening_id, 0);
-      setResults(resultsData.results);
-      setFilteredResults(resultsData.results);
-
-      // Reload history sidebar
-      fetchSessions();
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred during resume screening. Please check file validity.");
-    } finally {
-      setLoading(false);
+    const success = await performScreening(targetJD, resumeFiles);
+    if (success) {
+      // Reload history sidebar is handled inside performScreening (it calls fetchSessions)
     }
   };
 
@@ -293,20 +246,16 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* 2. HERO SECTION */}
+      {/* 2. EDITORIAL HERO SECTION */}
       <header className={styles.hero}>
         <div className={styles.heroContent}>
-          <div className={styles.heroTag}> Recruiter intelligence workspace</div>
-          <h1 className={styles.heroTitle}>Screen Candidates in Minutes, Not Hours</h1>
+          <h1 className={styles.heroTitle}>Review candidates,<br />not resumes.</h1>
           <p className={styles.heroSubtitle}>
-            Accelerate your hiring funnel. Upload a batch of resume PDFs and instantly rank technical, experience, and domain alignment against your specific job description in seconds.
+            Create hiring requirements and let HireLens surface the strongest matches. Intentional recruitment software designed to find target capabilities with absolute simplicity.
           </p>
           <div className={styles.heroActions}>
             <button onClick={scrollToWorkspace} className={styles.heroCta}>
-              Start Screening ➔
-            </button>
-            <button onClick={scrollToHowItWorks} className={styles.heroSecondaryCta}>
-              Learn more
+              Create Hiring Requirements
             </button>
           </div>
         </div>
@@ -315,27 +264,164 @@ export default function Home() {
       {/* 3. MAIN WORKSPACE */}
       <main ref={workspaceRef} className={styles.workspaceSection}>
         <div className={styles.workspaceContainer}>
-          <div className={styles.workspaceLayout}>
-            {/* LEFT PANEL = Inputs */}
-            <section className={styles.leftPanel}>
-              <div className={styles.panelHeader}>
-                <h3 className={styles.panelTitle}>Screening Setup</h3>
-                <p className={styles.panelSubtitle}>Configure your evaluation constraints</p>
-              </div>
 
-              <div className={styles.inputStack}>
+          {/* Horizontal Recruiter Workflow Timeline Navigator */}
+          <div className={styles.workflowNav}>
+            <div className={`${styles.workflowNavStep} ${(!screeningId && !resumeFiles.length) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>01</span>
+              <div className="">
+                <strong>Job Requirements</strong>
+
+              </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(resumeFiles.length > 0 && !screeningId) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>02</span>
+              <div className="">
+                <strong>Upload Resumes</strong>
+
+              </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(screeningId && !activeSession) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>03</span>
+              <div className="">
+                <strong>Review Candidates</strong>
+
+              </div>
+            </div>
+            <div className={styles.workflowNavArrow}>→</div>
+            <div className={`${styles.workflowNavStep} ${(activeSession) ? styles.activeNavStep : ""}`}>
+              <span className={styles.navStepNum}>04</span>
+              <div className="">
+                <strong>Hiring Decision</strong>
+
+              </div>
+            </div>
+          </div>
+
+          {/* Screening History */}
+          <div className={styles.topHistorySection}>
+            <button
+              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              className={styles.historyToggleBtn}
+            >
+              {isHistoryOpen ? "Hide History" : "Screening History"}
+            </button>
+
+            {isHistoryOpen && (
+              <div
+                className={styles.topHistoryList}
+                style={{
+                  maxHeight: "280px",
+                  overflowY: "auto",
+                  marginTop: "12px",
+                }}
+              >
+                {sessions.length > 0 ? (
+                  sessions.map((s) => {
+                    const isActive = screeningId === s.id;
+                    const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+
+                    let roleName = "Screening Session";
+
+                    if (s.job_description) {
+                      const lines = s.job_description.split("\n");
+                      const roleLine = lines.find(
+                        (l) =>
+                          l.toLowerCase().includes("role:") ||
+                          l.toLowerCase().includes("title:")
+                      );
+
+                      if (roleLine) {
+                        roleName = roleLine.replace(/(role:|title:)/i, "").trim();
+                      } else {
+                        roleName = lines[0].trim() || s.job_description.slice(0, 30);
+                      }
+                    }
+
+                    if (roleName.length > 30) {
+                      roleName = roleName.slice(0, 30) + "...";
+                    }
+
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => handleSelectSession(s)}
+                        className={`${styles.topHistoryItem} ${isActive ? styles.activeTopHistoryItem : ""
+                          }`}
+                      >
+                        <div className={styles.topHistoryItemContent}>
+                          <div className={styles.topHistoryItemTitle}>
+                            {roleName}
+                          </div>
+
+                          <div className={styles.topHistoryItemCount}>
+                            {s.result_count} Candidates
+                          </div>
+
+                          <div className={styles.topHistoryItemDate}>
+                            {dateStr}
+                          </div>
+                        </div>
+
+                        <span className="">
+                          {s.result_count}{" "}
+                          {s.result_count === 1 ? "resume" : "resumes"}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className={styles.emptyHistory}>No prior screenings found.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.workflowStack}>
+
+            {/* STEP 1: Job Description */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 1</span>
+                <h3 className={styles.stepTitle}>Job Description & Mandates</h3>
+                <p className={styles.stepDesc}>Define the target role description, key skills, and mandatory requirements</p>
+              </div>
+              <div className={styles.workflowCard}>
+                <JobDescInput
+                  freeTextValue={jobDescription}
+                  onFreeTextChange={handleJobDescChange}
+                  isLoading={loading}
+                  onUseSample={handleUseSample}
+                  onClear={handleClearJD}
+                />
+              </div>
+            </div>
+
+            {/* STEP 2: Resume Upload & Screening Ingestion */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 2</span>
+
+                <h3 className={styles.stepTitle}>
+                  Upload Candidate Resumes
+                </h3>
+
+                <p className={styles.stepDesc}>
+                  Upload resumes and let HireLens identify the strongest candidates for this role.
+                </p>
+              </div>
+              <div className={styles.workflowCard}>
                 <FileUpload
                   files={resumeFiles}
                   onFilesSelect={handleFilesSelect}
                   isLoading={loading}
-                />
-
-                <JobDescInput
-                  value={jobDescription}
-                  onChange={handleJobDescChange}
-                  isLoading={loading}
-                  onUseSample={handleUseSample}
-                  onClear={handleClearJD}
                 />
 
                 {/* Validation UX - elegant inline box */}
@@ -361,78 +447,23 @@ export default function Home() {
                   {loading ? (
                     <>
                       <div className={styles.loaderSpinner}></div>
-                      <span>Analyzing...</span>
+                      <span>{loadingText}</span>
                     </>
                   ) : (
-                    <span>Initiate Candidates Screening</span>
+                    <span>Review Candidates</span>
                   )}
                 </button>
-
-                {/* 🕒 Screening History Panel */}
-                <div className={styles.historyPanel}>
-                  <div className={styles.historyHeader}>
-                    <h4 className={styles.historyTitle}>
-                      <span className={styles.historyTitleIcon}>🕒</span> Previous Screenings
-                    </h4>
-                  </div>
-
-                  {sessions.length > 0 ? (
-                    <div className={styles.historyList}>
-                      {sessions.map((s) => {
-                        const isActive = screeningId === s.id;
-                        const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        });
-
-                        // Clean role name from JD text
-                        let roleName = "Screening Session";
-                        if (s.job_description) {
-                          const lines = s.job_description.split("\n");
-                          const roleLine = lines.find(l => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
-                          if (roleLine) {
-                            roleName = roleLine.replace(/(role:|title:)/i, "").trim();
-                          } else {
-                            // Fallback to first line or slice of description
-                            roleName = lines[0].trim() || s.job_description.slice(0, 30);
-                          }
-                        }
-                        if (roleName.length > 30) {
-                          roleName = roleName.slice(0, 30) + "...";
-                        }
-
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => handleSelectSession(s)}
-                            className={`${styles.historyItem} ${isActive ? styles.activeHistoryItem : ""}`}
-                          >
-                            <div className={styles.historyItemMeta}>
-                              <span className={styles.historyItemTitle} title={roleName}>
-                                {roleName}
-                              </span>
-                              <span className={styles.historyItemDate}>{dateStr}</span>
-                            </div>
-                            <div className={styles.historyItemDetails}>
-                              <span className={styles.historyItemPill}>
-                                {s.result_count} {s.result_count === 1 ? "resume" : "resumes"}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className={styles.emptyHistory}>No prior screenings found.</p>
-                  )}
-                </div>
               </div>
-            </section>
+            </div>
 
-            {/* RIGHT PANEL = Results */}
-            <section className={styles.rightPanel}>
+            {/* STEP 3: Candidate Results */}
+            <div className={styles.workflowStep}>
+              <div className={styles.stepHeader}>
+                <span className={`${styles.stepBadge} hl-badge`}>STEP 3</span>
+                <h3 className={styles.stepTitle}>Hiring Suitability Results</h3>
+                <p className={styles.stepDesc}>Explore screened candidates, match score comparisons, and make final decisions</p>
+              </div>
+
               {loading ? (
                 /* Premium Dynamic Loading State */
                 <div className={styles.loadingWrapper}>
@@ -443,92 +474,86 @@ export default function Home() {
                     </div>
                     <h4 className={styles.loadingTitle}>{loadingText}</h4>
                     <p className={styles.loadingSub}>
-                      Our recruiting models are evaluating candidate files against your deterministic mathematical rubric.
+                      Our AI models are evaluating candidate files against your standardized mathematical grading rubric.
                     </p>
                   </div>
                 </div>
               ) : screeningId ? (
                 /* Results Experience */
                 <div className={styles.resultsStack}>
-                  {showComparison ? (
-                    <CandidateComparison
-                      selectedCandidates={filteredResults.filter(r => selectedCandidateIds.includes(r.id))}
-                      onClose={() => setShowComparison(false)}
-                    />
-                  ) : (
-                    <>
+                  <>
+                      <WorkspaceHeader counts={getWorkspaceCounts()} />
+
                       <FilterControl
                         minScore={minScore}
                         onChange={handleMinScoreChange}
                         isLoading={loading}
                       />
 
-                      {/* Premium ATS Shortlist Status Ribbon */}
-                      <div className={styles.atsRibbon}>
-                        <div className={styles.atsPill}>
-                          <span className={styles.atsPillIcon}>⭐</span>
-                          <span className={styles.atsPillText}>
-                            <strong>{shortlistCount}</strong> Candidate{shortlistCount !== 1 ? "s" : ""} Shortlisted
-                          </span>
-                        </div>
-                        {shortlistCount > 0 && (
-                          <div className={styles.atsViewPill}>
-                            <span>Sorted at top of hiring pipeline</span>
-                          </div>
-                        )}
-                      </div>
+                      {/* Premium Pipeline Filtering Bar */}
+                      <div className={styles.pipelineFilterBar}>
+                        <span className={styles.pipelineFilterLabel}>Pipeline Status:</span>
+                        <div className={styles.pipelineFilterTabs}>
+                          {["All", "New", "Reviewing", "Shortlisted", "Interview", "Rejected", "Hired"].map(filterVal => {
+                            const counts = getWorkspaceCounts();
+                            let displayCount = counts.total;
+                            if (filterVal === "New") displayCount = counts.new;
+                            else if (filterVal === "Reviewing") displayCount = counts.reviewing;
+                            else if (filterVal === "Shortlisted") displayCount = counts.shortlisted;
+                            else if (filterVal === "Interview") displayCount = counts.interview;
+                            else if (filterVal === "Rejected") displayCount = counts.rejected;
+                            else if (filterVal === "Hired") displayCount = counts.hired;
 
-                      {/* Premium Side-by-Side Compare Action Status Bar */}
-                      <div className={styles.compareBar}>
-                        <div className={styles.compareInfo}>
-                          <span className={styles.compareIcon}>⚖️</span>
-                          <span className={styles.compareText}>
-                            Select candidates to compare side-by-side (max 3): <strong>{selectedCandidateIds.length} selected</strong>
-                          </span>
-                        </div>
-                        <div className={styles.compareActions}>
-                          {selectedCandidateIds.length > 0 && (
-                            <button
-                              onClick={() => setSelectedCandidateIds([])}
-                              className={styles.resetBtn}
-                            >
-                              Reset
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setShowComparison(true)}
-                            disabled={selectedCandidateIds.length < 2}
-                            className={styles.compareBtn}
-                          >
-                            Compare Candidates
-                          </button>
+                            return (
+                              <button
+                                key={filterVal}
+                                onClick={() => setStatusFilter(filterVal)}
+                                className={`${styles.pipelineFilterBtn} ${statusFilter === filterVal ? styles.activePipelineFilter : ""}`}
+                              >
+                                <span>{filterVal}</span>
+                                <span className={styles.pipelineFilterBadge}>{displayCount}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      <AnalyticsDashboard results={filteredResults} isLoading={loading} />
-                      <ResultsTable
-                        results={filteredResults}
-                        isLoading={loading}
-                        selectedIds={selectedCandidateIds}
-                        onSelect={handleSelectCandidate}
-                        screeningId={screeningId}
-                      />
+
+                      <div className={styles.tableColumn}>
+                        <ResultsTable
+                          results={filteredResults.filter(r => {
+                            if (statusFilter === "All") return true;
+                            const status = candidateStatuses[r.id] || "New";
+                            return status === statusFilter;
+                          })}
+                          isLoading={loading}
+                          screeningId={screeningId}
+                          activeSession={activeSession}
+                          candidateStatuses={candidateStatuses}
+                          onStatusChange={handleStatusChange}
+                          candidateNotes={candidateNotes}
+                          onNoteChange={handleNoteChange}
+                          onViewCandidate={setActiveCandidateId}
+                          activeCandidateId={activeCandidateId}
+                        />
+                      </div>
                     </>
-                  )}
+
                 </div>
               ) : (
-                /* Elegant Empty State */
+                /* Elegant simplified recruiter empty state */
                 <div className={styles.emptyResultsWrapper}>
                   <div className={styles.emptyStateCard}>
-                    <span className={styles.emptyStateIcon}>📊</span>
-                    <h4 className={styles.emptyStateTitle}>Evaluation Workspace</h4>
+                    <span className={styles.emptyStateIcon}>📂</span>
+                    <h4 className={styles.emptyStateTitle}>No resumes uploaded yet</h4>
                     <p className={styles.emptyStateDesc}>
-                      Configure your job requirements and upload candidate PDFs on the left, then trigger screening to load the ranked candidate list here.
+                      Upload candidate resumes in Step 2 to start reviewing and screening candidates.
                     </p>
                   </div>
                 </div>
               )}
-            </section>
+            </div>
+
           </div>
         </div>
       </main>

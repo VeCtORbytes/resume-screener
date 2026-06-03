@@ -23,6 +23,8 @@ class InMemoryRateLimiter:
 
     def check_rate_limit(self, request: Request, limit: int, window_seconds: int = 60):
         client_ip = self.get_client_ip(request)
+        if client_ip in ("127.0.0.1", "::1", "localhost"):
+            return # Bypass rate limiting for local development
         current_time = time.time()
         
         # Prune timestamps outside of the sliding window

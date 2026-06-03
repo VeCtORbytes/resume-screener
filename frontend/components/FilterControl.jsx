@@ -5,7 +5,7 @@ import styles from "./FilterControl.module.css";
 export default function FilterControl({ minScore, onChange, isLoading }) {
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}>🔍 Filter Results</h2>
+            <h2 className={styles.title}>Filter Results</h2>
 
             <div className={styles.filterGroup}>
                 <label className={styles.label}>Minimum Score</label>

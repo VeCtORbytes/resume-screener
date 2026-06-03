@@ -1,0 +1,152 @@
+.container {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+.headerTitleGroup {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card base styling */
+.card {
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.cardLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.cardIcon {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardValue {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.cardFooter {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Status-specific gradient left accents */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+}
+
+.cardTotal::before {
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+}
+
+.cardTotal .cardValue {
+  color: #1d4ed8;
+}
+
+.cardShortlisted::before {
+  background: linear-gradient(180deg, #10b981, #15803d);
+}
+
+.cardShortlisted .cardValue {
+  color: #15803d;
+}
+
+.cardInterview::before {
+  background: linear-gradient(180deg, #a855f7, #6d28d9);
+}
+
+.cardInterview .cardValue {
+  color: #6d28d9;
+}
+
+.cardReviewLater::before {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+}
+
+.cardReviewLater .cardValue {
+  color: #b45309;
+}
+
+.cardRejected::before {
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+}
+
+.cardRejected .cardValue {
+  color: #b91c1c;
+}
