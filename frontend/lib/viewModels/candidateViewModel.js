@@ -16,8 +16,8 @@ export function buildCandidateViewModel(candidate, status = "New", recruiterNote
   
   const gapData = candidate.gap_analysis || {};
   
-  // Use SkillCoverageEngine to generate the full skill metrics
-  const skillCoverage = calculateSkillCoverage(gapData);
+  // Use the new Phase 4 adapter to generate the normalized skill coverage arrays
+  const skillCoverage = normalizeSkillProficiency(gapData.skill_proficiency);
   
   // Project Validation
   const projectValidation = normalizeProjectAlignment(gapData.project_alignment);
