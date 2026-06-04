@@ -4,7 +4,7 @@ from models.models import ScreeningSession, ResumeResult
 from schemas.schemas import ResumeResultResponse
 from uuid import UUID
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 class DatabaseService:
     """Handle all database operations"""
@@ -46,6 +46,36 @@ class DatabaseService:
             resume_text=resume_text,
             score=score,
             reasoning=reasoning
+        )
+        try:
+            db.add(result)
+            db.commit()
+            db.refresh(result)
+            return result
+        except Exception as e:
+            db.rollback()
+            raise e
+            
+    @staticmethod
+    def create_resume_result_v2(
+        db: Session,
+        screening_id: UUID,
+        resume_filename: str,
+        resume_text: str,
+        legacy_score: int,
+        legacy_reasoning: str,
+        v2_engine_data: dict
+    ) -> ResumeResult:
+        """
+        Create resume result with both legacy fields AND v2_engine_data.
+        """
+        result = ResumeResult(
+            screening_id=screening_id,
+            resume_filename=resume_filename,
+            resume_text=resume_text,
+            score=legacy_score,
+            reasoning=legacy_reasoning,
+            v2_engine_data=v2_engine_data
         )
         try:
             db.add(result)
@@ -127,7 +157,7 @@ class DatabaseService:
         
         if session:
             try:
-                session.result_count = count
+                session.result_count = count # type: ignore
                 db.commit()
             except Exception as e:
                 db.rollback()
@@ -143,7 +173,7 @@ class DatabaseService:
         # Delete expired resume_results (cascade will handle screening_sessions)
         try:
             result = db.query(ResumeResult).filter(
-                ResumeResult.expires_at < datetime.now(datetime.timezone.utc)
+                ResumeResult.expires_at < datetime.now(timezone.utc)
             ).delete()
             db.commit()
             return result

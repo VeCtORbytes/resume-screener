@@ -57,8 +57,9 @@ async def screen_resumes(
 
     # Strict MIME Content-Type and File Extension validation
     for resume_file in resumes:
-        if resume_file.content_type != "application/pdf" or not resume_file.filename.lower().endswith(".pdf"):
-            logger.warning(f"Abuse Attempt: Suspicious non-PDF upload rejected. Name: '{resume_file.filename}', Content-Type: '{resume_file.content_type}'")
+        filename = resume_file.filename or "Unknown.pdf"
+        if resume_file.content_type != "application/pdf" or not filename.lower().endswith(".pdf"):
+            logger.warning(f"Abuse Attempt: Suspicious non-PDF upload rejected. Name: '{filename}', Content-Type: '{resume_file.content_type}'")
             raise HTTPException(
                 status_code=400, 
                 detail=f"Security Rejection: File '{resume_file.filename}' is not a valid PDF. Only standard PDF documents are allowed."
@@ -70,7 +71,9 @@ async def screen_resumes(
             db=db,
             job_description=job_description
         )
-        screening_id = screening_session.id
+        from uuid import UUID
+        import typing
+        screening_id = typing.cast(UUID, screening_session.id)
         
         # Step 2: Extract text from all PDFs
         resume_data = []
@@ -78,15 +81,16 @@ async def screen_resumes(
             try:
                 # Read file bytes
                 file_bytes = await resume_file.read()
+                filename = resume_file.filename or "Unknown.pdf"
                 
                 # Extract text
-                text = pdf_extractor.extract_text(file_bytes, resume_file.filename)
+                text = pdf_extractor.extract_text(file_bytes, filename)
                 
                 # Compute extraction confidence
-                conf_data = pdf_extractor.calculate_extraction_confidence(text, resume_file.filename)
+                conf_data = pdf_extractor.calculate_extraction_confidence(text, filename)
                 
                 resume_data.append({
-                    "filename": resume_file.filename,
+                    "filename": filename,
                     "text": text,
                     "extraction_confidence": conf_data
                 })
@@ -150,90 +154,194 @@ async def screen_resumes(
             detail="An internal server error occurred while processing the candidate evaluation. Please verify file integrity and try again."
         )
 
+@router.post("/screen-v2", response_model=ScreenResumeResponse)
+async def screen_resumes_v2(
+    job_description: str = Form(...),
+    resumes: List[UploadFile] = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Evaluation Engine 2.0 screening with structured pipeline.
+    
+    Outputs:
+    - Legacy fields: score, reasoning, gap_analysis (backward compat)
+    - V2 fields: v2_engine_data (candidate profile, semantic matching, weighted eval, intelligence)
+    """
+    
+    # Validate
+    if not job_description or len(job_description.strip()) < 10:
+        raise HTTPException(status_code=400, detail="Job description min 10 chars")
+    if not resumes or len(resumes) > 50:
+        raise HTTPException(status_code=400, detail="1-50 resumes required")
+    
+    try:
+        from services.extraction_service import candidate_extractor
+        
+        # Step 1: Create screening session
+        screening_session = db_service.create_screening_session(
+            db=db,
+            job_description=job_description
+        )
+        from uuid import UUID
+        import typing
+        screening_id = typing.cast(UUID, screening_session.id)
+        
+        # Step 2: Extract resumes
+        resume_data = []
+        extracted_candidates = []
+        
+        for resume_file in resumes:
+            try:
+                file_bytes = await resume_file.read()
+                filename = resume_file.filename or "Unknown.pdf"
+                text = pdf_extractor.extract_text(file_bytes, filename)
+                
+                # Extract candidate profile
+                candidate, extraction_conf = candidate_extractor.extract(
+                    text, 
+                    filename
+                )
+                
+                resume_data.append({
+                    "filename": filename,
+                    "text": text
+                })
+                
+                extracted_candidates.append(candidate.model_dump())
+            
+            except ValueError as e:
+                print(f"Error processing {resume_file.filename}: {str(e)}")
+                continue
+        
+        if not resume_data:
+            raise HTTPException(status_code=400, detail="No valid PDFs")
+        
+        # Step 3: Screen all resumes in parallel (V2 engine)
+        v2_results = await groq_screener.screen_resumes_parallel_v2(
+            resumes=resume_data,
+            job_description=job_description,
+            extracted_candidates=extracted_candidates
+        )
+        
+        # Step 4: Store results with v2_engine_data
+        for i, v2_result in enumerate(v2_results):
+            # Convert v2 overall_fit to legacy score
+            legacy_score = v2_result.get("v2_engine_data", {}).get("weighted_evaluation", {}).get("overall_fit", 0)
+            
+            # Build legacy reasoning
+            hiring_intel = v2_result.get("v2_engine_data", {}).get("hiring_intelligence", {})
+            legacy_reasoning = (
+                f"Recommendation: {hiring_intel.get('recommendation', 'Marginal')}\n\n"
+                f"Strengths: {'; '.join(hiring_intel.get('strengths', []))}\n\n"
+                f"Gaps: {'; '.join(hiring_intel.get('critical_gaps', []))}"
+            )
+            
+            db_service.create_resume_result_v2(
+                db=db,
+                screening_id=screening_id,
+                resume_filename=v2_result.get("filename", "Unknown"),
+                resume_text=resume_data[i]["text"],
+                legacy_score=legacy_score,
+                legacy_reasoning=legacy_reasoning,
+                v2_engine_data=v2_result.get("v2_engine_data", {})
+            )
+        
+        # Step 5: Update result count
+        db_service.update_session_result_count(
+            db=db,
+            screening_id=screening_id,
+            count=len(v2_results)
+        )
+        
+        return ScreenResumeResponse(
+            screening_id=screening_id,
+            status="success",
+            resume_count=len(v2_results),
+            message=f"Screened {len(v2_results)} resumes with Engine 2.0"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("V2 screening failed")
+        raise HTTPException(status_code=500, detail=f"Screening error: {str(e)}")
+
 
 @router.get("/results/{screening_id}", response_model=ResultsQueryResponse)
 def get_results(
-    request: Request,
     screening_id: str,
     min_score: int = 0,
     db: Session = Depends(get_db)
 ):
     """
     Fetch screening results for a session.
-    
-    - screening_id: UUID from POST /api/screen
-    - min_score: Filter results (0-100, default 0)
-    
-    Returns: Screening session + ranked resume results
     """
-    # Rate limiting (20 requests per minute per IP)
-    rate_limiter.check_rate_limit(request, limit=20, window_seconds=60)
     
     # Validate min_score
     if min_score < 0 or min_score > 100:
         raise HTTPException(status_code=400, detail="min_score must be 0-100")
     
     try:
-        # Convert string to UUID
         from uuid import UUID
         screening_uuid = UUID(screening_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid screening_id format")
     
-    try:
-        # Fetch screening session
-        session = db_service.get_screening_session(db=db, screening_id=screening_uuid)
-        
-        if not session:
-            raise HTTPException(status_code=404, detail="Screening session not found")
-        
-        # Fetch results with filtering
-        results = db_service.get_results_for_screening(
-            db=db,
-            screening_id=screening_uuid,
-            min_score=min_score
-        )
-        
-        import json
+    # Fetch screening session
+    session = db_service.get_screening_session(db=db, screening_id=screening_uuid)
     
-        # Convert to response schema
-        result_responses = []
-        for r in results:
-            reasoning_clean = r.reasoning
-            gap_analysis = None
-            
-            if "---GAP_ANALYSIS_JSON---" in r.reasoning:
-                parts = r.reasoning.split("---GAP_ANALYSIS_JSON---")
-                reasoning_clean = parts[0].strip()
-                try:
-                    gap_analysis = json.loads(parts[1].strip())
-                except Exception:
-                    gap_analysis = None
-            
-            response_item = ResumeResultResponse(
-                id=r.id,
-                resume_filename=r.resume_filename,
-                score=r.score,
-                reasoning=reasoning_clean,
-                created_at=r.created_at,
-                gap_analysis=gap_analysis
-            )
-            result_responses.append(response_item)
+    if not session:
+        raise HTTPException(status_code=404, detail="Screening session not found")
+    
+    # ← THIS LINE WAS MISSING - Fetch results with filtering
+    results = db_service.get_results_for_screening(
+        db=db,
+        screening_id=screening_uuid,
+        min_score=min_score
+    )
+    
+    import json
+
+    # Convert to response schema
+    result_responses = []
+    for r in results:
+        reasoning_clean = r.reasoning
+        gap_analysis = None
         
-        return ResultsQueryResponse(
-            screening_id=screening_uuid,
-            results=result_responses
+        if "---GAP_ANALYSIS_JSON---" in r.reasoning:
+            parts = r.reasoning.split("---GAP_ANALYSIS_JSON---")
+            reasoning_clean = parts[0].strip()
+            try:
+                gap_analysis = json.loads(parts[1].strip())
+            except Exception:
+                gap_analysis = None
+        
+        # Parse v2_engine_data if it's stored as JSON string
+        v2_data = None
+        if r.v2_engine_data:
+            if isinstance(r.v2_engine_data, str):
+                try:
+                    v2_data = json.loads(r.v2_engine_data)
+                except Exception:
+                    v2_data = None
+            else:
+                v2_data = r.v2_engine_data
+        
+        response_item = ResumeResultResponse(
+            id=r.id,
+            resume_filename=r.resume_filename,
+            score=r.score,
+            reasoning=reasoning_clean,
+            created_at=r.created_at,
+            gap_analysis=gap_analysis,
+            v2_engine_data=v2_data
         )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Internal Results Retrieval Error: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while attempting to fetch screening results. Please try again."
-        )
-
-
+        result_responses.append(response_item)
+    
+    return ResultsQueryResponse(
+        screening_id=screening_uuid,
+        results=result_responses
+    )
 @router.post("/results/{result_id}/questions")
 def generate_candidate_questions(
     request: Request,
@@ -310,7 +418,7 @@ def get_all_sessions(request: Request, db: Session = Depends(get_db)):
     
     try:
         sessions = db_service.get_all_screening_sessions(db=db)
-        return [ScreeningSessionResponse.from_orm(s) for s in sessions]
+        return [ScreeningSessionResponse.model_validate(s) for s in sessions]
     except Exception as e:
         logger.error(f"Internal Session Fetch Failure: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -402,10 +510,10 @@ def export_candidate_pdf(
             
         pdf_bytes = ExportService.generate_candidate_pdf(
             result,
-            session.job_description,
-            recruiter_notes=body.recruiter_notes,
-            current_stage=body.current_stage,
-            interview_questions=body.interview_questions
+            str(session.job_description),
+            recruiter_notes=body.recruiter_notes or "",
+            current_stage=body.current_stage or "",
+            interview_questions=body.interview_questions or []
         )
         
         # Sanitize filename to prevent directory traversal or CRLF header injections

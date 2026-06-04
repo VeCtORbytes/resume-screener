@@ -3,6 +3,101 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
+# ── Candidate Extraction ───────────────────────────────────────────────
+
+class SkillExperience(BaseModel):
+    """Candidate skill with evidence"""
+    name: str
+    proficiency_level: str = Field(..., pattern="^(beginner|intermediate|advanced|expert)$")
+    years_of_experience: Optional[float]
+    evidence: List[str]  # Exact quotes from resume
+
+class CandidateProfile(BaseModel):
+    """Structured candidate profile extracted from resume"""
+    name: Optional[str]
+    total_experience_years: Optional[float]
+    skills: List[SkillExperience] = []
+    projects: List[dict] = []
+    education: Optional[List[str]] = None  # ← Make Optional
+    certifications: Optional[List[str]] = None  # ← Make Optional
+    red_flags: Optional[List[str]] = None  # ← Make Optional
+
+    def __init__(self, **data):
+        """Convert None to empty lists"""
+        super().__init__(**data)
+        if self.education is None:
+            self.education = []
+        if self.certifications is None:
+            self.certifications = []
+        if self.red_flags is None:
+            self.red_flags = []
+
+    class Config:
+        from_attributes = True
+
+# ── Semantic Matching ──────────────────────────────────────────────────
+
+class SkillMatch(BaseModel):
+    """Per-skill matching result"""
+    skill_name: str
+    job_importance: int = Field(..., ge=0, le=100)
+    candidate_proficiency: int = Field(..., ge=0, le=100)
+    confidence: str = Field(..., pattern="^(high|medium|low)$")
+    evidence: Optional[str]
+    gap: int  # job_importance - candidate_proficiency
+
+class SemanticMatchingResult(BaseModel):
+    """Skill-by-skill matching breakdown"""
+    matched_skills: List[SkillMatch] = []
+    partial_skills: List[SkillMatch] = []
+    missing_skills: List[SkillMatch] = []
+
+    class Config:
+        from_attributes = True
+
+
+# ── Weighted Evaluation ────────────────────────────────────────────────
+
+class WeightedEvaluation(BaseModel):
+    """Scored breakdown (replaces single score)"""
+    must_have_completeness: int = Field(..., ge=0, le=100)  # % of must-haves matched
+    must_have_depth: int = Field(..., ge=0, le=100)  # Proficiency of matched must-haves
+    nice_to_have_bonus: int = Field(..., ge=0, le=50)  # % bonus from nice-to-haves
+    risk_penalty: int = Field(..., le=0, ge=-50)  # Penalty for critical gaps
+    overall_fit: int = Field(..., ge=0, le=100)  # Weighted average
+
+    class Config:
+        from_attributes = True
+
+# ── Hiring Intelligence ────────────────────────────────────────────────
+
+class HiringIntelligence(BaseModel):
+    """Evidence-backed intelligence for recruiter decision"""
+    strengths: List[str] = []  # Factual strengths
+    risks: List[str] = []  # Evidence-backed risks
+    critical_gaps: List[str] = []  # Must-haves missing
+    recommendation: str = Field(..., pattern="^(Strong Hire|Hire|Marginal|Don't Hire)$")
+    interview_focus_areas: List[str] = []
+
+    class Config:
+        from_attributes = True
+
+# ── V2 Engine Data (Complete Structure) ────────────────────────────────
+
+class V2EngineData(BaseModel):
+    """Complete Evaluation Engine 2.0 output"""
+    candidate_profile: CandidateProfile
+    semantic_matching: SemanticMatchingResult
+    weighted_evaluation: WeightedEvaluation
+    hiring_intelligence: HiringIntelligence
+    extraction_confidence: dict  # {score, label, reasons}
+    reliability_signals: dict  # {ai_confidence, evidence_strength, etc}
+
+    class Config:
+        from_attributes = True
+
+
+
 # Request schemas (incoming data from frontend)
 
 class ScreenResumeRequest(BaseModel):
@@ -20,17 +115,17 @@ class ScreenResumeRequest(BaseModel):
 # Response schemas (data sent back to frontend)
 
 class ResumeResultResponse(BaseModel):
-    """Single resume result"""
+    """Single resume result (with backward compat)"""
     id: UUID
     resume_filename: str
     score: int
     reasoning: str
     created_at: datetime
     gap_analysis: Optional[dict] = None
+    v2_engine_data: Optional[dict] = None  # ← Just dict, no strict validation
     
     class Config:
-        from_attributes = True  # Can read from SQLAlchemy models
-
+        from_attributes = True
 
 class ScreeningSessionResponse(BaseModel):
     """Screening session with all results"""

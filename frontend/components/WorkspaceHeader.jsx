@@ -2,18 +2,19 @@
 
 import styles from "./WorkspaceHeader.module.css";
 
-export default function WorkspaceHeader({ counts }) {
+export default function WorkspaceHeader({ counts, statusFilter, setStatusFilter }) {
   const {
     total = 0,
     shortlisted = 0,
     interview = 0,
-    reviewLater = 0,
+    reviewing = 0,
     rejected = 0
   } = counts;
 
   const cardConfig = [
     {
-      label: "Total Candidates",
+      label: "All Candidates",
+      filterValue: "All",
       value: total,
       icon: "👥",
       className: styles.cardTotal,
@@ -21,6 +22,7 @@ export default function WorkspaceHeader({ counts }) {
     },
     {
       label: "Shortlisted",
+      filterValue: "Shortlisted",
       value: shortlisted,
       icon: "⭐",
       className: styles.cardShortlisted,
@@ -28,20 +30,23 @@ export default function WorkspaceHeader({ counts }) {
     },
     {
       label: "Interview",
+      filterValue: "Interview",
       value: interview,
       icon: "📅",
       className: styles.cardInterview,
       footer: "Scheduled or in-progress"
     },
     {
-      label: "Review Later",
-      value: reviewLater,
+      label: "Reviewing",
+      filterValue: "Reviewing",
+      value: reviewing,
       icon: "⏳",
       className: styles.cardReviewLater,
       footer: "On hold for further review"
     },
     {
       label: "Rejected",
+      filterValue: "Rejected",
       value: rejected,
       icon: "🚫",
       className: styles.cardRejected,
@@ -57,16 +62,23 @@ export default function WorkspaceHeader({ counts }) {
       </div>
 
       <div className={styles.grid}>
-        {cardConfig.map((card, idx) => (
-          <div key={idx} className={`${styles.card} ${card.className}`}>
-            <div className={styles.cardHeader}>
-              <span className={styles.cardLabel}>{card.label}</span>
-              <span className={styles.cardIcon}>{card.icon}</span>
+        {cardConfig.map((card, idx) => {
+          const isActive = statusFilter === card.filterValue;
+          return (
+            <div 
+              key={idx} 
+              className={`${styles.card} ${card.className} ${isActive ? styles.activeCard : ""}`}
+              onClick={() => setStatusFilter && setStatusFilter(card.filterValue)}
+            >
+              <div className={styles.cardHeader}>
+                <span className={styles.cardLabel}>{card.label}</span>
+                <span className={styles.cardIcon}>{card.icon}</span>
+              </div>
+              <h2 className={styles.cardValue}>{card.value}</h2>
+              <p className={styles.cardFooter}>{card.footer}</p>
             </div>
-            <h2 className={styles.cardValue}>{card.value}</h2>
-            <p className={styles.cardFooter}>{card.footer}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
