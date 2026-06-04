@@ -34,16 +34,16 @@ export default function DecisionCenter({ candidateId }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h3 className={styles.decisionPanelTitle}>Recruiter Decision Center</h3>
         {lastUpdated && !isEditing && (
-          <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+          <span style={{ fontSize: "var(--font-xs)", color: "var(--text-secondary)" }}>
             Last updated: {new Date(lastUpdated).toLocaleString()}
           </span>
         )}
       </div>
 
       {isEditing ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", marginTop: "var(--space-md)" }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", color: "#475569", marginBottom: "0.5rem" }}>
+            <label style={{ display: "block", fontSize: "var(--font-sm)", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "var(--space-xs)" }}>
               Decision Justification (Optional)
             </label>
             <textarea
@@ -52,11 +52,12 @@ export default function DecisionCenter({ candidateId }) {
               value={localJustification}
               onChange={(e) => setLocalJustification(e.target.value)}
               rows={3}
+              style={{ width: "100%", padding: "var(--space-md)", borderRadius: "var(--radius-md)", border: "var(--border-subtle)" }}
             />
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: "600", color: "#475569", marginBottom: "0.5rem" }}>
+            <label style={{ display: "block", fontSize: "var(--font-sm)", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "var(--space-xs)" }}>
               Final Decision
             </label>
             <div className={styles.decisionActions} style={{ flexWrap: "wrap" }}>
@@ -72,41 +73,48 @@ export default function DecisionCenter({ candidateId }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "var(--space-xs)" }}>
             <button 
               onClick={handleSave}
               disabled={!localDecision}
-              style={{ padding: "8px 16px", backgroundColor: !localDecision ? "#cbd5e1" : "#0f172a", color: "white", borderRadius: "6px", border: "none", cursor: !localDecision ? "not-allowed" : "pointer" }}
+              style={{ 
+                padding: "var(--space-sm) var(--space-lg)", 
+                backgroundColor: !localDecision ? "var(--color-neutral-border)" : "var(--text-primary)", 
+                color: "white", 
+                borderRadius: "var(--radius-md)", 
+                border: "none", 
+                cursor: !localDecision ? "not-allowed" : "pointer" 
+              }}
             >
               Save Decision
             </button>
           </div>
         </div>
       ) : (
-        <div style={{ marginTop: "1rem", padding: "1.5rem", backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+        <div style={{ marginTop: "var(--space-md)", padding: "var(--space-xl)", backgroundColor: "var(--surface-card)", borderRadius: "var(--radius-lg)", border: "var(--border-subtle)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "#64748b", fontWeight: "600", display: "block", marginBottom: "4px" }}>
+              <span style={{ fontSize: "var(--font-xs)", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "600", display: "block", marginBottom: "4px" }}>
                 Current Decision
               </span>
-              <span style={{ fontSize: "1.25rem", fontWeight: "700", color: decision === "Reject" ? "#ef4444" : "#10b981" }}>
+              <span style={{ fontSize: "var(--font-xl)", fontWeight: "700", color: decision === "Reject" ? "var(--color-danger-text)" : "var(--color-success-text)" }}>
                 {decision}
               </span>
             </div>
             <button 
               onClick={() => setIsEditing(true)}
-              style={{ padding: "4px 12px", fontSize: "0.85rem", backgroundColor: "#f1f5f9", color: "#334155", borderRadius: "4px", border: "none", cursor: "pointer" }}
+              style={{ padding: "var(--space-xs) var(--space-md)", fontSize: "var(--font-sm)", backgroundColor: "var(--surface-muted)", color: "var(--text-primary)", borderRadius: "var(--radius-sm)", border: "none", cursor: "pointer" }}
             >
               Edit
             </button>
           </div>
           
           {justification && (
-            <div style={{ marginTop: "1rem" }}>
-              <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "#64748b", fontWeight: "600", display: "block", marginBottom: "4px" }}>
+            <div style={{ marginTop: "var(--space-lg)" }}>
+              <span style={{ fontSize: "var(--font-xs)", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: "600", display: "block", marginBottom: "4px" }}>
                 Justification
               </span>
-              <p style={{ margin: "0", fontSize: "0.9rem", color: "#334155", whiteSpace: "pre-wrap" }}>
+              <p style={{ margin: "0", fontSize: "var(--font-sm)", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>
                 {justification}
               </p>
             </div>

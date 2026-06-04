@@ -1,1424 +1,189 @@
 .container {
-    background: #faf8f2;
-    padding: 24px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-light);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.title {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 16px 0;
-    color: #0f172a;
-    letter-spacing: -0.01em;
-}
-
-.loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    background: var(--color-surface);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-light);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid #e2e8f0;
-    border-top: 2px solid #0f172a;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-bottom: 12px;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.loading p {
-    color: #64748b;
-    font-size: 13px;
-    margin: 0;
-    font-weight: 500;
-}
-
-.empty {
-    padding: 48px 24px;
-    text-align: center;
-    border-radius: var(--radius-md);
-    border: 1px dashed #cbd5e1;
-    background: var(--color-surface-hover);
-    color: #64748b;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.emptyIcon {
-    font-size: 24px;
-}
-
-.emptyText {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-neutral-text);
-    margin: 0;
-}
-
-.emptySubText {
-    font-size: 11px;
-    color: #94a3b8;
-    margin: 0;
-}
-
-.tableWrapper {
-    overflow-x: auto;
-    margin-bottom: 24px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    text-align: left;
-    font-family: var(--font-sans), sans-serif;
-}
-
-.table thead {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-}
-
-.table th {
-    padding: 16px 20px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.table td {
-    padding: 16px 20px;
-    vertical-align: middle;
-    color: var(--text-primary);
-}
-
-.row {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s ease;
-    cursor: pointer;
-}
-
-.row:hover {
-    background: var(--bg-secondary);
-}
-
-
-
-.selectedRow {
-    background: var(--accent-light) !important;
-}
-
-.selectCol {
-    width: 60px;
-    padding: 16px 20px;
-    text-align: center;
-}
-
-.checkboxInput {
-    width: 15px;
-    height: 15px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    accent-color: var(--accent);
-}
-
-
-
-.nameCol {
-    padding: 16px 20px;
-    min-width: 160px;
-}
-
-.nameWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.fileName {
-    word-break: break-word;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-
-
-.scoreCol {
-    padding: 16px 20px;
-    min-width: 130px;
-}
-
-.actionCol {
-    padding: 16px 20px;
-    text-align: right;
-    width: 60px;
-}
-
-.workspaceRow {
-    background: #fafafa;
-    border-bottom: 1px solid var(--border);
-}
-
-.workspaceCell {
-    padding: 24px 32px;
-}
-
-/* Detailed Drawer Table Row */
-
-
-
-
-
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-
-
-
-
-
-
-/* Rubric Metric Cards Grid */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Strengths & Gaps Side-by-Side */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Legacy text fallback */
-
-
-
-
-/* 💬 Candidate Interviewing Toolkit Panel */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@keyframes fadeInTab {
-    from {
-        opacity: 0;
-        transform: translateY(2px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-
-
-
-
-
-
-/* Accent Borders */
-
-/* Toolkit Generator Prompt / Setup Box */
-
-
-
-
-
-
-
-
-.generatorBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-}
-
-
-
-
-
-@keyframes miniSpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Score Pill Badges */
-.scoreBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: var(--radius-full);
-    font-weight: 600;
-    font-size: 11px;
-    border: 1px solid transparent;
-}
-
-.scoreValue {
-    font-size: 12px;
-    font-weight: 700;
-}
-
-
-
-.scoreBadge.excellent {
-    background: var(--color-success-bg);
-    color: #047857;
-    border-color: var(--color-success-border);
-}
-
-.scoreBadge.good {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
-}
-
-.scoreBadge.fair {
-    background: #fffbeb;
-    color: #b45309;
-    border-color: var(--color-warning-border);
-}
-
-.scoreBadge.poor {
-    background: #fef2f2;
-    color: #b91c1c;
-    border-color: var(--color-danger-border);
-}
-
-.stats {
-    display: flex;
-    gap: 24px;
-    padding-top: 16px;
-    font-size: 12.5px;
-    color: #64748b;
-}
-
-.stats p {
-    margin: 0;
-}
-
-.stats strong {
-    color: #0f172a;
-    font-weight: 600;
-}
-
-
-/* 🎯 Candidate Skill Gap Intelligence Dashboard Styles */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 📁 Project Intelligence section Styles */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.pdfExportBtn:hover:not(:disabled) {
-    background: #4338ca;
-    border-color: #4338ca;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);
-}
-
-
-
-.pdfExportError {
-    font-size: 11px;
-    color: #ef4444;
-    font-weight: 500;
-}
-
-/* Premium SaaS Recruiter Overlay Modal */
-.premiumModalOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    border-radius: var(--radius-lg);
-    animation: fadeInModal 0.25s ease-out;
-}
-
-.premiumModalContent {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    width: 90%;
-    max-width: 480px;
-    text-align: center;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    animation: scaleInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.premiumPulseSpinner {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #4f46e5;
-    position: relative;
-    animation: pulseLoader 1.4s ease-in-out infinite;
-}
-
-.premiumPulseSpinner::after {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    right: -6px;
-    bottom: -6px;
-    border-radius: 50%;
-    border: 2px solid #4f46e5;
-    opacity: 0.8;
-    animation: pulseRing 1.4s ease-in-out infinite;
-}
-
-.premiumModalTitle {
-    font-size: 15px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
-    letter-spacing: -0.01em;
-}
-
-.premiumModalSubtitle {
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: #64748b;
-    margin: 0;
-}
-
-@keyframes fadeInModal {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes scaleInModal {
-    from {
-        transform: scale(0.95);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes pulseLoader {
-
-    0%,
-    100% {
-        transform: scale(0.85);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: scale(1.05);
-        opacity: 1;
-    }
-}
-
-@keyframes pulseRing {
-    0% {
-        transform: scale(0.9);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: scale(1.3);
-        opacity: 0;
-    }
+  background: var(--surface-card);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  border: var(--border-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .resultsHeaderRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    gap: 16px;
-    flex-wrap: wrap;
-    width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  width: 100%;
 }
 
-.globalRecruiterActions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.title {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
-
-
-.globalCsvBtn:hover:not(:disabled) {
-    background: var(--color-surface-hover);
-    border-color: #94a3b8;
-    transform: translateY(-1px);
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl) var(--space-xl);
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  border: var(--border-card);
+  box-shadow: var(--shadow-sm);
 }
 
-
-
-.globalCompareReportBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-neutral-border);
+  border-top: 2px solid var(--text-primary);
+  border-radius: var(--radius-full);
+  animation: spin 0.8s linear infinite;
+  margin-bottom: var(--space-md);
 }
 
-.actionCellContainer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-
-
-.rowPdfBtn:hover:not(:disabled) {
-    background: #4f46e5;
-    color: #ffffff;
-    border-color: #4f46e5;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+.loading p {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  margin: 0;
+  font-weight: 500;
 }
 
-
-
-/* 📤 Premium Recruiter Unified Share Dropdown Action Menu Styles */
-.shareDropdownWrapper {
-    position: relative;
-    display: inline-block;
+.empty {
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-neutral-border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-.shareBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 18px;
-    background: #0f172a;
-    color: #ffffff;
-    border: 1px solid #0f172a;
-    border-radius: var(--radius-md);
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    user-select: none;
+.emptyIcon {
+  font-size: var(--font-2xl);
 }
 
-.shareBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+.emptyText {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.shareBtn:active:not(:disabled) {
-    transform: translateY(0);
+.emptySubText {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin: 0;
 }
 
-.shareBtn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.listWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.shareCaret {
-    font-size: 9px;
-    transition: transform 0.2s ease;
-    opacity: 0.8;
+.candidateCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.shareCaretActive {
-    transform: rotate(180deg);
+.candidateCard:hover {
+  background: var(--surface-hover);
+  border-color: var(--color-primary-border);
 }
 
-.dropdownMenu {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    width: 250px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    z-index: 1000;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    transform-origin: top right;
-    animation: dropdownOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.activeCard {
+  background: var(--color-primary-bg) !important;
+  border-color: var(--color-primary-text) !important;
+  box-shadow: 0 0 0 1px var(--color-primary-text);
 }
 
-@keyframes dropdownOpen {
-    from {
-        opacity: 0;
-        transform: scale(0.96) translateY(-4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.dropdownItem {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 12px;
-    font-weight: 500;
-    color: #334155;
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.15s ease;
+.fileName {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: var(--font-lg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.dropdownItem:hover:not(:disabled) {
-    background: var(--color-neutral-bg);
-    color: #0f172a;
+.cardBody {
+  margin-top: -4px;
+  margin-bottom: 4px;
 }
 
-.dropdownItem:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
 }
 
-.dropdownDivider {
-    height: 1px;
-    background: var(--color-neutral-bg);
-    margin: 4px 6px;
+.statusWrapper {
+  transform: scale(0.9);
+  transform-origin: right center;
 }
 
-.dropdownIcon {
-    font-size: 14px;
-    flex-shrink: 0;
+/* Badges */
+.scoreBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  border: 1px solid transparent;
 }
 
-.dropdownItemText {
-    flex-grow: 1;
+.scoreValue {
+  font-size: var(--font-sm);
+  font-weight: 700;
 }
 
-.dropdownShortcut {
-    font-size: 9px;
-    font-weight: 600;
-    color: #94a3b8;
-    background: var(--color-surface-hover);
-    padding: 1px 5px;
-    border-radius: 3px;
-    border: 1px solid var(--color-border-light);
-}
+.excellent { background: var(--color-success-bg); color: var(--color-success-text); border-color: var(--color-success-border); }
+.good { background: var(--color-primary-bg); color: var(--color-primary-text); border-color: var(--color-primary-border); }
+.fair { background: var(--color-warning-bg); color: var(--color-warning-text); border-color: var(--color-warning-border); }
+.poor { background: var(--color-danger-bg); color: var(--color-danger-text); border-color: var(--color-danger-border); }
 
-/* Phase D: Extraction Quality & AI Reliability Styles */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Semantic Match Evaluation Matrix Grid */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fileNameRow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.drawerPdfBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-}
-
-
-
-
-
-
-
-
-
-/* Factual Fit Classification Callout */
-
-
-
-
-
-
-
-
-
-
-/* Shortlist Star styles */
-.shortlistStarBtn {
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    color: #cbd5e1;
-    cursor: pointer;
-    padding: 2px 6px;
-    margin-right: 4px;
-    transition: transform 0.1s, color 0.1s;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.shortlistStarBtn:hover {
-    transform: scale(1.2);
-    color: #fbbf24;
-}
-
-.shortlistStarBtn.shortlisted {
-    color: #f59e0b;
-}
-
-/* Recommendation badge */
 .recBadge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    font-weight: 600;
-    font-size: 11.5px;
-    white-space: nowrap;
+  display: inline-flex;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  line-height: 1;
 }
 
-.strongHire {
-    background: var(--color-success-bg);
-    color: #047857;
-    border: 1px solid #a7f3d0;
-}
-
-.hire {
-    background: var(--color-success-bg);
-    color: #047857;
-    border: 1px solid #a7f3d0;
-}
-
-.needsInterview {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fde68a;
-}
-
-.needsReview {
-    background: #fff7ed;
-    color: #c2410c;
-    border: 1px solid #fed7aa;
-}
-
-.reject {
-    background: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-}
-
-/* Hiring Stage Select styles */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Action button styles */
-.viewDetailsBtn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: var(--radius-md);
-    font-size: 11.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.viewDetailsBtn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--text-secondary);
-    color: var(--text-primary);
-}
-
-
-
-.pdfActionBtn:hover:not(:disabled) {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border-color: var(--text-secondary);
-}
-
-/* Phase 6: Secondary export button — reduced visual prominence */
-.pdfActionBtnSecondary {
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    padding: 6px 8px;
-    border-radius: var(--radius-md);
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.pdfActionBtnSecondary:hover:not(:disabled) {
-    color: var(--color-neutral-text);
-    background: var(--color-neutral-bg);
-}
-
-.pdfActionBtnSecondary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-/* Notes Tab styles */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ==========================================================================
-   HIRELENS V2 — PHASE 1 DESIGN SYSTEM OVERRIDES (PREMIUM WORKSPACE VIEWS)
-   ========================================================================== */
-
-
-
-/* 1. HEADER SECTION (Hyring-style Candidate Header) */
-
-
-
-
-
-
-
-
-.profileShortlistBtn.shortlisted {
-    background: #fffbeb;
-    border-color: var(--color-warning-border);
-    color: #d97706;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-.metricVal.excellent {
-    color: #10b981;
-}
-
-.metricVal.good {
-    color: #3b82f6;
-}
-
-.metricVal.fair {
-    color: #f59e0b;
-}
-
-.metricVal.poor {
-    color: #ef4444;
-}
-
-
-
-
-
-
-
-.headerPdfBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-}
-
-
-
-
-
-
-
-/* 2. TWO-COLUMN WORKSPACE LAYOUT */
-
-
-
-
-
-
-
-
-/* 3. CORE SUITABILITY CARDS */
-
-
-
-
-
-
-
-
-
-
-/* Match Score Card Specifics */
-
-
-
-
-
-
-
-
-
-
-
-
-/* Resume Card Specifics */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Recommendation Card Specifics */
-
-
-
-
-
-
-/* Readiness Card Specifics */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* AI Recruiter Summary Block */
-
-
-
-
-
-
-
-
-
-
-
-
-/* 4. RIGHT COLUMN SKILLS ALIGNMENT OVERVIEW */
-
-/* 5. PROGRESSIVE DISCLOSURE ADVANCED INSIGHTS SECTION */
-
-
-
-
-
-
-
-
-
-
-@keyframes advancedSlideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Skill Gap List & Project list styling */
-.weightedEvalsList::-webkit-scrollbar,
-.projectIntelList::-webkit-scrollbar {
-    width: 4px;
-}
-
-.weightedEvalsList::-webkit-scrollbar-track,
-.projectIntelList::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.weightedEvalsList::-webkit-scrollbar-thumb,
-.projectIntelList::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: var(--radius-full);
-}
-
-
-
-
-
-
-
-
-
-
-
-/* Competency inference mapping project list */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Double column cards layout details */
-
-
-/* Trust metrics and reliability metrics styling */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Radar wrapper specifics */
-
-
-
-
-
-
-/* Toolkit and notes styles */
-.toolkitList::-webkit-scrollbar {
-    width: 4px;
-}
-
-.toolkitList::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: var(--radius-full);
-}
-
-.generatorTriggerBtn:hover:not(:disabled) {
-    background: #1e293b;
-    border-color: #1e293b;
-}
-
-
-
-
-
-
-
-
-
-.activeCandidateRow {
-    background: var(--accent-light) !important;
-    border-left: 4px solid var(--accent) !important;
-}
-
-.activeDetailsBtn {
-    background: var(--accent) !important;
-    border-color: var(--accent) !important;
-    color: #ffffff !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.reject { background: var(--color-danger-bg); color: var(--color-danger-text); border: 1px solid var(--color-danger-border); }
+.strongHire { background: var(--color-success-bg); color: var(--color-success-text); border: 1px solid var(--color-success-border); }
+.hire { background: var(--color-success-bg); color: var(--color-success-text); border: 1px solid var(--color-success-border); }
+.needsInterview { background: var(--color-warning-bg); color: var(--color-warning-text); border: 1px solid var(--color-warning-border); }
+.needsReview { background: var(--color-warning-bg); color: var(--color-warning-text); border: 1px solid var(--color-warning-border); }

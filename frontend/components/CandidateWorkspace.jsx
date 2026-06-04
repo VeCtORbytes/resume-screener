@@ -37,10 +37,11 @@ export default function CandidateWorkspace({
         {/* 1. CANDIDATE HEADER */}
         <section className={styles.headerSection}>
           <div className={styles.headerTopRow}>
-            <div>
+            <div className={styles.primaryIdentity}>
               <h2 className={styles.candidateName}>{candidateName}</h2>
-              {/* Optional Location/Role could go here if extracted */}
-              {/* <p className={styles.candidateLocation}>Software Engineer • San Francisco, CA</p> */}
+              <span className={`${styles.recBadge} ${styles[recInfo?.styleClass] || styles.statusBadge}`}>
+                {recInfo?.text}
+              </span>
             </div>
             <button
               onClick={() => onExportPdf(candidate.id, candidate.originalFilename)}
@@ -52,13 +53,14 @@ export default function CandidateWorkspace({
           </div>
 
           <div className={styles.metricsRow}>
-            <span className={`${styles.metricBadge} ${styles.scoreBadge}`}>
-              Match Score: {score}
-            </span>
-            <span className={`${styles.metricBadge} ${styles[recInfo?.styleClass] || styles.statusBadge}`}>
-              {recInfo?.text}
-            </span>
-            <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
+            <div className={`${styles.metricBadge} ${styles.scoreBadge}`}>
+              <span className={styles.metricLabel}>Match Score</span>
+              <span className={styles.metricValue}>{score}%</span>
+            </div>
+            <div className={styles.statusControl}>
+              <span className={styles.metricLabel}>Pipeline Status</span>
+              <StatusBadge status={status} onChange={onStatusChange} interactive={true} />
+            </div>
           </div>
 
           <p className={styles.recruiterSummary}>"{recruiterSummary}"</p>

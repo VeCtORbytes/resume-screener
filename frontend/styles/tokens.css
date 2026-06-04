@@ -1,0 +1,69 @@
+/* 
+  HireLens Design System Tokens 
+  Phase 7: UI Unification
+*/
+
+:root {
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* Typography Scale */
+  --font-xs: 0.75rem;     /* 12px */
+  --font-sm: 0.875rem;    /* 14px */
+  --font-md: 1rem;        /* 16px */
+  --font-lg: 1.125rem;    /* 18px */
+  --font-xl: 1.25rem;     /* 20px */
+  --font-2xl: 1.5rem;     /* 24px */
+  --font-3xl: 1.875rem;   /* 30px */
+
+  /* Border Radius Scale */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Elevation & Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04); /* Subtler for large cards */
+
+  /* Semantic Colors */
+  --color-success-bg: #ecfdf5;
+  --color-success-text: #065f46;
+  --color-success-border: #a7f3d0;
+
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-warning-border: #fde68a;
+
+  --color-danger-bg: #fef2f2;
+  --color-danger-text: #991b1b;
+  --color-danger-border: #fecaca;
+
+  --color-neutral-bg: #f1f5f9;
+  --color-neutral-text: #475569;
+  --color-neutral-border: #e2e8f0;
+
+  --color-primary-bg: var(--accent-light);
+  --color-primary-text: var(--accent);
+  --color-primary-border: var(--border);
+
+  /* Borders */
+  --border-subtle: 1px solid var(--border);
+  --border-card: 1px solid var(--border);
+
+  /* Surfaces */
+  --surface-card: var(--surface);
+  --surface-hover: var(--bg-primary);
+  --surface-muted: var(--bg-secondary);
+}

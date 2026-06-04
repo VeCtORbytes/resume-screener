@@ -300,88 +300,64 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Screening History */}
+          {/* Screening History Drawer */}
+          {isHistoryOpen && (
+            <>
+              <div className={styles.drawerOverlay} onClick={() => setIsHistoryOpen(false)} />
+              <div className={styles.historyDrawer}>
+                <div className={styles.historyDrawerHeader}>
+                  <h3 className={styles.historyDrawerTitle}>Screening History</h3>
+                  <button className={styles.closeDrawerBtn} style={{ position: 'relative', top: 'auto', right: 'auto' }} onClick={() => setIsHistoryOpen(false)}>×</button>
+                </div>
+                <div className={styles.historyDrawerContent}>
+                  {sessions.length > 0 ? (
+                    sessions.map((s) => {
+                      const isActive = screeningId === s.id;
+                      const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+
+                      let roleName = "Screening Session";
+                      if (s.job_description) {
+                        const lines = s.job_description.split("\n");
+                        const roleLine = lines.find((l) => l.toLowerCase().includes("role:") || l.toLowerCase().includes("title:"));
+                        if (roleLine) roleName = roleLine.replace(/(role:|title:)/i, "").trim();
+                        else roleName = lines[0].trim() || s.job_description.slice(0, 30);
+                      }
+                      if (roleName.length > 40) roleName = roleName.slice(0, 40) + "...";
+
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => { handleSelectSession(s); setIsHistoryOpen(false); }}
+                          className={`${styles.historyDrawerItem} ${isActive ? styles.activeHistoryDrawerItem : ""}`}
+                        >
+                          <div className={styles.historyDrawerItemTitle}>{roleName}</div>
+                          <div className={styles.historyDrawerItemMeta}>
+                            <span className={styles.historyDrawerItemCount}>{s.result_count} Candidates</span>
+                            <span className={styles.historyDrawerItemDate}>{dateStr}</span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className={styles.emptyHistory}>No prior screenings found.</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
           <div className={styles.topHistorySection}>
             <button
-              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              onClick={() => setIsHistoryOpen(true)}
               className={styles.historyToggleBtn}
             >
-              {isHistoryOpen ? "Hide History" : "Screening History"}
+              <span className={styles.historyIcon}>🕒</span> Screening History
             </button>
-
-            {isHistoryOpen && (
-              <div
-                className={styles.topHistoryList}
-                style={{
-                  maxHeight: "280px",
-                  overflowY: "auto",
-                  marginTop: "12px",
-                }}
-              >
-                {sessions.length > 0 ? (
-                  sessions.map((s) => {
-                    const isActive = screeningId === s.id;
-                    const dateStr = new Date(s.created_at).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-
-                    let roleName = "Screening Session";
-
-                    if (s.job_description) {
-                      const lines = s.job_description.split("\n");
-                      const roleLine = lines.find(
-                        (l) =>
-                          l.toLowerCase().includes("role:") ||
-                          l.toLowerCase().includes("title:")
-                      );
-
-                      if (roleLine) {
-                        roleName = roleLine.replace(/(role:|title:)/i, "").trim();
-                      } else {
-                        roleName = lines[0].trim() || s.job_description.slice(0, 30);
-                      }
-                    }
-
-                    if (roleName.length > 30) {
-                      roleName = roleName.slice(0, 30) + "...";
-                    }
-
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => handleSelectSession(s)}
-                        className={`${styles.topHistoryItem} ${isActive ? styles.activeTopHistoryItem : ""
-                          }`}
-                      >
-                        <div className={styles.topHistoryItemContent}>
-                          <div className={styles.topHistoryItemTitle}>
-                            {roleName}
-                          </div>
-
-                          <div className={styles.topHistoryItemCount}>
-                            {s.result_count} Candidates
-                          </div>
-
-                          <div className={styles.topHistoryItemDate}>
-                            {dateStr}
-                          </div>
-                        </div>
-
-                        <span className="">
-                          {s.result_count}{" "}
-                          {s.result_count === 1 ? "resume" : "resumes"}
-                        </span>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <p className={styles.emptyHistory}>No prior screenings found.</p>
-                )}
-              </div>
-            )}
           </div>
 
           <div className={styles.workflowStack}>
@@ -394,13 +370,34 @@ export default function Home() {
                 <p className={styles.stepDesc}>Define the target role description, key skills, and mandatory requirements</p>
               </div>
               <div className={styles.workflowCard}>
-                <JobDescInput
-                  freeTextValue={jobDescription}
-                  onFreeTextChange={handleJobDescChange}
-                  isLoading={loading}
-                  onUseSample={handleUseSample}
-                  onClear={handleClearJD}
-                />
+                <div className={styles.modeToggle}>
+                  <button 
+                    className={`${styles.modeToggleBtn} ${inputMode === "paste" ? styles.activeMode : ""}`} 
+                    onClick={() => setInputMode("paste")}
+                  >
+                    Paste JD
+                  </button>
+                  <button 
+                    className={`${styles.modeToggleBtn} ${inputMode === "build" ? styles.activeMode : ""}`} 
+                    onClick={() => setInputMode("build")}
+                  >
+                    Build JD
+                  </button>
+                </div>
+                
+                {inputMode === "paste" ? (
+                  <JobDescInput
+                    freeTextValue={jobDescription}
+                    onFreeTextChange={handleJobDescChange}
+                    isLoading={loading}
+                    onUseSample={handleUseSample}
+                    onClear={handleClearJD}
+                  />
+                ) : (
+                  <div className={styles.builderPlaceholder}>
+                    <p>Structured Builder UI coming soon. Please use Paste JD for now.</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -423,20 +420,6 @@ export default function Home() {
                   onFilesSelect={handleFilesSelect}
                   isLoading={loading}
                 />
-
-                {/* Validation UX - elegant inline box */}
-                {error && (
-                  <div className={styles.errorBox}>
-                    <span className={styles.errorIcon}>⚠️</span>
-                    <div className={styles.errorTextContainer}>
-                      <span className={styles.errorTitle}>Validation Error</span>
-                      <p className={styles.errorDetail}>{error}</p>
-                    </div>
-                    <button onClick={() => setError(null)} className={styles.errorClose} title="Dismiss">
-                      ✕
-                    </button>
-                  </div>
-                )}
 
                 {/* Primary Screening CTA */}
                 <button
@@ -482,7 +465,7 @@ export default function Home() {
                 /* Results Experience */
                 <div className={styles.resultsStack}>
                   <>
-                      <WorkspaceHeader counts={getWorkspaceCounts()} />
+                      <WorkspaceHeader counts={getWorkspaceCounts()} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
 
                       <FilterControl
                         minScore={minScore}
@@ -490,52 +473,51 @@ export default function Home() {
                         isLoading={loading}
                       />
 
-                      {/* Premium Pipeline Filtering Bar */}
-                      <div className={styles.pipelineFilterBar}>
-                        <span className={styles.pipelineFilterLabel}>Pipeline Status:</span>
-                        <div className={styles.pipelineFilterTabs}>
-                          {["All", "New", "Reviewing", "Shortlisted", "Interview", "Rejected", "Hired"].map(filterVal => {
-                            const counts = getWorkspaceCounts();
-                            let displayCount = counts.total;
-                            if (filterVal === "New") displayCount = counts.new;
-                            else if (filterVal === "Reviewing") displayCount = counts.reviewing;
-                            else if (filterVal === "Shortlisted") displayCount = counts.shortlisted;
-                            else if (filterVal === "Interview") displayCount = counts.interview;
-                            else if (filterVal === "Rejected") displayCount = counts.rejected;
-                            else if (filterVal === "Hired") displayCount = counts.hired;
 
-                            return (
-                              <button
-                                key={filterVal}
-                                onClick={() => setStatusFilter(filterVal)}
-                                className={`${styles.pipelineFilterBtn} ${statusFilter === filterVal ? styles.activePipelineFilter : ""}`}
-                              >
-                                <span>{filterVal}</span>
-                                <span className={styles.pipelineFilterBadge}>{displayCount}</span>
-                              </button>
-                            );
-                          })}
+                      <div className={styles.splitViewContainer}>
+                        <div className={styles.queueColumn}>
+                          <ResultsTable
+                            results={filteredResults.filter(r => {
+                              if (statusFilter === "All") return true;
+                              const status = candidateStatuses[r.id] || "New";
+                              return status === statusFilter;
+                            })}
+                            isLoading={loading}
+                            screeningId={screeningId}
+                            activeSession={activeSession}
+                            candidateStatuses={candidateStatuses}
+                            onStatusChange={handleStatusChange}
+                            candidateNotes={candidateNotes}
+                            onNoteChange={handleNoteChange}
+                            onViewCandidate={setActiveCandidateId}
+                            activeCandidateId={activeCandidateId}
+                          />
                         </div>
-                      </div>
-
-
-                      <div className={styles.tableColumn}>
-                        <ResultsTable
-                          results={filteredResults.filter(r => {
-                            if (statusFilter === "All") return true;
-                            const status = candidateStatuses[r.id] || "New";
-                            return status === statusFilter;
-                          })}
-                          isLoading={loading}
-                          screeningId={screeningId}
-                          activeSession={activeSession}
-                          candidateStatuses={candidateStatuses}
-                          onStatusChange={handleStatusChange}
-                          candidateNotes={candidateNotes}
-                          onNoteChange={handleNoteChange}
-                          onViewCandidate={setActiveCandidateId}
-                          activeCandidateId={activeCandidateId}
-                        />
+                        
+                        <div className={styles.workspaceColumn}>
+                          {activeCandidateId ? (
+                            (() => {
+                              const activeCandidate = filteredResults.find(r => r.id === activeCandidateId);
+                              if (!activeCandidate) return null;
+                              return (
+                                <CandidateWorkspace
+                                  candidate={activeCandidate}
+                                  status={candidateStatuses[activeCandidateId] || "New"}
+                                  onStatusChange={(newStatus) => handleStatusChange(activeCandidateId, newStatus)}
+                                  note={candidateNotes[activeCandidateId] || ""}
+                                  onNoteChange={(newNote) => handleNoteChange(activeCandidateId, newNote)}
+                                  onExportPdf={() => {}}
+                                />
+                              );
+                            })()
+                          ) : (
+                            <div className={styles.emptyWorkspaceColumn}>
+                              <span className={styles.emptyWorkspaceIcon}>📄</span>
+                              <h4 className={styles.emptyWorkspaceTitle}>No Candidate Selected</h4>
+                              <p className={styles.emptyWorkspaceDesc}>Select a candidate from the queue to view their full evaluation dossier.</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </>
 
@@ -591,6 +573,20 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Global Validation Toast */}
+      {error && (
+        <div className={styles.globalErrorToast}>
+          <span className={styles.errorIcon}>⚠️</span>
+          <div className={styles.errorTextContainer}>
+            <span className={styles.errorTitle}>Validation Error</span>
+            <p className={styles.errorDetail}>{error}</p>
+          </div>
+          <button onClick={() => setError(null)} className={styles.errorClose} title="Dismiss">
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 10. FOOTER */}
       <footer className={styles.footer}>
