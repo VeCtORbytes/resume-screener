@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime, timezone, timedelta
 import uuid
+from sqlalchemy.dialects.postgresql import JSONB
 
 Base = declarative_base()
 
@@ -37,7 +38,8 @@ class ResumeResult(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     expires_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=30), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+    v2_engine_data = Column(JSONB, nullable=True, default={})
+
     # Relationship to screening_sessions
     screening = relationship("ScreeningSession", back_populates="results")
     
